@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title>Untitled</title>
+  
+
+</head>
+<body>
+<!-- partial:index.partial.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bitcoin News — Live, Auto‑Updated Daily</title>
+  <meta name="description" content="A single‑file Bitcoin news website with live BTC price and automatically refreshed headlines pulled from multiple RSS sources daily (and every few minutes)." />
+
+  <!-- Icons & Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <style>
+    :root{
+      --bg:#0f1115; --panel:#151a21; --panel-2:#11151c; --text:#e8edf6; --muted:#aab0bd;
+      --accent:#f7931a; --accent-2:#ffc772; --success:#3acf87; --danger:#e04b4a; --border:#232833;
+      --ring: 0 0 0 3px rgba(247,147,26,.25); --radius: 18px; --shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial; background:linear-gradient(180deg,#0c0f13 0%,var(--bg) 20%,#0e131a 100%); color:var(--text); line-height:1.55}
+    a{color:var(--text); text-decoration:none}
+    .container{width:min(1200px,92vw); margin:0 auto}
+
+    header{position:sticky; top:0; z-index:1000; backdrop-filter:saturate(1.4) blur(10px); background:rgba(15,17,21,.75); border-bottom:1px solid var(--border)}
+    .nav{display:flex; align-items:center; justify-content:space-between; padding:14px 0}
+    .brand{display:flex; align-items:center; gap:12px; font-weight:800; letter-spacing:.4px}
+    .brand .logo{width:38px; height:38px; border-radius:50%; display:grid; place-items:center; font-size:20px; color:#111; background:radial-gradient(80% 80% at 20% 20%, #fff9e6 0%, #ffd79a 40%, var(--accent) 100%); box-shadow: inset 0 0 12px rgba(255,255,255,.3), 0 4px 12px rgba(247,147,26,.35)}
+    .navlinks{display:flex; gap:18px; align-items:center; font-weight:600}
+    .btn{display:inline-flex; align-items:center; gap:10px; padding:10px 14px; border-radius:12px; border:1px solid var(--border); background:var(--panel-2); font-weight:600}
+    .btn:hover{box-shadow:var(--ring)}
+    .btn.primary{background:linear-gradient(135deg,var(--accent) 0%, #ffb85c 80%); color:#111; border-color:transparent}
+    .currency{appearance:none; background:var(--panel-2); color:var(--text); border:1px solid var(--border); border-radius:12px; padding:10px 12px; font-weight:600}
+
+    .hero{padding:56px 0 28px}
+    .hero-grid{display:grid; grid-template-columns:1.2fr .8fr; gap:28px}
+    .h1{font-size:clamp(32px,4.2vw,54px); font-weight:900; line-height:1.05; margin:0 0 14px; background:linear-gradient(90deg,#fff 0%, #ffe9c7 35%, var(--accent) 100%); -webkit-background-clip:text; background-clip:text; color:transparent}
+    .lead{color:var(--muted); font-size:clamp(14px,2vw,18px)}
+    .cta{display:flex; gap:12px; margin-top:16px}
+
+    .hero-card{background: radial-gradient(120% 120% at 100% 0%, #1a1f2a 0%, var(--panel) 50%, #10151c 100%); border:1px solid var(--border); border-radius:var(--radius); padding:20px; box-shadow:var(--shadow)}
+    .statgrid{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:18px}
+    .stat{background:linear-gradient(180deg,#121822 0%, #0f141c 100%); border:1px solid var(--border); border-radius:14px; padding:16px}
+    .stat .label{color:var(--muted); font-size:13px}
+    .stat .value{font-size:22px; font-weight:800; margin-top:4px}
+    .stat .delta{font-weight:700; font-size:13px}
+    .delta.up{color:var(--success)} .delta.down{color:var(--danger)}
+
+    .ticker{margin:18px 0 6px; border-top:1px solid var(--border); border-bottom:1px solid var(--border)}
+    .ticker .row{display:flex; gap:24px; white-space:nowrap; overflow:hidden}
+    .ticker .item{padding:10px 0; color:var(--muted)}
+
+    section{padding:26px 0}
+    .section-title{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px}
+    .section-title h2{margin:0; font-size:clamp(18px,2.6vw,28px)}
+
+    .grid{display:grid; gap:16px}
+    .news-grid{grid-template-columns:repeat(12,1fr)}
+    .news-card{grid-column:span 4; background:linear-gradient(180deg,#12161f 0%, #0f131a 100%); border:1px solid var(--border); border-radius:16px; overflow:hidden; display:flex; flex-direction:column}
+    .news-card .thumb{aspect-ratio:16/9; background:#0c1016; display:block}
+    .news-card .inner{padding:14px}
+    .news-card h3{margin:0 0 8px; font-size:18px}
+    .badge{display:inline-flex; align-items:center; gap:8px; font-size:12px; color:#111; font-weight:800; background:linear-gradient(135deg,var(--accent),#ffb85c); padding:6px 10px; border-radius:999px}
+    .meta{display:flex; gap:12px; align-items:center; color:var(--muted); font-size:12px; margin-top:10px}
+
+    .cards{grid-template-columns:repeat(3,1fr)}
+    .card{background:linear-gradient(180deg,#12161f 0%, #0f131a 100%); border:1px solid var(--border); border-radius:16px; padding:16px; display:flex; flex-direction:column; gap:8px}
+
+    .chart-panel{background: radial-gradient(120% 120% at 100% 0%, #1a1f2a 0%, var(--panel) 50%, #10151c 100%); border:1px solid var(--border); border-radius:16px; padding:12px}
+
+    footer{border-top:1px solid var(--border); padding:24px 0; color:var(--muted)}
+    .to-top{position:fixed; right:16px; bottom:16px; z-index:999; opacity:0; transform:translateY(10px); transition:.2s}
+    .to-top.visible{opacity:1; transform:none}
+
+    @media (max-width:980px){.hero-grid{grid-template-columns:1fr} .statgrid{grid-template-columns:repeat(2,1fr)} .news-card{grid-column:span 6} .cards{grid-template-columns:1fr}}
+    @media (max-width:640px){.navlinks{display:none} .statgrid{grid-template-columns:1fr} .news-card{grid-column:span 12}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container nav">
+      <a class="brand" href="#"><span class="logo"><i class="fa-brands fa-bitcoin"></i></span><span>Bitcoin<span style="color:var(--accent)">News</span></span></a>
+      <nav class="navlinks">
+        <a href="#market">Market</a><a href="#news">News</a><a href="#chart">Chart</a><a href="#guides">Guides</a><a href="#faq">FAQ</a>
+      </nav>
+      <div style="display:flex; gap:10px; align-items:center">
+        <select class="currency" id="currency"><option value="usd">USD</option><option value="lkr" selected>LKR</option><option value="eur">EUR</option><option value="gbp">GBP</option><option value="inr">INR</option></select>
+        <button class="btn" id="refreshNews"><i class="fa-solid fa-rotate"></i> Refresh</button>
+        <a class="btn primary" href="https://bitcoin.org/en/wallets" target="_blank" rel="noopener">Get a Wallet</a>
+      </div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container hero-grid">
+      <div>
+        <h1 class="h1">Live Bitcoin price + headlines that update all day, every day.</h1>
+        <p class="lead">This page auto‑fetches BTC news from multiple sources and refreshes itself every few minutes. Works as a single HTML file.</p>
+        <div class="cta"><a class="btn primary" href="#news"><i class="fa-regular fa-newspaper"></i> Latest News</a><a class="btn" href="#guides"><i class="fa-solid fa-book"></i> Beginner Guides</a></div>
+        <div id="market" class="statgrid">
+          <div class="stat"><div class="label">BTC Price</div><div class="value" id="price">—</div><div class="delta" id="priceDelta">—</div></div>
+          <div class="stat"><div class="label">24h High</div><div class="value" id="high">—</div></div>
+          <div class="stat"><div class="label">24h Low</div><div class="value" id="low">—</div></div>
+          <div class="stat"><div class="label">Market Cap</div><div class="value" id="mcap">—</div></div>
+        </div>
+        <div class="ticker" aria-label="Headlines ticker"><div class="container"><div class="row" id="tickerRow"></div></div></div>
+      </div>
+      <aside class="hero-card">
+        <div class="section-title" style="margin-bottom:6px"><h2 style="margin:0">BTC Quick Chart</h2><small class="muted">Powered by TradingView</small></div>
+        <div class="chart-panel" id="chart">
+          <div class="tradingview-widget-container" style="height:300px">
+            <div class="tradingview-widget-container__widget" id="tv-widget"></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+            {"symbol":"BITSTAMP:BTCUSD","width":"100%","height":"300","locale":"en","dateRange":"12M","colorTheme":"dark","isTransparent":true,"autosize":true,"chartType":"area"}
+            </script>
+          </div>
+        </div>
+        <p style="color:var(--muted); margin-top:10px; font-size:12px">Data is for informational purposes only. Not financial advice.</p>
+      </aside>
+    </div>
+  </section>
+
+  <section id="news">
+    <div class="container">
+      <div class="section-title">
+        <h2><i class="fa-regular fa-newspaper"></i> Latest Headlines (auto)</h2>
+        <input id="search" placeholder="Search headlines…" aria-label="Search" style="background:var(--panel-2); color:var(--text); border:1px solid var(--border); border-radius:12px; padding:10px 12px; min-width:220px">
+      </div>
+      <div class="grid news-grid" id="newsGrid"></div>
+      <div id="newsEmpty" style="display:none; color:var(--muted); padding:20px; text-align:center">No matches. Try a different search.</div>
+      <p style="color:var(--muted); font-size:12px; margin-top:10px">Sources: Bitcoin.com, CoinDesk, CoinTelegraph (via RSS). Updated every ~10 minutes & on page open.</p>
+    </div>
+  </section>
+
+  <section id="guides">
+    <div class="container">
+      <div class="section-title"><h2><i class="fa-solid fa-book"></i> Beginner Guides</h2><a class="btn" href="https://bitcoin.org/en/" target="_blank" rel="noopener">Official Resources</a></div>
+      <div class="grid cards">
+        <article class="card"><span class="badge"><i class="fa-solid fa-wallet"></i> Wallets</span><h3>Choosing a Bitcoin Wallet</h3><p class="muted">Custodial vs non‑custodial, seed phrases, backups, and hardware wallets.</p><a class="btn" href="https://bitcoin.org/en/choose-your-wallet" target="_blank" rel="noopener">Explore Wallets</a></article>
+        <article class="card"><span class="badge"><i class="fa-solid fa-shield"></i> Security</span><h3>Security Basics</h3><p class="muted">2FA, phishing awareness, verifying addresses, and safe storage practices.</p><a class="btn" href="https://bitcoin.org/en/secure-your-wallet" target="_blank" rel="noopener">Secure Your Wallet</a></article>
+        <article class="card"><span class="badge"><i class="fa-solid fa-sack-dollar"></i> Getting BTC</span><h3>How to Acquire Bitcoin</h3><p class="muted">Exchanges, P2P marketplaces, and on‑ramp options — with KYC considerations.</p><a class="btn" href="https://bitcoin.org/en/getting-started" target="_blank" rel="noopener">Get Started</a></article>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="container">
+      <div class="section-title"><h2><i class="fa-regular fa-circle-question"></i> FAQ</h2></div>
+      <div class="grid" style="grid-template-columns:1fr; gap:8px">
+        <details class="card"><summary style="cursor:pointer; font-weight:700">Is this financial advice?</summary><div class="muted">No. Educational content only.</div></details>
+        <details class="card"><summary style="cursor:pointer; font-weight:700">Where does pricing come from?</summary><div class="muted">CoinGecko public API (demo). You can swap your source.</div></details>
+        <details class="card"><summary style="cursor:pointer; font-weight:700">How does news auto‑update?</summary><div class="muted">The script fetches multiple RSS feeds via a CORS proxy, merges and sorts them by publish time, deduplicates, then refreshes every few minutes.</div></details>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap">
+      <div>© <span id="year"></span> BitcoinNews — Community project</div>
+      <div>Built with ❤️ — single‑file HTML</div>
+    </div>
+  </footer>
+
+  <button class="btn to-top" id="toTop" aria-label="Back to top"><i class="fa-solid fa-arrow-up"></i></button>
+
+  <script>
+    // -------- Helpers --------
+    const qs = (s, el=document) => el.querySelector(s);
+    const qsa = (s, el=document) => [...el.querySelectorAll(s)];
+    const fmt = (n, c="USD") => new Intl.NumberFormat(undefined,{style:'currency',currency:c}).format(n);
+    const clean = (s='') => s.replace(/\s+/g,' ').trim();
+
+    // Year
+    qs('#year').textContent = new Date().getFullYear();
+
+    // Back to top
+    const toTop = qs('#toTop');
+    addEventListener('scroll',()=>{ if(scrollY>600){toTop.classList.add('visible')} else {toTop.classList.remove('visible')} });
+    toTop.addEventListener('click',()=>scrollTo({top:0, behavior:'smooth'}));
+
+    // -------- Price (CoinGecko) --------
+    const currencySel = qs('#currency');
+    let curr = currencySel.value;
+    async function loadMarket(){
+      try{
+        const url = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=${curr}&ids=bitcoin&precision=2`;
+        const r = await fetch(url, {headers:{'accept':'application/json'}});
+        const [btc] = await r.json();
+        if(!btc) return;
+        qs('#price').textContent = fmt(btc.current_price, curr.toUpperCase());
+        qs('#high').textContent = fmt(btc.high_24h, curr.toUpperCase());
+        qs('#low').textContent = fmt(btc.low_24h, curr.toUpperCase());
+        qs('#mcap').textContent = fmt(btc.market_cap, curr.toUpperCase());
+        const delta = Number(btc.price_change_percentage_24h||0).toFixed(2);
+        const d = qs('#priceDelta'); d.textContent = `${delta}%`; d.className = 'delta ' + (delta>=0?'up':'down');
+      }catch(err){ console.warn('Price fetch failed', err); }
+    }
+    loadMarket();
+    setInterval(loadMarket, 60_000);
+    currencySel.addEventListener('change', e=>{ curr = e.target.value; loadMarket(); });
+
+    // -------- News (Multi‑RSS via AllOrigins CORS proxy) --------
+    const FEEDS = [
+      'https://news.bitcoin.com/feed/',
+      'https://www.coindesk.com/arc/outboundfeeds/rss/?outputType=xml',
+      'https://cointelegraph.com/rss'
+    ];
+
+    const newsGrid = qs('#newsGrid');
+    const newsEmpty = qs('#newsEmpty');
+    const tickerRow = qs('#tickerRow');
+    const search = qs('#search');
+    const refreshBtn = qs('#refreshNews');
+
+    function rssTimeToDate(txt){
+      // Handles RFC822 / ISO strings
+      const d = new Date(txt);
+      return isNaN(d.getTime()) ? new Date() : d;
+    }
+
+    function getImgFromItem(item){
+      // Try common RSS media fields
+      const media = item.querySelector('media\\:content, content');
+      const enclosure = item.querySelector('enclosure');
+      const thumb = item.querySelector('media\\:thumbnail');
+      if(enclosure?.getAttribute('url')) return enclosure.getAttribute('url');
+      if(media?.getAttribute?.('url')) return media.getAttribute('url');
+      if(thumb?.getAttribute?.('url')) return thumb.getAttribute('url');
+      // Try to extract first <img> from content:encoded / description
+      const cdata = item.querySelector('content\\:encoded, description');
+      if(cdata){
+        const html = cdata.textContent;
+        const m = html && html.match(/<img[^>]+src=["']([^"']+)["']/i);
+        if(m) return m[1];
+      }
+      // Fallback unsplash
+      return 'https://images.unsplash.com/photo-1621416894569-0f39b79ce3bf?auto=format&fit=crop&w=1200&q=60';
+    }
+
+    async function fetchFeed(url){
+      const proxied = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+      const r = await fetch(proxied);
+      const j = await r.json();
+      const xml = new window.DOMParser().parseFromString(j.contents, 'text/xml');
+      const items = [...xml.querySelectorAll('item')];
+      return items.map(it => ({
+        title: clean(it.querySelector('title')?.textContent||''),
+        url: it.querySelector('link')?.textContent||'#',
+        time: rssTimeToDate(it.querySelector('pubDate, updated')?.textContent||''),
+        tag: clean(xml.querySelector('channel>title')?.textContent||'News'),
+        img: getImgFromItem(it)
+      }));
+    }
+
+    function dedupe(items){
+      const seen = new Set();
+      return items.filter(x=>{ const k = x.title.toLowerCase(); if(seen.has(k)) return false; seen.add(k); return true; });
+    }
+
+    function renderNews(items){
+      newsGrid.innerHTML = '';
+      if(!items.length){ newsEmpty.style.display='block'; return; }
+      newsEmpty.style.display='none';
+      items.forEach(n=>{
+        const card = document.createElement('article');
+        card.className = 'news-card';
+        card.innerHTML = `
+          <a class="thumb" style="background-image:url('${n.img}'); background-size:cover; background-position:center" href="${n.url}" target="_blank" rel="noopener"></a>
+          <div class="inner">
+            <span class="badge"><i class="fa-solid fa-bolt"></i> ${n.tag}</span>
+            <h3><a href="${n.url}" target="_blank" rel="noopener">${n.title}</a></h3>
+            <div class="meta"><span><i class=\"fa-regular fa-clock\"></i> ${n.time.toLocaleString()}</span> · <span><i class=\"fa-solid fa-hashtag\"></i> BTC</span></div>
+          </div>`;
+        newsGrid.appendChild(card);
+      });
+
+      // Rebuild ticker
+      tickerRow.innerHTML = '';
+      items.slice(0, 15).forEach(n=>{
+        const el = document.createElement('div');
+        el.className = 'item';
+        el.innerHTML = `<i class="fa-regular fa-newspaper"></i> ${n.title}`;
+        tickerRow.appendChild(el);
+      });
+      tickerRow.animate([{transform:'translateX(0)'},{transform:'translateX(-50%)'}], {duration:30000, iterations:Infinity, easing:'linear'});
+    }
+
+    let ALL_NEWS = [];
+
+    async function fetchAllNews(){
+      try{
+        const batches = await Promise.allSettled(FEEDS.map(fetchFeed));
+        const merged = batches.flatMap(b => b.status==='fulfilled' ? b.value : []);
+        const deduped = dedupe(merged);
+        deduped.sort((a,b)=> b.time - a.time);
+        ALL_NEWS = deduped.slice(0, 36); // keep top 36 freshest
+        applyFilter();
+      }catch(err){ console.error('News fetch failed', err); }
+    }
+
+    function applyFilter(){
+      const q = search.value.toLowerCase().trim();
+      const filtered = q ? ALL_NEWS.filter(n=> n.title.toLowerCase().includes(q) || n.tag.toLowerCase().includes(q)) : ALL_NEWS;
+      renderNews(filtered);
+    }
+
+    refreshBtn.addEventListener('click', fetchAllNews);
+    search.addEventListener('input', applyFilter);
+
+    // Initial load + auto refresh every ~10 minutes
+    fetchAllNews();
+    setInterval(fetchAllNews, 10 * 60 * 1000);
+
+    // Reveal animation
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => { if(e.isIntersecting){ e.target.style.transform='translateY(0)'; e.target.style.opacity=1; io.unobserve(e.target); } });
+    }, { threshold:.2 });
+    qsa('.card, .news-card, .stat').forEach(el=>{ el.style.opacity=.0; el.style.transform='translateY(10px)'; el.style.transition='all .35s ease'; io.observe(el) });
+  </script>
+</body>
+</html>
+<!-- partial -->
+  
+</body>
+</html>
