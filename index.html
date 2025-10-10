@@ -1,336 +1,619 @@
 <!DOCTYPE html>
-<html lang="en" >
-<head>
-  <meta charset="UTF-8">
-  <title>Untitled</title>
-  
-
-</head>
-<body>
-<!-- partial:index.partial.html -->
-<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bitcoin News — Live, Auto‑Updated Daily</title>
-  <meta name="description" content="A single‑file Bitcoin news website with live BTC price and automatically refreshed headlines pulled from multiple RSS sources daily (and every few minutes)." />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>BinaryTools UI – Deriv Volatility Chart (Fixed)</title>
 
-  <!-- Icons & Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <!-- Icons -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+  <!-- Lightweight Charts -->
+  <link rel="preconnect" href="https://unpkg.com"/>
+  <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 
   <style>
+    /* =================== AURORA NEON THEME (Colors & Design only) =================== */
     :root{
-      --bg:#0f1115; --panel:#151a21; --panel-2:#11151c; --text:#e8edf6; --muted:#aab0bd;
-      --accent:#f7931a; --accent-2:#ffc772; --success:#3acf87; --danger:#e04b4a; --border:#232833;
-      --ring: 0 0 0 3px rgba(247,147,26,.25); --radius: 18px; --shadow: 0 10px 30px rgba(0,0,0,.25);
+      --bg-0:#070910;
+      --bg-1:#0a0f1c;
+      --bg-2:#0d1424;
+      --panel:#101a2c;
+      --panel-2:#0c1629;
+      --ink:#e9f1ff;
+      --muted:#9eb4d6;
+      --line:#172842;
+      --accent:#9b5cff;      /* violet */
+      --accent-2:#06c1dc;    /* cyan */
+      --accent-3:#ffd166;    /* warm highlight */
+      --ok:#10d07a;
+      --bad:#ff4d6d;
+      --shadow: 0 10px 30px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.02);
+      --glass: rgba(13,22,39,.55);
+      --glass-bd: rgba(255,255,255,.06);
     }
-    *{box-sizing:border-box}
-    body{margin:0; font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial; background:linear-gradient(180deg,#0c0f13 0%,var(--bg) 20%,#0e131a 100%); color:var(--text); line-height:1.55}
-    a{color:var(--text); text-decoration:none}
-    .container{width:min(1200px,92vw); margin:0 auto}
 
-    header{position:sticky; top:0; z-index:1000; backdrop-filter:saturate(1.4) blur(10px); background:rgba(15,17,21,.75); border-bottom:1px solid var(--border)}
-    .nav{display:flex; align-items:center; justify-content:space-between; padding:14px 0}
-    .brand{display:flex; align-items:center; gap:12px; font-weight:800; letter-spacing:.4px}
-    .brand .logo{width:38px; height:38px; border-radius:50%; display:grid; place-items:center; font-size:20px; color:#111; background:radial-gradient(80% 80% at 20% 20%, #fff9e6 0%, #ffd79a 40%, var(--accent) 100%); box-shadow: inset 0 0 12px rgba(255,255,255,.3), 0 4px 12px rgba(247,147,26,.35)}
-    .navlinks{display:flex; gap:18px; align-items:center; font-weight:600}
-    .btn{display:inline-flex; align-items:center; gap:10px; padding:10px 14px; border-radius:12px; border:1px solid var(--border); background:var(--panel-2); font-weight:600}
-    .btn:hover{box-shadow:var(--ring)}
-    .btn.primary{background:linear-gradient(135deg,var(--accent) 0%, #ffb85c 80%); color:#111; border-color:transparent}
-    .currency{appearance:none; background:var(--panel-2); color:var(--text); border:1px solid var(--border); border-radius:12px; padding:10px 12px; font-weight:600}
+    /* Global */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+      background:
+        radial-gradient(1200px 600px at 10% 0%, rgba(155,92,255,.12), transparent 60%),
+        radial-gradient(1200px 600px at 90% 100%, rgba(6,193,220,.10), transparent 60%),
+        linear-gradient(180deg,var(--bg-0),var(--bg-1) 40%,var(--bg-2));
+      color: var(--ink);
+    }
+    a { color: inherit; text-decoration: none; }
 
-    .hero{padding:56px 0 28px}
-    .hero-grid{display:grid; grid-template-columns:1.2fr .8fr; gap:28px}
-    .h1{font-size:clamp(32px,4.2vw,54px); font-weight:900; line-height:1.05; margin:0 0 14px; background:linear-gradient(90deg,#fff 0%, #ffe9c7 35%, var(--accent) 100%); -webkit-background-clip:text; background-clip:text; color:transparent}
-    .lead{color:var(--muted); font-size:clamp(14px,2vw,18px)}
-    .cta{display:flex; gap:12px; margin-top:16px}
+    /* Layout */
+    .container { display: flex; height: 100vh; }
 
-    .hero-card{background: radial-gradient(120% 120% at 100% 0%, #1a1f2a 0%, var(--panel) 50%, #10151c 100%); border:1px solid var(--border); border-radius:var(--radius); padding:20px; box-shadow:var(--shadow)}
-    .statgrid{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:18px}
-    .stat{background:linear-gradient(180deg,#121822 0%, #0f141c 100%); border:1px solid var(--border); border-radius:14px; padding:16px}
-    .stat .label{color:var(--muted); font-size:13px}
-    .stat .value{font-size:22px; font-weight:800; margin-top:4px}
-    .stat .delta{font-weight:700; font-size:13px}
-    .delta.up{color:var(--success)} .delta.down{color:var(--danger)}
+    /* (Sidebar removed; we reuse .sidebar-item styles for the top menu buttons) */
+    .sidebar-item {
+      padding: 0.85rem 1rem; display: flex; align-items: center; gap: 0.85rem;
+      color: #b7c6e6; cursor: pointer; transition: background .2s, color .2s, transform .2s;
+      border-left: 3px solid transparent;
+      border-radius: 10px;
+    }
+    .sidebar-item i { width: 20px; text-align: center; opacity: .9; }
+    .sidebar-item:hover {
+      background: rgba(155,92,255,.10);
+      color: #ffffff;
+      transform: translateY(-1px);
+      border-left-color: var(--accent);
+    }
+    .sidebar-item.active {
+      background: linear-gradient(90deg, rgba(155,92,255,.22), rgba(6,193,220,.18));
+      color: #ffffff;
+      border-left-color: var(--accent-2);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
+    }
 
-    .ticker{margin:18px 0 6px; border-top:1px solid var(--border); border-bottom:1px solid var(--border)}
-    .ticker .row{display:flex; gap:24px; white-space:nowrap; overflow:hidden}
-    .ticker .item{padding:10px 0; color:var(--muted)}
+    .main { flex: 1; display: flex; flex-direction: column; }
 
-    section{padding:26px 0}
-    .section-title{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px}
-    .section-title h2{margin:0; font-size:clamp(18px,2.6vw,28px)}
+    /* Topbar — WHITE base (gradient is applied inline via JS for precise stop) */
+    .topbar {
+      height: 56px;
+      background: #ffffff; /* base; JS will paint yellow-from-right → up to 'p' */
+      color: #0f172a;
+      display: flex; align-items: center; justify-content: space-between; padding: 0 1rem; font-size: 0.95rem;
+      border-bottom: 1px solid rgba(15,23,42,.12);
+      position: sticky; top: 0; z-index: 50;
+    }
+    .topbar .left, .topbar .right { display: flex; align-items: center; gap: 0.85rem; }
+    .topbar i { color: #0f172a; text-shadow: none; }
+    #top-user { color:#0f172a; font-weight:700; }
+    #loginLink { color: #0f766e; font-weight:600; }
+    .metric { color:#0f172a; font-weight:600; }
+    .metric .label { font-weight:600; opacity:.7; margin-right:.25rem }
+    .dot { opacity:.35; }
 
-    .grid{display:grid; gap:16px}
-    .news-grid{grid-template-columns:repeat(12,1fr)}
-    .news-card{grid-column:span 4; background:linear-gradient(180deg,#12161f 0%, #0f131a 100%); border:1px solid var(--border); border-radius:16px; overflow:hidden; display:flex; flex-direction:column}
-    .news-card .thumb{aspect-ratio:16/9; background:#0c1016; display:block}
-    .news-card .inner{padding:14px}
-    .news-card h3{margin:0 0 8px; font-size:18px}
-    .badge{display:inline-flex; align-items:center; gap:8px; font-size:12px; color:#111; font-weight:800; background:linear-gradient(135deg,var(--accent),#ffb85c); padding:6px 10px; border-radius:999px}
-    .meta{display:flex; gap:12px; align-items:center; color:var(--muted); font-size:12px; margin-top:10px}
+    /* brand tweaks */
+    #brand-name{
+      font-weight:700; letter-spacing:.2px; color:#0f172a;
+      /* Move slightly to the left as requested */
+      margin-left:-6px;
+    }
 
-    .cards{grid-template-columns:repeat(3,1fr)}
-    .card{background:linear-gradient(180deg,#12161f 0%, #0f131a 100%); border:1px solid var(--border); border-radius:16px; padding:16px; display:flex; flex-direction:column; gap:8px}
+    /* New horizontal top menu (side buttons moved here) */
+    .topmenu {
+      height: 52px;
+      display: flex; align-items: center; gap: .25rem; padding: .5rem .75rem;
+      background:
+        linear-gradient(90deg, rgba(155,92,255,.12), rgba(6,193,220,.12)),
+        linear-gradient(180deg, rgba(16,26,44,.75), rgba(10,18,34,.75));
+      border-bottom: 1px solid var(--glass-bd);
+      backdrop-filter: blur(6px);
+      position: sticky; top: 56px; z-index: 49;
+      box-shadow: var(--shadow);
+      overflow-x: auto;
+    }
+    .topmenu .sidebar-item { border-left: 0; padding: .6rem .85rem; white-space: nowrap; }
 
-    .chart-panel{background: radial-gradient(120% 120% at 100% 0%, #1a1f2a 0%, var(--panel) 50%, #10151c 100%); border:1px solid var(--border); border-radius:16px; padding:12px}
+    .content { flex: 1; overflow-y: auto; padding: 1rem; }
+    .hidden { display: none; }
 
-    footer{border-top:1px solid var(--border); padding:24px 0; color:var(--muted)}
-    .to-top{position:fixed; right:16px; bottom:16px; z-index:999; opacity:0; transform:translateY(10px); transition:.2s}
-    .to-top.visible{opacity:1; transform:none}
+    .content h2, .content h3 {
+      color: var(--accent-3);
+      margin-bottom: 0.6rem;
+      text-shadow: 0 1px 0 rgba(0,0,0,.3);
+    }
 
-    @media (max-width:980px){.hero-grid{grid-template-columns:1fr} .statgrid{grid-template-columns:repeat(2,1fr)} .news-card{grid-column:span 6} .cards{grid-template-columns:1fr}}
-    @media (max-width:640px){.navlinks{display:none} .statgrid{grid-template-columns:1fr} .news-card{grid-column:span 12}}
+    /* Stats cards */
+    .stats { display: flex; gap: 1rem; margin-bottom: 1rem; }
+    .card {
+      background: var(--glass);
+      border: 1px solid var(--glass-bd);
+      box-shadow: var(--shadow);
+      flex: 1; padding: 1rem;
+      border-radius: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before{
+      content:""; position:absolute; inset:-1px;
+      background: radial-gradient(600px 140px at -10% -20%, rgba(155,92,255,.14), transparent 60%);
+      pointer-events:none;
+    }
+    .card h4 { margin-bottom: 0.5rem; color: #cbd9ff; letter-spacing:.2px }
+    .card p { font-size: 1.25rem; text-shadow: 0 0 12px rgba(155,92,255,.15); }
+    .green { color: var(--ok); }
+    .red { color: var(--bad); }
+
+    /* ===== Scoped styles for the Deriv Chart App (visual only) ===== */
+    #derivChartApp {
+      --bg:#0b1120; --panel:var(--panel); --panel2:var(--panel-2); --ink:var(--ink); --muted:var(--muted);
+      --line:var(--line); --up:#10d07a; --down:#ff4d6d;
+      background:
+        radial-gradient(900px 400px at 80% 0%, rgba(6,193,220,.10), transparent 60%),
+        radial-gradient(900px 400px at 0% 100%, rgba(155,92,255,.12), transparent 60%),
+        linear-gradient(180deg,var(--bg),#0a1222 30%,#080d1a);
+      color: var(--ink);
+      border: 1px solid var(--glass-bd);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    #derivChartApp .chartbar{
+      position: sticky; top: 0; z-index: 2;
+      background:
+        linear-gradient(90deg, rgba(155,92,255,.16), rgba(6,193,220,.16)),
+        rgba(10,18,34,.82);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--glass-bd);
+      display: flex; gap: 14px; align-items: center; padding: 10px 14px;
+    }
+    #derivChartApp .chartbar h1{
+      font-size:16px;margin:0 10px 0 0;letter-spacing:.25px;color:#ffffff;
+      text-shadow: 0 0 18px rgba(155,92,255,.35);
+    }
+    #derivChartApp .spacer{flex:1}
+    #derivChartApp .ctrl{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    #derivChartApp .hint{font-size:12px;color:var(--muted)}
+
+    #derivChartApp select, #derivChartApp button{
+      background: linear-gradient(180deg, rgba(20,33,56,.9), rgba(15,26,46,.9));
+      color: var(--ink);
+      border: 1px solid var(--glass-bd);
+      border-radius:12px;
+      padding:8px 12px;font:inherit;outline:none; cursor:pointer;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.03), 0 4px 16px rgba(0,0,0,.25);
+      transition: transform .12s ease, box-shadow .2s ease, border-color .2s ease;
+    }
+    #derivChartApp select:focus, #derivChartApp button:focus{
+      border-color: rgba(6,193,220,.45);
+      box-shadow: 0 0 0 3px rgba(6,193,220,.18);
+    }
+    #derivChartApp button{
+      background:
+        linear-gradient(90deg, rgba(155,92,255,.25), rgba(6,193,220,.25)),
+        linear-gradient(180deg, rgba(24,40,68,.95), rgba(16,30,54,.95));
+    }
+    #derivChartApp button:hover{ transform: translateY(-1px); }
+
+    #derivChartApp .wrap{height: 60vh; padding: 12px;}
+    #derivChartApp .cardX{
+      height:100%;
+      background:
+        radial-gradient(900px 300px at 100% 0%, rgba(6,193,220,.10), transparent 60%),
+        radial-gradient(900px 300px at 0% 100%, rgba(155,92,255,.12), transparent 60%),
+        linear-gradient(180deg,var(--panel),var(--panel2));
+      border:1px solid var(--glass-bd);
+      border-radius:16px; position:relative; overflow:hidden;
+      box-shadow: var(--shadow);
+    }
+    #derivChartApp .cardX .slot{position:absolute; inset:0}
+
+    #derivChartApp .pill{
+      font-size:12px;padding:6px 10px;border:1px solid var(--glass-bd);
+      border-radius:999px;color:#d7e6ff;
+      background: linear-gradient(180deg, rgba(20,33,56,.75), rgba(13,23,41,.75));
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.03);
+    }
+
+    /* Icon bar (top-right) */
+    #derivChartApp .icon-bar{
+      position:absolute;top:10px;right:10px;z-index:3;display:flex;gap:10px
+    }
+    #derivChartApp .icon-bar a{
+      width:36px;height:36px;display:grid;place-items:center;border-radius:12px;
+      background: linear-gradient(180deg, rgba(20,33,56,.7), rgba(15,26,46,.7));
+      border:1px solid var(--glass-bd);backdrop-filter:blur(6px);
+      text-decoration:none;transition:.18s transform, .18s box-shadow;
+      box-shadow: 0 6px 18px rgba(0,0,0,.35);
+    }
+    #derivChartApp .icon-bar a:hover{
+      transform:translateY(-2px);
+      box-shadow: 0 10px 24px rgba(155,92,255,.25);
+    }
+    #derivChartApp .icon-bar svg{width:18px;height:18px;fill:#d8e6ff;filter: drop-shadow(0 0 8px rgba(155,92,255,.35));}
   </style>
 </head>
 <body>
-  <header>
-    <div class="container nav">
-      <a class="brand" href="#"><span class="logo"><i class="fa-brands fa-bitcoin"></i></span><span>Bitcoin<span style="color:var(--accent)">News</span></span></a>
-      <nav class="navlinks">
-        <a href="#market">Market</a><a href="#news">News</a><a href="#chart">Chart</a><a href="#guides">Guides</a><a href="#faq">FAQ</a>
+  <div class="container">
+    <!-- (Sidebar removed) -->
+
+    <!-- Main Content -->
+    <section class="main">
+      <!-- Topbar (WHITE base; JS paints yellow-from-right → up to 'p') -->
+      <header class="topbar" id="topbar">
+        <div class="left" id="brand-left">
+          <!-- PNG logo -->
+          <img src="https://iili.io/Kw8ik5g.th.jpg" alt="logo" style="height:28px; width:auto; display:block;"/>
+          <!-- derivesup name (moved slightly left) -->
+          <span id="brand-name">derivesup</span>
+        </div>
+        <div class="right" id="top-right">
+          <span id="top-user">Your Name</span>
+          <span class="dot">•</span>
+          <span class="metric" id="top-balance"><span class="label">Bal:</span> —</span>
+          <span class="dot">•</span>
+          <span class="metric" id="top-cr"><span class="label">CR:</span> —</span>
+          <span class="dot">•</span>
+          <span class="metric" id="top-pnl"><span class="label">PnL:</span> —</span>
+          <a id="loginLink" class="green" href="#" title="Login to Deriv">Login</a>
+          <i class="fas fa-caret-down"></i>
+        </div>
+      </header>
+
+      <!-- New Horizontal Top Menu (icons/logos changed) -->
+      <nav class="topmenu">
+        <div class="sidebar-item active" data-section="dashboard"><i class="fas fa-house"></i> Dashboard</div>
+        <div class="sidebar-item" data-section="freebots"><i class="fas fa-microchip"></i>5 Confirmations Manual Strategies</div>
+        <div class="sidebar-item" data-section="botbuilder"><i class="fas fa-screwdriver-wrench"></i>Analyzer Tool</div>
+        <div class="sidebar-item" data-section="tools"><i class="fas fa-wand-magic-sparkles"></i>5 Confirmations Auto Bot</div>
+        <div class="sidebar-item" data-section="signals"><i class="fas fa-bolt"></i>MT 5 Bulk Trading tool</div>
+        <div class="sidebar-item" data-section="charts"><i class="fas fa-chart-area"></i> DeriveSup Signal</div>
+        <div class="sidebar-item" data-section="auto-analyzer"><i class="fas fa-gears"></i>Money Management Plan</div>
       </nav>
-      <div style="display:flex; gap:10px; align-items:center">
-        <select class="currency" id="currency"><option value="usd">USD</option><option value="lkr" selected>LKR</option><option value="eur">EUR</option><option value="gbp">GBP</option><option value="inr">INR</option></select>
-        <button class="btn" id="refreshNews"><i class="fa-solid fa-rotate"></i> Refresh</button>
-        <a class="btn primary" href="https://bitcoin.org/en/wallets" target="_blank" rel="noopener">Get a Wallet</a>
-      </div>
-    </div>
-  </header>
 
-  <section class="hero">
-    <div class="container hero-grid">
-      <div>
-        <h1 class="h1">Live Bitcoin price + headlines that update all day, every day.</h1>
-        <p class="lead">This page auto‑fetches BTC news from multiple sources and refreshes itself every few minutes. Works as a single HTML file.</p>
-        <div class="cta"><a class="btn primary" href="#news"><i class="fa-regular fa-newspaper"></i> Latest News</a><a class="btn" href="#guides"><i class="fa-solid fa-book"></i> Beginner Guides</a></div>
-        <div id="market" class="statgrid">
-          <div class="stat"><div class="label">BTC Price</div><div class="value" id="price">—</div><div class="delta" id="priceDelta">—</div></div>
-          <div class="stat"><div class="label">24h High</div><div class="value" id="high">—</div></div>
-          <div class="stat"><div class="label">24h Low</div><div class="value" id="low">—</div></div>
-          <div class="stat"><div class="label">Market Cap</div><div class="value" id="mcap">—</div></div>
-        </div>
-        <div class="ticker" aria-label="Headlines ticker"><div class="container"><div class="row" id="tickerRow"></div></div></div>
-      </div>
-      <aside class="hero-card">
-        <div class="section-title" style="margin-bottom:6px"><h2 style="margin:0">BTC Quick Chart</h2><small class="muted">Powered by TradingView</small></div>
-        <div class="chart-panel" id="chart">
-          <div class="tradingview-widget-container" style="height:300px">
-            <div class="tradingview-widget-container__widget" id="tv-widget"></div>
-            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
-            {"symbol":"BITSTAMP:BTCUSD","width":"100%","height":"300","locale":"en","dateRange":"12M","colorTheme":"dark","isTransparent":true,"autosize":true,"chartType":"area"}
-            </script>
+      <!-- Content Area -->
+      <div class="content">
+        <div id="content-dashboard">
+          <h2>Deriv Dashboard</h2>
+
+          <div class="stats">
+            <div class="card"><h4>Balance</h4><p id="balance" class="green">—</p></div>
+            <div class="card"><h4>CR Number</h4><p id="cr">—</p></div>
+            <div class="card"><h4>Daily PnL</h4><p id="pnl" class="">—</p></div>
           </div>
+
+          <!-- ======= Deriv Volatility Chart in the middle ======= -->
+          <div id="derivChartApp" aria-label="AI Signal Studio — Deriv Volatility">
+            <div class="chartbar">
+              <h1>Deriv Volatility</h1>
+              <div class="ctrl">
+                <label class="hint">Volatility</label>
+                <select id="vol">
+                  <option value="R_10">Volatility 10</option>
+                  <option value="R_25">Volatility 25</option>
+                  <option value="R_50" selected>Volatility 50</option>
+                  <option value="R_75">Volatility 75</option>
+                  <option value="R_100">Volatility 100</option>
+                  <option value="R_10S">Volatility 10 (1s)</option>
+                  <option value="R_25S">Volatility 25 (1s)</option>
+                  <option value="R_50S">Volatility 50 (1s)</option>
+                  <option value="R_75S">Volatility 75 (1s)</option>
+                  <option value="R_100S">Volatility 100 (1s)</option>
+                </select>
+
+                <label class="hint">TF</label>
+                <select id="tf">
+                  <option value="1m">1m</option>
+                  <option value="5m" selected>5m</option>
+                  <option value="15m">15m</option>
+                  <option value="1h">1h</option>
+                  <option value="4h">4h</option>
+                  <option value="1d">1d</option>
+                </select>
+
+                <button id="reload">Load</button>
+              </div>
+
+              <div class="spacer"></div>
+              <div class="ctrl">
+                <span class="pill" id="status">Booting…</span>
+              </div>
+            </div>
+
+            <div class="wrap">
+              <div class="cardX" id="main">
+                <div class="icon-bar"></div>
+                <div class="slot" id="c-main"></div>
+              </div>
+            </div>
+          </div>
+          <!-- ======= /Chart ======= -->
         </div>
-        <p style="color:var(--muted); margin-top:10px; font-size:12px">Data is for informational purposes only. Not financial advice.</p>
-      </aside>
-    </div>
-  </section>
 
-  <section id="news">
-    <div class="container">
-      <div class="section-title">
-        <h2><i class="fa-regular fa-newspaper"></i> Latest Headlines (auto)</h2>
-        <input id="search" placeholder="Search headlines…" aria-label="Search" style="background:var(--panel-2); color:var(--text); border:1px solid var(--border); border-radius:12px; padding:10px 12px; min-width:220px">
+        <!-- Other sections (kept) -->
+        <div id="content-freebots" class="hidden"><h3>Free Bots</h3></div>
+        <div id="content-botbuilder" class="hidden"><h3>Bot Builder</h3></div>
+        <div id="content-manual" class="hidden"><h3>Manual Analyzer</h3></div>
+        <div id="content-tools" class="hidden"><h3>Analysis Tools</h3></div>
+        <div id="content-signals" class="hidden"><h3>Signals</h3></div>
+        <div id="content-charts" class="hidden"><h3>Charts</h3></div>
+        <div id="content-auto-analyzer" class="hidden"><h3>Auto Analyzer</h3></div>
+        <div id="content-smart" class="hidden"><h3>Smart Auto</h3></div>
       </div>
-      <div class="grid news-grid" id="newsGrid"></div>
-      <div id="newsEmpty" style="display:none; color:var(--muted); padding:20px; text-align:center">No matches. Try a different search.</div>
-      <p style="color:var(--muted); font-size:12px; margin-top:10px">Sources: Bitcoin.com, CoinDesk, CoinTelegraph (via RSS). Updated every ~10 minutes & on page open.</p>
-    </div>
-  </section>
-
-  <section id="guides">
-    <div class="container">
-      <div class="section-title"><h2><i class="fa-solid fa-book"></i> Beginner Guides</h2><a class="btn" href="https://bitcoin.org/en/" target="_blank" rel="noopener">Official Resources</a></div>
-      <div class="grid cards">
-        <article class="card"><span class="badge"><i class="fa-solid fa-wallet"></i> Wallets</span><h3>Choosing a Bitcoin Wallet</h3><p class="muted">Custodial vs non‑custodial, seed phrases, backups, and hardware wallets.</p><a class="btn" href="https://bitcoin.org/en/choose-your-wallet" target="_blank" rel="noopener">Explore Wallets</a></article>
-        <article class="card"><span class="badge"><i class="fa-solid fa-shield"></i> Security</span><h3>Security Basics</h3><p class="muted">2FA, phishing awareness, verifying addresses, and safe storage practices.</p><a class="btn" href="https://bitcoin.org/en/secure-your-wallet" target="_blank" rel="noopener">Secure Your Wallet</a></article>
-        <article class="card"><span class="badge"><i class="fa-solid fa-sack-dollar"></i> Getting BTC</span><h3>How to Acquire Bitcoin</h3><p class="muted">Exchanges, P2P marketplaces, and on‑ramp options — with KYC considerations.</p><a class="btn" href="https://bitcoin.org/en/getting-started" target="_blank" rel="noopener">Get Started</a></article>
-      </div>
-    </div>
-  </section>
-
-  <section id="faq">
-    <div class="container">
-      <div class="section-title"><h2><i class="fa-regular fa-circle-question"></i> FAQ</h2></div>
-      <div class="grid" style="grid-template-columns:1fr; gap:8px">
-        <details class="card"><summary style="cursor:pointer; font-weight:700">Is this financial advice?</summary><div class="muted">No. Educational content only.</div></details>
-        <details class="card"><summary style="cursor:pointer; font-weight:700">Where does pricing come from?</summary><div class="muted">CoinGecko public API (demo). You can swap your source.</div></details>
-        <details class="card"><summary style="cursor:pointer; font-weight:700">How does news auto‑update?</summary><div class="muted">The script fetches multiple RSS feeds via a CORS proxy, merges and sorts them by publish time, deduplicates, then refreshes every few minutes.</div></details>
-      </div>
-    </div>
-  </section>
-
-  <footer>
-    <div class="container" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap">
-      <div>© <span id="year"></span> BitcoinNews — Community project</div>
-      <div>Built with ❤️ — single‑file HTML</div>
-    </div>
-  </footer>
-
-  <button class="btn to-top" id="toTop" aria-label="Back to top"><i class="fa-solid fa-arrow-up"></i></button>
+    </section>
+  </div>
 
   <script>
-    // -------- Helpers --------
-    const qs = (s, el=document) => el.querySelector(s);
-    const qsa = (s, el=document) => [...el.querySelectorAll(s)];
-    const fmt = (n, c="USD") => new Intl.NumberFormat(undefined,{style:'currency',currency:c}).format(n);
-    const clean = (s='') => s.replace(/\s+/g,' ').trim();
+    /* ===================== Topbar yellow-from-right → up to 'p' mix ===================== */
+    (function paintTopbarGradient(){
+      const topbar = document.getElementById('topbar');
+      const brand  = document.getElementById('brand-name');
 
-    // Year
-    qs('#year').textContent = new Date().getFullYear();
+      function apply(){
+        if(!topbar || !brand) return;
+        const tb  = topbar.getBoundingClientRect();
+        const br  = brand.getBoundingClientRect();
+        // Right edge of the word "derivesup" ≈ at the "p" letter
+        const stop = Math.round(br.right - tb.left);   // px from left of topbar to the 'p' edge
+        const blend = 28; // width of the white↔yellow mix zone
 
-    // Back to top
-    const toTop = qs('#toTop');
-    addEventListener('scroll',()=>{ if(scrollY>600){toTop.classList.add('visible')} else {toTop.classList.remove('visible')} });
-    toTop.addEventListener('click',()=>scrollTo({top:0, behavior:'smooth'}));
-
-    // -------- Price (CoinGecko) --------
-    const currencySel = qs('#currency');
-    let curr = currencySel.value;
-    async function loadMarket(){
-      try{
-        const url = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=${curr}&ids=bitcoin&precision=2`;
-        const r = await fetch(url, {headers:{'accept':'application/json'}});
-        const [btc] = await r.json();
-        if(!btc) return;
-        qs('#price').textContent = fmt(btc.current_price, curr.toUpperCase());
-        qs('#high').textContent = fmt(btc.high_24h, curr.toUpperCase());
-        qs('#low').textContent = fmt(btc.low_24h, curr.toUpperCase());
-        qs('#mcap').textContent = fmt(btc.market_cap, curr.toUpperCase());
-        const delta = Number(btc.price_change_percentage_24h||0).toFixed(2);
-        const d = qs('#priceDelta'); d.textContent = `${delta}%`; d.className = 'delta ' + (delta>=0?'up':'down');
-      }catch(err){ console.warn('Price fetch failed', err); }
-    }
-    loadMarket();
-    setInterval(loadMarket, 60_000);
-    currencySel.addEventListener('change', e=>{ curr = e.target.value; loadMarket(); });
-
-    // -------- News (Multi‑RSS via AllOrigins CORS proxy) --------
-    const FEEDS = [
-      'https://news.bitcoin.com/feed/',
-      'https://www.coindesk.com/arc/outboundfeeds/rss/?outputType=xml',
-      'https://cointelegraph.com/rss'
-    ];
-
-    const newsGrid = qs('#newsGrid');
-    const newsEmpty = qs('#newsEmpty');
-    const tickerRow = qs('#tickerRow');
-    const search = qs('#search');
-    const refreshBtn = qs('#refreshNews');
-
-    function rssTimeToDate(txt){
-      // Handles RFC822 / ISO strings
-      const d = new Date(txt);
-      return isNaN(d.getTime()) ? new Date() : d;
-    }
-
-    function getImgFromItem(item){
-      // Try common RSS media fields
-      const media = item.querySelector('media\\:content, content');
-      const enclosure = item.querySelector('enclosure');
-      const thumb = item.querySelector('media\\:thumbnail');
-      if(enclosure?.getAttribute('url')) return enclosure.getAttribute('url');
-      if(media?.getAttribute?.('url')) return media.getAttribute('url');
-      if(thumb?.getAttribute?.('url')) return thumb.getAttribute('url');
-      // Try to extract first <img> from content:encoded / description
-      const cdata = item.querySelector('content\\:encoded, description');
-      if(cdata){
-        const html = cdata.textContent;
-        const m = html && html.match(/<img[^>]+src=["']([^"']+)["']/i);
-        if(m) return m[1];
+        // White (left) → mix near 'p' → Yellow (right)
+        topbar.style.background =
+          `linear-gradient(90deg,
+            #ffffff 0,
+            #ffffff ${Math.max(0, stop - blend)}px,
+            #fff7d1 ${stop}px,
+            #ffd166 ${stop + blend}px,
+            #ffd166 100%)`;
       }
-      // Fallback unsplash
-      return 'https://images.unsplash.com/photo-1621416894569-0f39b79ce3bf?auto=format&fit=crop&w=1200&q=60';
+
+      // initial + on resize/scroll/font reflow
+      window.addEventListener('load', apply);
+      window.addEventListener('resize', apply);
+      new ResizeObserver(apply).observe(document.body);
+      // slight defer for font metrics
+      setTimeout(apply, 100);
+    })();
+
+    /* ===================== Deriv OAuth (APP ID: 106142) ===================== */
+    const APP_ID = '106142';
+    const REDIRECT_URI = window.location.origin + window.location.pathname;
+    const OAUTH_URL = `https://oauth.deriv.com/oauth2/authorize?app_id=${APP_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
+
+    (function handleOAuthCallback() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.has('token1') && params.has('acct1')) {
+        localStorage.setItem('deriv_token', params.get('token1'));
+        localStorage.setItem('deriv_loginid', params.get('acct1'));
+        history.replaceState(null, '', REDIRECT_URI);
+      }
+    })();
+
+    const TOKEN = localStorage.getItem('deriv_token');
+
+    // login link
+    const loginLink = document.getElementById('loginLink');
+    loginLink.onclick = (e)=>{ e.preventDefault(); window.location.href = OAUTH_URL; };
+
+    // Helper: format USD
+    const fmtUSD = (n)=> (Number(n)||0).toFixed(2) + ' USD';
+
+    // Topbar refs
+    const elTopUser   = document.getElementById('top-user');
+    const elTopBal    = document.getElementById('top-balance');
+    const elTopCR     = document.getElementById('top-cr');
+    const elTopPnL    = document.getElementById('top-pnl');
+
+    // Dashboard cards
+    const elBalCard   = document.getElementById('balance');
+    const elCRCard    = document.getElementById('cr');
+    const elPNLCard   = document.getElementById('pnl');
+
+    if (TOKEN) {
+      const wsAcct = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`);
+      wsAcct.onopen = ()=> wsAcct.send(JSON.stringify({ authorize: TOKEN }));
+
+      wsAcct.onmessage = (ev)=>{
+        const data = JSON.parse(ev.data);
+
+        if(data.msg_type === 'authorize'){
+          const auth = data.authorize||{};
+          const fullName = auth.fullname || auth.loginid || 'User';
+          const loginid  = auth.loginid || '-';
+          const balStr   = fmtUSD(auth.balance);
+
+          elTopUser.textContent  = fullName;
+          elTopBal.innerHTML     = `<span class="label">Bal:</span> ${balStr}`;
+          elTopCR.innerHTML      = `<span class="label">CR:</span> ${loginid}`;
+          loginLink.style.display = 'none';
+
+          elBalCard.textContent  = balStr;
+          elCRCard.textContent   = loginid;
+
+          const now = new Date();
+          const utcMidnight = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())/1000;
+          const nowEpoch = Math.floor(Date.now()/1000);
+          wsAcct.send(JSON.stringify({
+            profit_table: 1,
+            description: 1,
+            date_from: utcMidnight,
+            date_to: nowEpoch,
+            limit: 500
+          }));
+        }
+
+        if(data.msg_type === 'profit_table' && data.profit_table){
+          const rows = (data.profit_table.transactions || []);
+          const sum = rows.reduce((a,r)=> a + (Number(r.profit)||0), 0);
+          const signCls = sum >= 0 ? 'green' : 'red';
+          const pnlStr = (Number(sum).toFixed(2)) + ' USD';
+
+          elTopPnL.innerHTML = `<span class="label">PnL:</span> ${pnlStr}`;
+          elTopPnL.classList.remove('green','red');
+          elTopPnL.classList.add(signCls);
+
+          elPNLCard.textContent = (sum>=0?'+':'') + pnlStr.replace(' USD','');
+          elPNLCard.classList.remove('green','red');
+          elPNLCard.classList.add(signCls);
+        }
+
+        if(data.error){
+          console.error(data.error);
+        }
+      };
     }
 
-    async function fetchFeed(url){
-      const proxied = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-      const r = await fetch(proxied);
-      const j = await r.json();
-      const xml = new window.DOMParser().parseFromString(j.contents, 'text/xml');
-      const items = [...xml.querySelectorAll('item')];
-      return items.map(it => ({
-        title: clean(it.querySelector('title')?.textContent||''),
-        url: it.querySelector('link')?.textContent||'#',
-        time: rssTimeToDate(it.querySelector('pubDate, updated')?.textContent||''),
-        tag: clean(xml.querySelector('channel>title')?.textContent||'News'),
-        img: getImgFromItem(it)
-      }));
-    }
+    /* ===================== Top menu routing ===================== */
+    document.querySelectorAll('.sidebar-item').forEach(el => {
+      el.onclick = () => {
+        document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+        el.classList.add('active');
+        document.querySelectorAll('[id^="content-"]').forEach(c => c.classList.add('hidden'));
+        document.getElementById('content-' + el.dataset.section).classList.remove('hidden');
+      };
+    });
 
-    function dedupe(items){
-      const seen = new Set();
-      return items.filter(x=>{ const k = x.title.toLowerCase(); if(seen.has(k)) return false; seen.add(k); return true; });
-    }
+    /* ===================== Deriv Volatility Chart ===================== */
+    (function initDerivChart(){
+      const $ = (id)=>document.getElementById(id);
+      const els = { vol:$('vol'), tf:$('tf'), status:$('status') };
+      const setStatus = (t)=> els.status.textContent = t;
 
-    function renderNews(items){
-      newsGrid.innerHTML = '';
-      if(!items.length){ newsEmpty.style.display='block'; return; }
-      newsEmpty.style.display='none';
-      items.forEach(n=>{
-        const card = document.createElement('article');
-        card.className = 'news-card';
-        card.innerHTML = `
-          <a class="thumb" style="background-image:url('${n.img}'); background-size:cover; background-position:center" href="${n.url}" target="_blank" rel="noopener"></a>
-          <div class="inner">
-            <span class="badge"><i class="fa-solid fa-bolt"></i> ${n.tag}</span>
-            <h3><a href="${n.url}" target="_blank" rel="noopener">${n.title}</a></h3>
-            <div class="meta"><span><i class=\"fa-regular fa-clock\"></i> ${n.time.toLocaleString()}</span> · <span><i class=\"fa-solid fa-hashtag\"></i> BTC</span></div>
-          </div>`;
-        newsGrid.appendChild(card);
+      const MARKET_WS_URL = `wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`;
+      let WS = null, DATA = [], OLDEST_EPOCH=null, LOADING_OLD=false, liveSubId=null;
+
+      const GRAN = { '1m':60, '5m':300, '15m':900, '1h':3600, '4h':14400, '1d':86400 };
+      const mapSymbol = (sel)=> sel.endsWith('S') ? sel.replace('S','_1s') : sel;
+
+      const elMain = document.getElementById('c-main');
+      const chart = LightweightCharts.createChart(elMain, {
+        layout:{background:{type:'solid',color:'transparent'},textColor:'#cfe3ff'},
+        grid:{vertLines:{color:'#0e1a28'},horzLines:{color:'#0e1a28'}},
+        rightPriceScale:{borderColor:'#223246'},
+        timeScale:{borderColor:'#223246', rightOffset: 20, barSpacing: 8},
+        crosshair:{mode:0},
       });
-
-      // Rebuild ticker
-      tickerRow.innerHTML = '';
-      items.slice(0, 15).forEach(n=>{
-        const el = document.createElement('div');
-        el.className = 'item';
-        el.innerHTML = `<i class="fa-regular fa-newspaper"></i> ${n.title}`;
-        tickerRow.appendChild(el);
+      const sCandle = chart.addCandlestickSeries({
+        upColor:'#16a34a',downColor:'#ef4444',
+        borderUpColor:'#16a34a',borderDownColor:'#ef4444',
+        wickUpColor:'#16a34a',wickDownColor:'#ef4444'
       });
-      tickerRow.animate([{transform:'translateX(0)'},{transform:'translateX(-50%)'}], {duration:30000, iterations:Infinity, easing:'linear'});
-    }
+      const resize=()=>chart.applyOptions({width:elMain.clientWidth,height:elMain.clientHeight});
+      new ResizeObserver(resize).observe(elMain); resize();
 
-    let ALL_NEWS = [];
+      function closeWS(){
+        try{ if(WS){ WS.onmessage=null; WS.onclose=null; WS.onerror=null; WS.close(); } }catch(_){}
+        WS=null;
+      }
+      function openWS(){
+        closeWS();
+        WS = new WebSocket(MARKET_WS_URL);
+        WS.onopen = ()=> setStatus('Connected');
+        WS.onerror = ()=> setStatus('Socket error');
+        WS.onclose = ()=> setStatus('Disconnected');
+        WS.onmessage = handleWSMessage;
+      }
+      function sendWS(obj){
+        if(WS && WS.readyState===1){ WS.send(JSON.stringify(obj)); }
+        else {
+          openWS();
+          const iv = setInterval(()=>{
+            if(WS && WS.readyState===1){
+              clearInterval(iv);
+              WS.send(JSON.stringify(obj));
+            }
+          },150);
+        }
+      }
 
-    async function fetchAllNews(){
-      try{
-        const batches = await Promise.allSettled(FEEDS.map(fetchFeed));
-        const merged = batches.flatMap(b => b.status==='fulfilled' ? b.value : []);
-        const deduped = dedupe(merged);
-        deduped.sort((a,b)=> b.time - a.time);
-        ALL_NEWS = deduped.slice(0, 36); // keep top 36 freshest
-        applyFilter();
-      }catch(err){ console.error('News fetch failed', err); }
-    }
+      function requestCandles(symbol, gran, count=1000, end='latest'){
+        sendWS({ ticks_history: symbol, style:'candles', granularity: gran, count, end });
+      }
+      function subscribeLive(symbol, gran){
+        if(liveSubId){ sendWS({ forget: liveSubId }); liveSubId = null; }
+        sendWS({ ticks_history: symbol, style:'candles', granularity: gran, count:1, end:'latest', subscribe:1 });
+      }
 
-    function applyFilter(){
-      const q = search.value.toLowerCase().trim();
-      const filtered = q ? ALL_NEWS.filter(n=> n.title.toLowerCase().includes(q) || n.tag.toLowerCase().includes(q)) : ALL_NEWS;
-      renderNews(filtered);
-    }
+      function handleWSMessage(e){
+        try{
+          const msg = JSON.parse(e.data);
 
-    refreshBtn.addEventListener('click', fetchAllNews);
-    search.addEventListener('input', applyFilter);
+          if(msg.msg_type === 'candles' && Array.isArray(msg.candles)){
+            const arr = msg.candles.map(c=>({ time:c.epoch, open:+c.open, high:+c.high, low:+c.low, close:+c.close }));
+            if(!DATA.length || (arr.length && arr[arr.length-1].time > (DATA[DATA.length-1]?.time||0))){
+              DATA = arr;
+            }else{
+              DATA = arr.concat(DATA);
+            }
+            OLDEST_EPOCH = DATA[0]?.time ?? OLDEST_EPOCH;
+            sCandle.setData(DATA);
+            queueMicrotask(()=> chart.timeScale().scrollToPosition(-2, false));
+            setStatus('History loaded');
+          }
 
-    // Initial load + auto refresh every ~10 minutes
-    fetchAllNews();
-    setInterval(fetchAllNews, 10 * 60 * 1000);
+          if(msg.msg_type === 'ohlc' && msg.ohlc){
+            const k = msg.ohlc;
+            const t = +k.open_time;
+            const bar = { time:t, open:+k.open, high:+k.high, low:+k.low, close:+k.close };
+            const lastT = DATA[DATA.length-1]?.time;
+            if(lastT === t){
+              DATA[DATA.length-1] = bar;
+              sCandle.update(bar);
+            }else if(!lastT || t > lastT){
+              DATA.push(bar);
+              if(DATA.length>5000) DATA.shift();
+              sCandle.update(bar);
+            }
+            setStatus(`Live: ${els.vol.value} • ${els.tf.value}`);
+          }
 
-    // Reveal animation
-    const io = new IntersectionObserver(entries => {
-      entries.forEach(e => { if(e.isIntersecting){ e.target.style.transform='translateY(0)'; e.target.style.opacity=1; io.unobserve(e.target); } });
-    }, { threshold:.2 });
-    qsa('.card, .news-card, .stat').forEach(el=>{ el.style.opacity=.0; el.style.transform='translateY(10px)'; el.style.transition='all .35s ease'; io.observe(el) });
+          if(msg.subscription && msg.subscription.id){
+            liveSubId = msg.subscription.id;
+          }
+
+          if(msg.error){
+            console.error(msg.error);
+            setStatus('API error');
+            alert('Deriv API error: ' + (msg.error.message||'Unknown'));
+          }
+        }catch(err){ console.error(err); }
+      }
+
+      function debounce(fn, ms=250){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; }
+      const watchBackfill = debounce(()=>{
+        const range = chart.timeScale().getVisibleLogicalRange?.();
+        if(!range || LOADING_OLD) return;
+        if(range.from !== undefined && range.from < 20 && OLDEST_EPOCH){
+          LOADING_OLD = true;
+          const symbol = mapSymbol(els.vol.value);
+          const gran = GRAN[els.tf.value];
+          requestCandles(symbol, gran, 1000, String(OLDEST_EPOCH - 1));
+          setTimeout(()=>{ LOADING_OLD = false; }, 400);
+        }
+      }, 150);
+      chart.timeScale().subscribeVisibleLogicalRangeChange?.(watchBackfill);
+
+      async function loadAll(){
+        try{
+          setStatus('Loading…');
+          const symbol = mapSymbol(els.vol.value);
+          const gran = GRAN[els.tf.value];
+
+          if(!WS || WS.readyState!==1) openWS();
+
+          DATA = []; OLDEST_EPOCH = null; sCandle.setData([]);
+
+          requestCandles(symbol, gran, 1000, 'latest');
+          subscribeLive(symbol, gran);
+        }catch(err){
+          console.error(err);
+          setStatus('Error loading');
+          alert('Failed to load Deriv candles. Check network.');
+        }
+      }
+
+      document.getElementById('reload').addEventListener('click', loadAll);
+      els.tf.addEventListener('change', loadAll);
+      els.vol.addEventListener('change', loadAll);
+
+      openWS();
+      loadAll();
+    })();
   </script>
-</body>
-</html>
-<!-- partial -->
-  
 </body>
 </html>
