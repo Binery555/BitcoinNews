@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>BinaryTools UI – Deriv Volatility Chart (Fixed)</title>
 
+  <!-- Optional: set a default redirect here (can be overridden by ?redirect=...) -->
+  <!-- <meta name="deriv-redirect" content="https://your-site.com/oauth-callback"> -->
+
   <!-- Icons -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
   <!-- Lightweight Charts -->
@@ -30,9 +33,11 @@
       --shadow: 0 10px 30px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.02);
       --glass: rgba(13,22,39,.55);
       --glass-bd: rgba(255,255,255,.06);
+
+      /* Brand gradient to match "derivesup" topbar (white → yellow) */
+      --brand-grad: linear-gradient(90deg,#ffffff 0,#fff7d1 45%,#ffd166 70%,#ffd166 100%);
     }
 
-    /* Global */
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
@@ -44,57 +49,61 @@
     }
     a { color: inherit; text-decoration: none; }
 
-    /* Layout */
     .container { display: flex; height: 100vh; }
 
-    /* (Sidebar removed; we reuse .sidebar-item styles for the top menu buttons) */
+    /* Top-menu buttons (ex-sidebar) */
     .sidebar-item {
       padding: 0.85rem 1rem; display: flex; align-items: center; gap: 0.85rem;
       color: #b7c6e6; cursor: pointer; transition: background .2s, color .2s, transform .2s;
       border-left: 3px solid transparent;
       border-radius: 10px;
     }
-    .sidebar-item i { width: 20px; text-align: center; opacity: .9; }
+    /* Brand-match icons: use gradient fill on FA icons */
+    .sidebar-item i, .topbar i, .brand-icon {
+      background: var(--brand-grad);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;              /* text becomes gradient */
+      text-shadow: none;
+    }
+    .sidebar-item i { width: 20px; text-align: center; opacity: .95; }
+
     .sidebar-item:hover {
-      background: rgba(155,92,255,.10);
+      background: rgba(255,209,102,.08);
       color: #ffffff;
       transform: translateY(-1px);
-      border-left-color: var(--accent);
+      border-left-color: #ffd166;
     }
     .sidebar-item.active {
-      background: linear-gradient(90deg, rgba(155,92,255,.22), rgba(6,193,220,.18));
+      background: linear-gradient(90deg, rgba(255,209,102,.22), rgba(6,193,220,.18));
       color: #ffffff;
-      border-left-color: var(--accent-2);
+      border-left-color: #ffd166;
       box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
     }
 
     .main { flex: 1; display: flex; flex-direction: column; }
 
-    /* Topbar — WHITE base (gradient is applied inline via JS for precise stop) */
+    /* Topbar — WHITE base; JS paints white→yellow up to the 'p' letter */
     .topbar {
       height: 56px;
-      background: #ffffff; /* base; JS will paint yellow-from-right → up to 'p' */
+      background: #ffffff;
       color: #0f172a;
       display: flex; align-items: center; justify-content: space-between; padding: 0 1rem; font-size: 0.95rem;
       border-bottom: 1px solid rgba(15,23,42,.12);
       position: sticky; top: 0; z-index: 50;
     }
     .topbar .left, .topbar .right { display: flex; align-items: center; gap: 0.85rem; }
-    .topbar i { color: #0f172a; text-shadow: none; }
     #top-user { color:#0f172a; font-weight:700; }
-    #loginLink { color: #0f766e; font-weight:600; }
+    #loginLink { font-weight:700; }
     .metric { color:#0f172a; font-weight:600; }
     .metric .label { font-weight:600; opacity:.7; margin-right:.25rem }
     .dot { opacity:.35; }
 
-    /* brand tweaks */
     #brand-name{
       font-weight:700; letter-spacing:.2px; color:#0f172a;
-      /* Move slightly to the left as requested */
       margin-left:-6px;
     }
 
-    /* New horizontal top menu (side buttons moved here) */
     .topmenu {
       height: 52px;
       display: flex; align-items: center; gap: .25rem; padding: .5rem .75rem;
@@ -118,7 +127,6 @@
       text-shadow: 0 1px 0 rgba(0,0,0,.3);
     }
 
-    /* Stats cards */
     .stats { display: flex; gap: 1rem; margin-bottom: 1rem; }
     .card {
       background: var(--glass);
@@ -210,7 +218,7 @@
       box-shadow: inset 0 0 0 1px rgba(255,255,255,.03);
     }
 
-    /* Icon bar (top-right) */
+    /* Icon bar (top-right of chart) */
     #derivChartApp .icon-bar{
       position:absolute;top:10px;right:10px;z-index:3;display:flex;gap:10px
     }
@@ -223,23 +231,18 @@
     }
     #derivChartApp .icon-bar a:hover{
       transform:translateY(-2px);
-      box-shadow: 0 10px 24px rgba(155,92,255,.25);
+      box-shadow: 0 10px 24px rgba(255,209,102,.25);
     }
-    #derivChartApp .icon-bar svg{width:18px;height:18px;fill:#d8e6ff;filter: drop-shadow(0 0 8px rgba(155,92,255,.35));}
+    #derivChartApp .icon-bar svg{width:18px;height:18px;fill:#d8e6ff;filter: drop-shadow(0 0 8px rgba(255,209,102,.35));}
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- (Sidebar removed) -->
-
-    <!-- Main Content -->
     <section class="main">
-      <!-- Topbar (WHITE base; JS paints yellow-from-right → up to 'p') -->
+      <!-- Topbar -->
       <header class="topbar" id="topbar">
         <div class="left" id="brand-left">
-          <!-- PNG logo -->
           <img src="https://iili.io/Kw8ik5g.th.jpg" alt="logo" style="height:28px; width:auto; display:block;"/>
-          <!-- derivesup name (moved slightly left) -->
           <span id="brand-name">derivesup</span>
         </div>
         <div class="right" id="top-right">
@@ -250,23 +253,23 @@
           <span class="metric" id="top-cr"><span class="label">CR:</span> —</span>
           <span class="dot">•</span>
           <span class="metric" id="top-pnl"><span class="label">PnL:</span> —</span>
-          <a id="loginLink" class="green" href="#" title="Login to Deriv">Login</a>
+          <!-- Login uses brand-gradient text -->
+          <a id="loginLink" class="brand-icon" href="#" title="Login to Deriv">Login</a>
           <i class="fas fa-caret-down"></i>
         </div>
       </header>
 
-      <!-- New Horizontal Top Menu (icons/logos changed) -->
+      <!-- Brand-matched icons (gradient) -->
       <nav class="topmenu">
         <div class="sidebar-item active" data-section="dashboard"><i class="fas fa-house"></i> Dashboard</div>
-        <div class="sidebar-item" data-section="freebots"><i class="fas fa-microchip"></i>5 Confirmations Manual Strategies</div>
-        <div class="sidebar-item" data-section="botbuilder"><i class="fas fa-screwdriver-wrench"></i>Analyzer Tool</div>
-        <div class="sidebar-item" data-section="tools"><i class="fas fa-wand-magic-sparkles"></i>5 Confirmations Auto Bot</div>
-        <div class="sidebar-item" data-section="signals"><i class="fas fa-bolt"></i>MT 5 Bulk Trading tool</div>
+        <div class="sidebar-item" data-section="freebots"><i class="fas fa-microchip"></i> 5 Confirmations Manual Strategies</div>
+        <div class="sidebar-item" data-section="botbuilder"><i class="fas fa-screwdriver-wrench"></i> Analyzer Tool</div>
+        <div class="sidebar-item" data-section="tools"><i class="fas fa-wand-magic-sparkles"></i> 5 Confirmations Auto Bot</div>
+        <div class="sidebar-item" data-section="signals"><i class="fas fa-bolt"></i> MT 5 Bulk Trading tool</div>
         <div class="sidebar-item" data-section="charts"><i class="fas fa-chart-area"></i> DeriveSup Signal</div>
-        <div class="sidebar-item" data-section="auto-analyzer"><i class="fas fa-gears"></i>Money Management Plan</div>
+        <div class="sidebar-item" data-section="auto-analyzer"><i class="fas fa-gears"></i> Money Management Plan</div>
       </nav>
 
-      <!-- Content Area -->
       <div class="content">
         <div id="content-dashboard">
           <h2>Deriv Dashboard</h2>
@@ -277,7 +280,7 @@
             <div class="card"><h4>Daily PnL</h4><p id="pnl" class="">—</p></div>
           </div>
 
-          <!-- ======= Deriv Volatility Chart in the middle ======= -->
+          <!-- ======= Deriv Volatility Chart ======= -->
           <div id="derivChartApp" aria-label="AI Signal Studio — Deriv Volatility">
             <div class="chartbar">
               <h1>Deriv Volatility</h1>
@@ -339,20 +342,16 @@
   </div>
 
   <script>
-    /* ===================== Topbar yellow-from-right → up to 'p' mix ===================== */
+    /* ===================== Topbar white→yellow mix up to 'p' ===================== */
     (function paintTopbarGradient(){
       const topbar = document.getElementById('topbar');
       const brand  = document.getElementById('brand-name');
-
       function apply(){
         if(!topbar || !brand) return;
         const tb  = topbar.getBoundingClientRect();
         const br  = brand.getBoundingClientRect();
-        // Right edge of the word "derivesup" ≈ at the "p" letter
-        const stop = Math.round(br.right - tb.left);   // px from left of topbar to the 'p' edge
-        const blend = 28; // width of the white↔yellow mix zone
-
-        // White (left) → mix near 'p' → Yellow (right)
+        const stop = Math.round(br.right - tb.left);
+        const blend = 28;
         topbar.style.background =
           `linear-gradient(90deg,
             #ffffff 0,
@@ -361,34 +360,53 @@
             #ffd166 ${stop + blend}px,
             #ffd166 100%)`;
       }
-
-      // initial + on resize/scroll/font reflow
       window.addEventListener('load', apply);
       window.addEventListener('resize', apply);
       new ResizeObserver(apply).observe(document.body);
-      // slight defer for font metrics
       setTimeout(apply, 100);
     })();
 
     /* ===================== Deriv OAuth (APP ID: 106142) ===================== */
     const APP_ID = '106142';
-    const REDIRECT_URI = window.location.origin + window.location.pathname;
-    const OAUTH_URL = `https://oauth.deriv.com/oauth2/authorize?app_id=${APP_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
 
+    // Get redirect URI from (priority): ?redirect=… → window.DERIV_REDIRECT → <meta name="deriv-redirect"> → fallback (same page)
+    function getRedirectUri(){
+      const q = new URLSearchParams(window.location.search);
+      if (q.get('redirect')) return q.get('redirect');
+      if (window.DERIV_REDIRECT) return window.DERIV_REDIRECT;
+      const meta = document.querySelector('meta[name="deriv-redirect"]');
+      if (meta && meta.content) return meta.content;
+      return window.location.origin + window.location.pathname;
+    }
+    function buildOAuthUrl(redirect){
+      const uri = redirect || getRedirectUri();
+      return `https://oauth.deriv.com/oauth2/authorize?app_id=${APP_ID}&redirect_uri=${encodeURIComponent(uri)}`;
+    }
+
+    // Handle callback (token + account)
     (function handleOAuthCallback() {
       const params = new URLSearchParams(window.location.search);
       if (params.has('token1') && params.has('acct1')) {
         localStorage.setItem('deriv_token', params.get('token1'));
         localStorage.setItem('deriv_loginid', params.get('acct1'));
-        history.replaceState(null, '', REDIRECT_URI);
+        // Clean query after capturing
+        history.replaceState(null, '', window.location.origin + window.location.pathname);
       }
     })();
 
     const TOKEN = localStorage.getItem('deriv_token');
 
-    // login link
+    // Login link
     const loginLink = document.getElementById('loginLink');
-    loginLink.onclick = (e)=>{ e.preventDefault(); window.location.href = OAUTH_URL; };
+    loginLink.addEventListener('click', (e)=>{
+      e.preventDefault();
+      window.location.href = buildOAuthUrl();
+    });
+
+    // OPTIONAL: If you want a menu item to force OAuth with a custom redirect:
+    // document.querySelector('[data-section="signals"]').addEventListener('click', ()=>{
+    //   window.location.href = buildOAuthUrl('https://your-site.com/after-signals');
+    // });
 
     // Helper: format USD
     const fmtUSD = (n)=> (Number(n)||0).toFixed(2) + ' USD';
