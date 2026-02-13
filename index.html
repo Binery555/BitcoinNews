@@ -498,43 +498,44 @@
       -webkit-overflow-scrolling:touch;
     }
 
-    /* Bottom candles / indicators: fit height + horizontal swipe */
+    /* Bottom candles / indicators: fit height + swipe for Trend Strength row */
 #bottom-indicators{
   flex:0 0 auto;
   height:28dvh;
   max-height:none;
   padding:6px;
   display:flex;
-  flex-direction:row;
+  flex-direction:column;
   gap:8px;
   align-items:stretch;
-  overflow-x:auto;
-  overflow-y:hidden;
+  overflow-x:hidden;
+  overflow-y:auto;
   -webkit-overflow-scrolling:touch;
-  scroll-snap-type:x mandatory;
-  scroll-padding:8px;
+  box-sizing:border-box;
 }
 
-/* Make both groups flow in the same horizontal row */
+/* Trend Strength candles: horizontal swipe */
 .bi-row{
   display:flex;
   flex-direction:row;
   gap:8px;
   flex-wrap:nowrap;
   align-items:stretch;
-  flex:0 0 auto;
-}
-.bi-jet{
-  display:flex;
-  flex-direction:row;
-  gap:8px;
-  flex-wrap:nowrap;
-  align-items:stretch;
-  flex:0 0 auto;
-  min-height:0;
-  margin:0;
+  overflow-x:auto;
+  overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;
+  scroll-snap-type:x mandatory;
+  scroll-padding:8px;
+  padding-bottom:4px;
 }
 
+/* B Plus Gaing Identify Strength: separate, full-width under Trend Strength */
+.bi-jet{
+  flex:0 0 auto;
+  width:100%;
+  min-width:0;
+  margin:0;
+}
 /* Compact cards that swipe nicely */
 #bottom-indicators .bi-card{
   flex:0 0 auto;
@@ -542,6 +543,11 @@
   min-width:min(78vw, 320px);
   padding:8px;
   scroll-snap-align:start;
+}
+#bottom-indicators .bi-card.jetCard{
+  width:100%;
+  min-width:0;
+  max-width:none;
 }
 #bottom-indicators .bi-title{font-size:12px;}
 #bottom-indicators .bi-sub{font-size:10px; line-height:1.25;}
@@ -941,7 +947,7 @@ select,button{background:var(--bpg-white)!important;color:var(--bpg-ink)!importa
 
     <div class="bi-jet">
       <div class="bi-card jetCard">
-        <div class="bi-title">Jet Detect Strength — 15m</div>
+        <div class="bi-title">B Plus Gaing Identify Strength — 15m</div>
         <div class="bi-sub">Stronger = darker • Weaker = lighter • BUY green / SELL red</div>
         <div class="bi-slot"><div class="chartind" id="ind5"></div></div>
       </div>
