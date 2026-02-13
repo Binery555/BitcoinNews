@@ -498,29 +498,56 @@
       -webkit-overflow-scrolling:touch;
     }
 
-    /* Bottom candles / indicators: grid-fit (no scroll needed) */
-    #bottom-indicators{
-      flex:0 0 auto;
-      height:28dvh;
-      max-height:none;
-      overflow:hidden;
-      padding:6px;
-      display:grid;
-      grid-template-rows: 2fr 1fr;
-      gap:6px;
-    }
+    /* Bottom candles / indicators: fit height + horizontal swipe */
+#bottom-indicators{
+  flex:0 0 auto;
+  height:28dvh;
+  max-height:none;
+  padding:6px;
+  display:flex;
+  flex-direction:row;
+  gap:8px;
+  align-items:stretch;
+  overflow-x:auto;
+  overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;
+  scroll-snap-type:x mandatory;
+  scroll-padding:8px;
+}
 
-    .bi-row{
-      min-height:0;
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr 1fr;
-      gap:6px;
-      align-items:stretch;
-    }
-    .bi-jet{ min-height:0; margin:0; }
+/* Make both groups flow in the same horizontal row */
+.bi-row{
+  display:flex;
+  flex-direction:row;
+  gap:8px;
+  flex-wrap:nowrap;
+  align-items:stretch;
+  flex:0 0 auto;
+}
+.bi-jet{
+  display:flex;
+  flex-direction:row;
+  gap:8px;
+  flex-wrap:nowrap;
+  align-items:stretch;
+  flex:0 0 auto;
+  min-height:0;
+  margin:0;
+}
 
-    .bi-card{
+/* Compact cards that swipe nicely */
+#bottom-indicators .bi-card{
+  flex:0 0 auto;
+  width:min(78vw, 320px);
+  min-width:min(78vw, 320px);
+  padding:8px;
+  scroll-snap-align:start;
+}
+#bottom-indicators .bi-title{font-size:12px;}
+#bottom-indicators .bi-sub{font-size:10px; line-height:1.25;}
+#bottom-indicators .bi-slot{padding-top:6px;}
+#bottom-indicators .chartind{max-height:70px;}
+.bi-card{
       min-width:0;
       min-height:0;
       padding:6px;
@@ -647,24 +674,6 @@ select,button{background:var(--bpg-white)!important;color:var(--bpg-ink)!importa
 .bpg-cutoff{display:inline-flex;align-items:center;gap:6px;font-weight:800;}
 #emaAngleSlider{accent-color:var(--bpg-red);}
 /* BPG_UI_THEME_END */
-
-  .availCard{min-width:260px; max-width:420px;}
-  .availList{
-    margin-top:6px;
-    border:1px solid rgba(30,41,59,0.8);
-    border-radius:10px;
-    padding:8px;
-    background:#030a15;
-    font-size:12px;
-    line-height:1.4;
-    max-height:180px;
-    overflow:auto;
-    white-space:pre-wrap;
-  }
-  .availItem{display:flex; justify-content:space-between; gap:10px; padding:4px 0; border-bottom:1px dashed rgba(30,41,59,0.55);}
-  .availItem:last-child{border-bottom:none;}
-  .tagBuy{color:var(--up); font-weight:800;}
-  .tagSell{color:var(--down); font-weight:800;}
 </style>
 </head>
 
@@ -937,13 +946,6 @@ select,button{background:var(--bpg-white)!important;color:var(--bpg-ink)!importa
         <div class="bi-slot"><div class="chartind" id="ind5"></div></div>
       </div>
     </div>
-
-      <div class="bi-card availCard">
-        <div class="bi-title">Available Crypto Signals (Auto Scan)</div>
-        <div class="bi-sub">Shows crypto symbols with the most recent BUY/SELL strategy signal (last 15 min)</div>
-        <div class="availList" id="availList">—</div>
-      </div>
-
   </div>
 </div>
 
@@ -2471,9 +2473,9 @@ function applyMarkersToSeries(series, sigs){
 
 
 
-// ===== SUPER TREND (EMA2 vs BB Upper/Lower) =====
-// When EMA2 is ABOVE BB Upper -> "SUPER UP TREND"
-// When EMA2 is BELOW BB Lower -> "SUPER DOWN TREND"
+// ===== ULTRA TREND (EMA2 vs BB Upper/Lower) =====
+// When EMA2 is ABOVE BB Upper -> "ULTRA UP TREND"
+// When EMA2 is BELOW BB Lower -> "ULTRA DOWN TREND"
 // Also computes angle difference (degrees) between EMA2 slope and BB band slope.
 function computeSuperTrendInfoFromEma2(arr, lookbackCandles=10){
   if(!arr || arr.length < 3) return null;
@@ -2890,14 +2892,14 @@ function updateAngleBadge(el, emaAngle, bbEmaAngle, gapInfo, superInfo){
   }
 
 
-// SUPER TREND (EMA2 vs BB Upper/Lower)
+// ULTRA TREND (EMA2 vs BB Upper/Lower)
 // Show as a separate line ABOVE Turbo Scan line inside the badge.
 let superLine = "";
 if (superInfo && superInfo.mode){
   const sDeg = (isFinite(superInfo.diffDeg) ? superInfo.diffDeg.toFixed(1) : "—") + "°";
   superLine = (superInfo.mode === "UP")
-    ? `SUPER UP TREND • Δ${sDeg}`
-    : `SUPER DOWN TREND • Δ${sDeg}`;
+    ? `ULTRA UP TREND • Δ${sDeg}`
+    : `ULTRA DOWN TREND • Δ${sDeg}`;
 }
 
   // text (keep compact for 4 charts)
@@ -2927,7 +2929,7 @@ if (superInfo && superInfo.mode){
 
 
   
-// SUPER TREND highlight (EMA2 outside BB)
+// ULTRA TREND highlight (EMA2 outside BB)
 if (superInfo && superInfo.mode === "DOWN"){
   el.style.background = "rgba(239, 68, 68, 0.08)";
 } else if (superInfo && superInfo.mode === "UP"){
@@ -3760,66 +3762,7 @@ function updateSignalsTitle(){
 }
 /* RENDER SIGNAL LIST (uses GLOBAL_SIGNALS only) */
 
-function isCryptoSymbol(sym){
-  if(!sym) return false;
-  if(sym.startsWith("cry")) return true;
-  if(Array.isArray(CRYPTO_SYMBOLS) && CRYPTO_SYMBOLS.includes(sym)) return true;
-  return false;
-}
 
-function updateAvailableCryptoSignals(){
-  const el = $("availList");
-  if(!el) return;
-
-  const nowSec = Math.floor(Date.now()/1000);
-  const windowSec = 15*60;
-
-  // pick latest BUY/SELL per crypto symbol within the window
-  const latest = new Map();
-  for(const s of (GLOBAL_SIGNALS||[])){
-    if(!s || !isCryptoSymbol(s.symbol)) continue;
-    const t = Number(s.time)||0;
-    if(!t || (nowSec - t) > windowSec) continue;
-    const dir = (s.dir||"").toUpperCase();
-    if(dir !== "BUY" && dir !== "SELL") continue;
-
-    const prev = latest.get(s.symbol);
-    if(!prev || t > (Number(prev.time)||0)) latest.set(s.symbol, s);
-  }
-
-  const arr = [...latest.values()].sort((a,b)=>(Number(b.time)||0)-(Number(a.time)||0)).slice(0, 80);
-  if(arr.length===0){
-    el.textContent = "No crypto signals in the last 15 minutes.";
-    return;
-  }
-
-  el.innerHTML = "";
-  for(const s of arr){
-    const row = document.createElement("div");
-    row.className = "availItem";
-
-    const left = document.createElement("div");
-    left.textContent = s.symbol;
-
-    const right = document.createElement("div");
-    const dir = (s.dir||"").toUpperCase();
-    const tag = document.createElement("span");
-    tag.className = (dir==="BUY") ? "tagBuy" : "tagSell";
-    tag.textContent = dir;
-
-    const tf = document.createElement("span");
-    tf.style.color = "#9eb1c7";
-    tf.style.marginLeft = "8px";
-    tf.textContent = s.tf || "";
-
-    right.appendChild(tag);
-    right.appendChild(tf);
-
-    row.appendChild(left);
-    row.appendChild(right);
-    el.appendChild(row);
-  }
-}
 function renderSignals(){
   const list = $("sig-list");
   // Always reflect current selections in the title
@@ -3890,7 +3833,6 @@ function renderSignals(){
     `;
     list.appendChild(div);
   });
-  updateAvailableCryptoSignals();
 }
 function applyMarkers(){
   const markers = SIGNALS.map(s=>{
