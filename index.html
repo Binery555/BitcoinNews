@@ -1,637 +1,4993 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>BinaryTools UI – Deriv Volatility Chart (Fixed)</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>B Plus Gaing Momentum Break Core – Live Signals</title>
 
-  <!-- Optional: set a default redirect here (can be overridden by ?redirect=...) -->
-  <!-- <meta name="deriv-redirect" content="https://your-site.com/oauth-callback"> -->
+<script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 
-  <!-- Icons -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
-  <!-- Lightweight Charts -->
-  <link rel="preconnect" href="https://unpkg.com"/>
-  <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
+<style>
+  :root{
+    
+    --header-h:56px; /* dynamic header height for mobile */
+--bg:#0b0f14; --panel:#0f1621; --panel2:#0b1320; --ink:#e6eef7;
+    --muted:#9eb1c7; --line:#1a2736;
+    --up:#16a34a; --down:#ef4444;
+  }
+  body{
+    margin:0; background:#020617; color:var(--ink);
+    font-family:Inter,system-ui;
+    overflow:hidden;
+  }
+  header{
+    background:#020617;border-bottom:1px solid #1e293b;
+    height:56px;
+    padding:4px 10px;display:flex;align-items:center;gap:10px;
+    box-sizing:border-box;
+  }
+  header h1{
+    font-size:15px;margin:0;color:#fff;font-weight:600;
+  }
+  select, button{
+    background:#020617;color:#d5e2f0;border:1px solid #1e293b;
+    padding:6px 8px;border-radius:8px;font-size:13px;
+  }
+  #status{
+    font-size:11px;border-radius:999px;background:#020617;padding:3px 8px;
+    color:#9eb1c7;border:1px solid #1e293b;margin-left:auto;
+  }
 
-  <style>
-    /* =================== AURORA NEON THEME (Colors & Design only) =================== */
-    :root{
-      --bg-0:#070910;
-      --bg-1:#0a0f1c;
-      --bg-2:#0d1424;
-      --panel:#101a2c;
-      --panel-2:#0c1629;
-      --ink:#e9f1ff;
-      --muted:#9eb4d6;
-      --line:#172842;
-      --accent:#9b5cff;      /* violet */
-      --accent-2:#06c1dc;    /* cyan */
-      --accent-3:#ffd166;    /* warm highlight */
-      --ok:#10d07a;
-      --bad:#ff4d6d;
-      --shadow: 0 10px 30px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.02);
-      --glass: rgba(13,22,39,.55);
-      --glass-bd: rgba(255,255,255,.06);
+  /* TP button */
+  .btn-tp{
+    background:#2563eb;
+    border-color:#1d4ed8;
+    color:#e0f2fe;
+    font-weight:500;
+  }
+  .btn-tp:hover{
+    background:#1d4ed8;
+  }
 
-      /* Brand gradient to match "derivesup" topbar (white → yellow) */
-      --brand-grad: linear-gradient(90deg,#ffffff 0,#fff7d1 45%,#ffd166 70%,#ffd166 100%);
+  /* Signals settings button */
+  .btn-signal-settings{
+    background:#16a34a;
+    border-color:#15803d;
+    color:#ecfdf5;
+    font-weight:500;
+  }
+  .btn-signal-settings:hover{
+    background:#15803d;
+  }
+
+  #layout{
+    display:flex;
+    flex-direction:column;
+    height:calc(100dvh - var(--header-h,56px));
+    width:100vw;
+    min-height:0;
+  }
+  #top-row{
+    flex:1;
+    min-height:0;
+    display:flex;
+    width:100%;
+  }
+  #bottom-indicators{
+    flex:0 0 34%;
+    min-height:240px;
+    max-height:52vh;
+    border-top:1px solid #1e293b;
+    background:#020817;
+    padding:8px;
+    box-sizing:border-box;
+    overflow:auto;
+  }
+  .bi-row{display:flex; gap:10px; flex-wrap:wrap; align-items:stretch;}
+  .bi-card{
+    flex:1;
+    min-width:230px;
+    background:#0b1220;
+    border:1px solid rgba(30,41,59,0.90);
+    border-radius:12px;
+    padding:10px;
+    box-sizing:border-box;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .bi-title{font-size:12px; font-weight:800; color:#e5e7eb; letter-spacing:0.02em;}
+  .bi-sub{font-size:11px; color:#94a3b8;}
+  .bi-slot{
+    display:flex;
+    align-items:center;
+    justify-content:flex-start;
+    padding:6px 0 0 0;
+  }
+  .bi-jet{margin-top:8px;}
+  .bi-card.jetCard .bi-slot{justify-content:center; padding-top:10px;}
+  /* make chartind neutral in bottom section */
+  #bottom-indicators .chartind{
+    height:auto;
+    min-height:0;
+    max-height:none;
+    border-top:none;
+    background:transparent;
+    padding:0;
+    justify-content:center;
+  }
+  #bottom-indicators .jetCandleWrap{align-items:flex-end;}
+
+  #chart-wrap{
+    flex:1;
+    min-width:0;
+    height:100%;
+  }
+  #chart-grid{
+    height:100%;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    padding:10px;
+    box-sizing:border-box;
+  }
+  #chart-row-top{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:10px;
+    height:50%;
+  }
+  #chart-row-bottom{
+    display:grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap:10px;
+    height:50%;
+  }
+  /* ensure chartboxes fill their row height */
+  #chart-row-top .chartbox,
+  #chart-row-bottom .chartbox{ min-height:0; }
+
+  .chartbox{
+    background:#020617;
+    border:1px solid #1e293b;
+    border-radius:12px;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+    min-height:0;
+  }
+  .charthead{
+    padding:6px 10px;
+    font-size:12px;
+    color:#cbd5e1;
+    border-bottom:1px solid #1e293b;
+    background:#0b1220;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .anglewrap{ display:flex; align-items:center; justify-content:flex-end; }
+  .anglebadge{
+    font-size:11px;
+    padding:2px 8px;
+    border-radius:999px;
+    border:1px solid #1e293b;
+    background:#020617;
+    color:#9eb1c7;
+    white-space:nowrap;
+  }
+  .chartcanvas{
+    flex:1;
+    min-height:0;
+  }
+
+  /* ==========================
+     Trend Strength + Jet Strength (Horizontal Candle)
+     ========================== */
+  .chartsplit{ flex:1; min-height:0; display:flex; flex-direction:column; }
+  .chartind{
+    height:auto;
+    min-height:80px;
+    border-top:1px solid #1e293b;
+    background:#0b1220;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:8px 10px;
+    box-sizing:border-box;
+  }
+
+  /* Generic horizontal candle indicator */
+  .hTrack{
+    position:relative;
+    width:360px;
+    max-width:100%;
+    height:90px;
+    border-radius:12px;
+    border:1px solid rgba(30,41,59,0.95);
+    background:rgba(2,6,23,0.45);
+    overflow:hidden;
+  }
+  .hMid{
+    position:absolute;
+    left:0; right:0;
+    top:50%;
+    height:1px;
+    background:rgba(148,163,184,0.25);
+    transform:translateY(-0.5px);
+  }
+  .hCandle{
+    position:absolute;
+    left:10px;
+    right:10px;
+    top:50%;
+    height:18px;
+    transform:translateY(-50%);
+    border-radius:10px;
+    border:1px solid rgba(30,41,59,0.95);
+    background:rgba(148,163,184,0.12);
+    overflow:hidden;
+  }
+   .hFill{
+    position:absolute;
+    top:2px;
+    bottom:2px;
+    width:0%;
+    left:0%;
+    border-radius:8px;
+    background:rgba(148,163,184,0.25);
+    transition:width .15s ease, background-color .15s ease, opacity .15s ease;
+  }
+
+
+  .hMeta{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    width:360px;
+    max-width:100%;
+    padding:0 2px;
+    margin-top:6px;
+    box-sizing:border-box;
+  }
+  .tfTag{
+    font-size:11px;
+    font-weight:800;
+    padding:2px 8px;
+    border-radius:999px;
+    border:1px solid rgba(30,41,59,0.95);
+    background:#020617;
+    color:#e5e7eb;
+  }
+    .jetTag{font-size:12px;color:#cbd5e1;padding:2px 6px;border-radius:999px;border:1px solid rgba(148,163,184,0.25);}
+.pctTag{
+    font-size:11px;
+    font-weight:800;
+    color:#e5e7eb;
+    letter-spacing:0.01em;
+  }
+  .pctSub{
+    font-size:11px;
+    color:#94a3b8;
+    margin-left:auto;
+  }
+
+  /* 15m Jet candle: longer + thicker */
+  .hTrack.jet{
+    width:620px;
+    height:56px;
+  }
+  .hTrack.jet .hCandle{
+    height:26px;
+    border-radius:14px;
+  }
+
+  /* helper text */
+  .indText{ display:flex; flex-direction:column; line-height:1.1; }
+
+
+  #signals{
+    width:280px;max-width:40vw;
+    border-left:1px solid #1e293b;
+    background:#020617;
+    padding:8px;
+    box-sizing:border-box;
+    overflow-y:auto;
+  }
+  #signals-title{
+    font-size:13px;
+    color:#e5e7eb;
+    margin-bottom:6px;
+  }
+  .sig-card{
+    border:1px solid #1f2937;
+    border-radius:10px;
+    padding:6px 7px;
+    background:#020617;
+    margin-bottom:6px;
+  }
+  .symbol{
+    background:#020617;
+    padding:2px 6px;
+    border-radius:999px;
+    margin-right:4px;
+    font-size:11px;
+    border:1px solid #1e293b;
+    color:#cbd5f5;
+  }
+  .buy{ color:#4ade80; font-weight:600; font-size:12px;}
+  .sell{ color:#f87171; font-weight:600; font-size:12px;}
+  .close{ color:#fbbf24; font-weight:700; font-size:12px;}
+  .price{
+    color:#e5e7eb;
+    font-size:12px;
+  }
+  .tp{
+    font-size:12px;
+    margin-top:2px;
+    border-radius:6px;
+    padding:2px 4px;
+    display:inline-block;
+  }
+  .time{
+    color:#64748b;
+    font-size:11px;
+    margin-top:2px;
+  }
+
+  #toast{
+    position:fixed;
+    background:transparent;
+    border:none;
+    padding:0;
+    font-size:12px;
+    color:#e5e7eb;
+    box-shadow:none;
+
+    opacity:0;
+    transform:translateY(20px);
+    pointer-events:none;
+    transition:opacity .25s ease, transform .25s ease;
+    z-index:9999;
+
+    right:16px;
+    bottom:16px;
+  }
+  #toast.show{
+    opacity:1;
+    transform:translateY(0);
+  }
+
+  /* Toast card */
+  .toast-card{
+    border-radius:10px;
+    border:1px solid #1f2937;
+    padding:6px 7px;
+    background:#020617;
+    min-width:230px;
+    max-width:320px;
+  }
+  .toast-card .symbol{
+    background:#020617;
+    border:1px solid #1e293b;
+    border-radius:999px;
+    padding:2px 6px;
+    margin-right:4px;
+    font-size:11px;
+    color:#cbd5f5;
+  }
+  .toast-title{
+    font-size:12px;
+    color:#e5e7eb;
+  }
+  .toast-dir-buy{
+    color:#4ade80;
+    font-weight:600;
+    font-size:12px;
+    margin-top:3px;
+  }
+  .toast-dir-sell{
+    color:#f87171;
+    font-weight:600;
+    font-size:12px;
+    margin-top:3px;
+  }
+  .toast-entry{
+    color:#e5e7eb;
+    font-size:12px;
+  }
+  .toast-tp{
+    font-size:11px;
+    padding:2px 4px;
+    border-radius:6px;
+    display:inline-block;
+    margin-top:2px;
+  }
+  .toast-time{
+    color:#6b7280;
+    font-size:11px;
+    margin-top:3px;
+  }
+
+  @media (max-width: 900px){
+    #layout{flex-direction:column;}
+    #signals{
+      width:100%;
+      max-width:100%;
+      height:40%;
+      border-left:none;
+      border-top:1px solid #1e293b;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
-      background:
-        radial-gradient(1200px 600px at 10% 0%, rgba(155,92,255,.12), transparent 60%),
-        radial-gradient(1200px 600px at 90% 100%, rgba(6,193,220,.10), transparent 60%),
-        linear-gradient(180deg,var(--bg-0),var(--bg-1) 40%,var(--bg-2));
-      color: var(--ink);
-    }
-    a { color: inherit; text-decoration: none; }
 
-    .container { display: flex; height: 100vh; }
+  /* ==========================
+     Mobile-first responsive layout
+     - wraps header controls
+     - stacks charts into a single column
+     - makes panels scroll safely on small screens
+     ========================== */
+  header{ position:sticky; top:0; z-index:10001; }
 
-    /* Top-menu buttons (ex-sidebar) */
-    .sidebar-item {
-      padding: 0.85rem 1rem; display: flex; align-items: center; gap: 0.85rem;
-      color: #b7c6e6; cursor: pointer; transition: background .2s, color .2s, transform .2s;
-      border-left: 3px solid transparent;
-      border-radius: 10px;
-    }
-    /* Brand-match icons: use gradient fill on FA icons */
-    .sidebar-item i, .topbar i, .brand-icon {
-      background: var(--brand-grad);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;              /* text becomes gradient */
-      text-shadow: none;
-    }
-    .sidebar-item i { width: 20px; text-align: center; opacity: .95; }
+  @media (max-width: 700px){
+    body{ overflow:hidden; }
 
-    .sidebar-item:hover {
-      background: rgba(255,209,102,.08);
-      color: #ffffff;
-      transform: translateY(-1px);
-      border-left-color: #ffd166;
+    header{
+      height:auto;
+      padding:8px 10px;
+      flex-wrap:wrap;
+      gap:8px;
     }
-    .sidebar-item.active {
-      background: linear-gradient(90deg, rgba(255,209,102,.22), rgba(6,193,220,.18));
-      color: #ffffff;
-      border-left-color: #ffd166;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
+    header h1{
+      flex:1 1 100%;
+      font-size:14px;
+      line-height:1.2;
+    }
+    header label{
+      font-size:11px;
+      color:#94a3b8;
+    }
+    select, button{
+      font-size:12px;
+      padding:8px 10px;
+      border-radius:10px;
+    }
+    #status{
+      order:99;
+      width:100%;
+      text-align:center;
+      margin-left:0;
     }
 
-    .main { flex: 1; display: flex; flex-direction: column; }
-
-    /* Topbar — WHITE base; JS paints white→yellow up to the 'p' letter */
-    .topbar {
-      height: 56px;
-      background: #ffffff;
-      color: #0f172a;
-      display: flex; align-items: center; justify-content: space-between; padding: 0 1rem; font-size: 0.95rem;
-      border-bottom: 1px solid rgba(15,23,42,.12);
-      position: sticky; top: 0; z-index: 50;
+    #top-row{ flex-direction:column; }
+    #chart-wrap{
+      height:auto;
+      min-height:44dvh;
+      overflow:auto;
+      -webkit-overflow-scrolling:touch;
     }
-    .topbar .left, .topbar .right { display: flex; align-items: center; gap: 0.85rem; }
-    #top-user { color:#0f172a; font-weight:700; }
-    #loginLink { font-weight:700; }
-    .metric { color:#0f172a; font-weight:600; }
-    .metric .label { font-weight:600; opacity:.7; margin-right:.25rem }
-    .dot { opacity:.35; }
-
-    #brand-name{
-      font-weight:700; letter-spacing:.2px; color:#0f172a;
-      margin-left:-6px;
+    #signals{
+      width:100%;
+      max-width:100%;
+      height:38dvh;
+      border-left:none;
+      border-top:2px solid #1e293b;
     }
 
-    .topmenu {
-      height: 52px;
-      display: flex; align-items: center; gap: .25rem; padding: .5rem .75rem;
-      background:
-        linear-gradient(90deg, rgba(155,92,255,.12), rgba(6,193,220,.12)),
-        linear-gradient(180deg, rgba(16,26,44,.75), rgba(10,18,34,.75));
-      border-bottom: 1px solid var(--glass-bd);
-      backdrop-filter: blur(6px);
-      position: sticky; top: 56px; z-index: 49;
-      box-shadow: var(--shadow);
-      overflow-x: auto;
+    /* Stack all charts vertically */
+    #chart-grid{
+      height:auto;
+      gap:10px;
+      padding:10px;
     }
-    .topmenu .sidebar-item { border-left: 0; padding: .6rem .85rem; white-space: nowrap; }
+    #chart-row-top,
+    #chart-row-bottom{
+      grid-template-columns: 1fr;
+      height:auto;
+    }
+    .chartbox{ min-height:260px; }
+    .chartcanvas{ min-height:220px; }
 
-    .content { flex: 1; overflow-y: auto; padding: 1rem; }
-    .hidden { display: none; }
+    /* Bottom indicators: keep scrollable but not too tall */
+    #bottom-indicators{
+      flex:0 0 auto;
+      min-height:0;
+      max-height:42dvh;
+      overflow:auto;
+      -webkit-overflow-scrolling:touch;
+      padding:8px 6px;
+    }
+    .bi-card{ min-width:160px; padding:8px; }
+    .hTrack{ height:78px; }
+    .hTrack.jet{ width:100%; height:52px; }
+  }
 
-    .content h2, .content h3 {
-      color: var(--accent-3);
-      margin-bottom: 0.6rem;
-      text-shadow: 0 1px 0 rgba(0,0,0,.3);
+  @media (max-width: 420px){
+    header{ padding:8px; }
+    .charthead{ padding:6px 8px; font-size:11px; }
+    .anglebadge{ font-size:10px; padding:2px 6px; }
+    #signals-title{ font-size:12px; }
+    .sig-card{ padding:6px 7px; }
+    .toast-card{ min-width:200px; max-width:92vw; }
+  }
+    #chart-wrap{
+      height:60%;
     }
+  }
 
-    .stats { display: flex; gap: 1rem; margin-bottom: 1rem; }
-    .card {
-      background: var(--glass);
-      border: 1px solid var(--glass-bd);
-      box-shadow: var(--shadow);
-      flex: 1; padding: 1rem;
-      border-radius: 14px;
-      position: relative;
-      overflow: hidden;
-    }
-    .card::before{
-      content:""; position:absolute; inset:-1px;
-      background: radial-gradient(600px 140px at -10% -20%, rgba(155,92,255,.14), transparent 60%);
-      pointer-events:none;
-    }
-    .card h4 { margin-bottom: 0.5rem; color: #cbd9ff; letter-spacing:.2px }
-    .card p { font-size: 1.25rem; text-shadow: 0 0 12px rgba(155,92,255,.15); }
-    .green { color: var(--ok); }
-    .red { color: var(--bad); }
+  /* Popups */
+  .tp-modal-backdrop,
+  .signal-modal-backdrop{
+    position:fixed;
+    inset:0;
+    background:rgba(15,23,42,0.85);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:9998;
+  }
+  .tp-modal-backdrop.show,
+  .signal-modal-backdrop.show{
+    display:flex;
+  }
+  .tp-modal,
+  .signal-modal{
+    background:#020617;
+    border:1px solid #1f2937;
+    border-radius:16px;
+    padding:16px 18px;
+    width:320px;
+    max-width:90vw;
+    box-shadow:0 20px 50px rgba(0,0,0,0.8);
+  }
+  .tp-title,
+  .signal-title{
+    font-size:14px;
+    font-weight:600;
+    margin-bottom:10px;
+    color:#e5e7eb;
+  }
+  .tp-field,
+  .signal-field{
+    margin-bottom:10px;
+    font-size:12px;
+  }
+  .tp-field label,
+  .signal-field label{
+    display:block;
+    margin-bottom:4px;
+    color:#9ca3af;
+  }
+  .alarm-inline,
+  .signal-inline{
+    display:flex;
+    gap:8px;
+    align-items:center;
+  }
+  .alarm-note{
+    font-size:11px;
+    color:#6b7280;
+    margin-top:3px;
+  }
+  .tp-actions,
+  .signal-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:8px;
+    margin-top:12px;
+  }
+  .btn-secondary{
+    background:#020617;
+    border-color:#374151;
+    color:#d1d5db;
+  }
+  .btn-primary{
+    background:#22c55e;
+    border-color:#16a34a;
+    color:#052e16;
+    font-weight:600;
+  }
+  .btn-primary:hover{
+    background:#16a34a;
+  }
 
-    /* ===== Scoped styles for the Deriv Chart App (visual only) ===== */
-    #derivChartApp {
-      --bg:#0b1120; --panel:var(--panel); --panel2:var(--panel-2); --ink:var(--ink); --muted:var(--muted);
-      --line:var(--line); --up:#10d07a; --down:#ff4d6d;
-      background:
-        radial-gradient(900px 400px at 80% 0%, rgba(6,193,220,.10), transparent 60%),
-        radial-gradient(900px 400px at 0% 100%, rgba(155,92,255,.12), transparent 60%),
-        linear-gradient(180deg,var(--bg),#0a1222 30%,#080d1a);
-      color: var(--ink);
-      border: 1px solid var(--glass-bd);
-      border-radius: 16px;
-      box-shadow: var(--shadow);
-      overflow: hidden;
-    }
-    #derivChartApp .chartbar{
-      position: sticky; top: 0; z-index: 2;
-      background:
-        linear-gradient(90deg, rgba(155,92,255,.16), rgba(6,193,220,.16)),
-        rgba(10,18,34,.82);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid var(--glass-bd);
-      display: flex; gap: 14px; align-items: center; padding: 10px 14px;
-    }
-    #derivChartApp .chartbar h1{
-      font-size:16px;margin:0 10px 0 0;letter-spacing:.25px;color:#ffffff;
-      text-shadow: 0 0 18px rgba(155,92,255,.35);
-    }
-    #derivChartApp .spacer{flex:1}
-    #derivChartApp .ctrl{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    #derivChartApp .hint{font-size:12px;color:var(--muted)}
+/* BPG_UI_THEME_START */
+:root{--bpg-white:#000000;--bpg-yellow:#facc15;--bpg-red:#dc2626;--bpg-green:#16a34a;--bpg-ink:#14532d;}
+body{ background:var(--bpg-white)!important; color:#ffffff!important; }
+header{ background:var(--bpg-white)!important;border-bottom:2px solid var(--bpg-red)!important;}
+header h1{color:var(--bpg-ink)!important;}
+select,button{background:var(--bpg-white)!important;color:var(--bpg-ink)!important;border:2px solid var(--bpg-red)!important;}
+#status{ background:#0b0b0b!important;color:var(--bpg-ink)!important;border:2px solid var(--bpg-red)!important;}
+.chartbox{ background:#0b0b0b!important;border:2px solid var(--bpg-red)!important;}
+.charthead{background:var(--bpg-yellow)!important;color:#000!important;border-bottom:2px solid var(--bpg-red)!important;}
+.anglebadge{background:var(--bpg-white)!important;border:2px solid var(--bpg-red)!important;color:var(--bpg-ink)!important;}
+#signals{background:var(--bpg-white)!important;border-left:2px solid var(--bpg-red)!important;}
+.sig-card{ background:#0b0b0b!important;border:2px solid var(--bpg-red)!important;color:var(--bpg-ink)!important;}
+.symbol{ background:#0b0b0b!important;border:2px solid var(--bpg-red)!important;color:var(--bpg-ink)!important;}
+.buy{color:var(--bpg-green)!important;}
+.sell{color:var(--bpg-red)!important;}
+.close{color:var(--bpg-yellow)!important;}
+#emaAnglePanel{border:3px solid var(--bpg-red)!important;background:var(--bpg-white)!important;}
+.bpg-panel-title{display:flex;align-items:center;gap:8px;font-weight:900;font-size:12px;margin-bottom:6px;color:var(--bpg-ink)!important;}
+.bpg-icon-turbo,.bpg-icon-cutoff{display:inline-flex;align-items:center;justify-content:center;color:var(--bpg-red)!important;}
+.bpg-cutoff{display:inline-flex;align-items:center;gap:6px;font-weight:800;}
+#emaAngleSlider{accent-color:var(--bpg-red);}
+/* BPG_UI_THEME_END */
 
-    #derivChartApp select, #derivChartApp button{
-      background: linear-gradient(180deg, rgba(20,33,56,.9), rgba(15,26,46,.9));
-      color: var(--ink);
-      border: 1px solid var(--glass-bd);
-      border-radius:12px;
-      padding:8px 12px;font:inherit;outline:none; cursor:pointer;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,.03), 0 4px 16px rgba(0,0,0,.25);
-      transition: transform .12s ease, box-shadow .2s ease, border-color .2s ease;
-    }
-    #derivChartApp select:focus, #derivChartApp button:focus{
-      border-color: rgba(6,193,220,.45);
-      box-shadow: 0 0 0 3px rgba(6,193,220,.18);
-    }
-    #derivChartApp button{
-      background:
-        linear-gradient(90deg, rgba(155,92,255,.25), rgba(6,193,220,.25)),
-        linear-gradient(180deg, rgba(24,40,68,.95), rgba(16,30,54,.95));
-    }
-    #derivChartApp button:hover{ transform: translateY(-1px); }
-
-    #derivChartApp .wrap{height: 60vh; padding: 12px;}
-    #derivChartApp .cardX{
-      height:100%;
-      background:
-        radial-gradient(900px 300px at 100% 0%, rgba(6,193,220,.10), transparent 60%),
-        radial-gradient(900px 300px at 0% 100%, rgba(155,92,255,.12), transparent 60%),
-        linear-gradient(180deg,var(--panel),var(--panel2));
-      border:1px solid var(--glass-bd);
-      border-radius:16px; position:relative; overflow:hidden;
-      box-shadow: var(--shadow);
-    }
-    #derivChartApp .cardX .slot{position:absolute; inset:0}
-
-    #derivChartApp .pill{
-      font-size:12px;padding:6px 10px;border:1px solid var(--glass-bd);
-      border-radius:999px;color:#d7e6ff;
-      background: linear-gradient(180deg, rgba(20,33,56,.75), rgba(13,23,41,.75));
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,.03);
-    }
-
-    /* Icon bar (top-right of chart) */
-    #derivChartApp .icon-bar{
-      position:absolute;top:10px;right:10px;z-index:3;display:flex;gap:10px
-    }
-    #derivChartApp .icon-bar a{
-      width:36px;height:36px;display:grid;place-items:center;border-radius:12px;
-      background: linear-gradient(180deg, rgba(20,33,56,.7), rgba(15,26,46,.7));
-      border:1px solid var(--glass-bd);backdrop-filter:blur(6px);
-      text-decoration:none;transition:.18s transform, .18s box-shadow;
-      box-shadow: 0 6px 18px rgba(0,0,0,.35);
-    }
-    #derivChartApp .icon-bar a:hover{
-      transform:translateY(-2px);
-      box-shadow: 0 10px 24px rgba(255,209,102,.25);
-    }
-    #derivChartApp .icon-bar svg{width:18px;height:18px;fill:#d8e6ff;filter: drop-shadow(0 0 8px rgba(255,209,102,.35));}
-  </style>
+  .availCard{min-width:260px; max-width:420px;}
+  .availList{
+    margin-top:6px;
+    border:1px solid rgba(30,41,59,0.8);
+    border-radius:10px;
+    padding:8px;
+    background:#030a15;
+    font-size:12px;
+    line-height:1.4;
+    max-height:180px;
+    overflow:auto;
+    white-space:pre-wrap;
+  }
+  .availItem{display:flex; justify-content:space-between; gap:10px; padding:4px 0; border-bottom:1px dashed rgba(30,41,59,0.55);}
+  .availItem:last-child{border-bottom:none;}
+  .tagBuy{color:var(--up); font-weight:800;}
+  .tagSell{color:var(--down); font-weight:800;}
+</style>
 </head>
+
 <body>
-  <div class="container">
-    <section class="main">
-      <!-- Topbar -->
-      <header class="topbar" id="topbar">
-        <div class="left" id="brand-left">
-          <img src="https://iili.io/Kw8ik5g.th.jpg" alt="logo" style="height:28px; width:auto; display:block;"/>
-          <span id="brand-name">derivesup</span>
-        </div>
-        <div class="right" id="top-right">
-          <span id="top-user">Your Name</span>
-          <span class="dot">•</span>
-          <span class="metric" id="top-balance"><span class="label">Bal:</span> —</span>
-          <span class="dot">•</span>
-          <span class="metric" id="top-cr"><span class="label">CR:</span> —</span>
-          <span class="dot">•</span>
-          <span class="metric" id="top-pnl"><span class="label">PnL:</span> —</span>
-          <!-- Login uses brand-gradient text -->
-          <a id="loginLink" class="brand-icon" href="#" title="Login to Deriv">Login</a>
-          <i class="fas fa-caret-down"></i>
-        </div>
-      </header>
+<header>
+  <h1>B Plus Gaing Momentum Break Core</h1>
 
-      <!-- Brand-matched icons (gradient) -->
-      <nav class="topmenu">
-        <div class="sidebar-item active" data-section="dashboard"><i class="fas fa-house"></i> Dashboard</div>
-        <div class="sidebar-item" data-section="freebots"><i class="fas fa-microchip"></i> 5 Confirmations Manual Strategies</div>
-        <div class="sidebar-item" data-section="botbuilder"><i class="fas fa-screwdriver-wrench"></i> Analyzer Tool</div>
-        <div class="sidebar-item" data-section="tools"><i class="fas fa-wand-magic-sparkles"></i> 5 Confirmations Auto Bot</div>
-        <div class="sidebar-item" data-section="signals"><i class="fas fa-bolt"></i> MT 5 Bulk Trading tool</div>
-        <div class="sidebar-item" data-section="charts"><i class="fas fa-chart-area"></i> DeriveSup Signal</div>
-        <div class="sidebar-item" data-section="auto-analyzer"><i class="fas fa-gears"></i> Money Management Plan</div>
-      </nav>
+  <button id="openTp" class="btn-tp">Add TP option</button>
+  <button id="openSignalSettings" class="btn-signal-settings">Signals settings</button>
 
-      <div class="content">
-        <div id="content-dashboard">
-          <h2>Deriv Dashboard</h2>
+  <label style="font-size:12px;color:#9ca3af;">Market</label>
+  <select id="symbol">
+      <optgroup label="Binance Spot" id="binanceGroup"></optgroup>
+      <optgroup label="Binance Futures (USD-M Perp)" id="binanceFuturesGroup"></optgroup>
+  </select>
 
-          <div class="stats">
-            <div class="card"><h4>Balance</h4><p id="balance" class="green">—</p></div>
-            <div class="card"><h4>CR Number</h4><p id="cr">—</p></div>
-            <div class="card"><h4>Daily PnL</h4><p id="pnl" class="">—</p></div>
-          </div>
+  <label style="font-size:12px;color:#9ca3af;">Main TF</label>
+  <select id="tf">
+    <option value="1m">1m</option>
+    <option value="5m">5m</option>
+    <option value="10m">10m</option>
+    <option value="15m">15m</option>
+    <option value="30m">30m</option>
+    <option value="1h" selected>1h</option>
+    <option value="2h">2h</option>
+    <option value="4h">4h</option>
+    <option value="1d">1D</option>
+  </select>
 
-          <!-- ======= Deriv Volatility Chart ======= -->
-          <div id="derivChartApp" aria-label="AI Signal Studio — Deriv Volatility">
-            <div class="chartbar">
-              <h1>Deriv Volatility</h1>
-              <div class="ctrl">
-                <label class="hint">Volatility</label>
-                <select id="vol">
-                  <option value="R_10">Volatility 10</option>
-                  <option value="R_25">Volatility 25</option>
-                  <option value="R_50" selected>Volatility 50</option>
-                  <option value="R_75">Volatility 75</option>
-                  <option value="R_100">Volatility 100</option>
-                  <option value="R_10S">Volatility 10 (1s)</option>
-                  <option value="R_25S">Volatility 25 (1s)</option>
-                  <option value="R_50S">Volatility 50 (1s)</option>
-                  <option value="R_75S">Volatility 75 (1s)</option>
-                  <option value="R_100S">Volatility 100 (1s)</option>
-                </select>
+  <label style="font-size:12px;color:#9ca3af;">TF 2</label>
+  <select id="tf2">
+    <option value="1m">1m</option>
+    <option value="5m">5m</option>
+    <option value="10m">10m</option>
+    <option value="15m">15m</option>
+    <option value="30m">30m</option>
+    <option value="1h">1h</option>
+    <option value="2h" selected>2h</option>
+    <option value="4h">4h</option>
+    <option value="1d">1D</option>
+  </select>
 
-                <label class="hint">TF</label>
-                <select id="tf">
-                  <option value="1m">1m</option>
-                  <option value="5m" selected>5m</option>
-                  <option value="15m">15m</option>
-                  <option value="1h">1h</option>
-                  <option value="4h">4h</option>
-                  <option value="1d">1d</option>
-                </select>
+  <label style="font-size:12px;color:#9ca3af;">TF 3</label>
+  <select id="tf3">
+    <option value="1m">1m</option>
+    <option value="5m">5m</option>
+    <option value="10m">10m</option>
+    <option value="15m">15m</option>
+    <option value="30m">30m</option>
+    <option value="1h">1h</option>
+    <option value="2h">2h</option>
+    <option value="4h">4h</option>
+    <option value="1d" selected>1D</option>
+  </select>
 
-                <button id="reload">Load</button>
-              </div>
+  <label style="font-size:12px;color:#9ca3af;">TF 4</label>
+  <select id="tf4">
+    <option value="1m">1m</option>
+    <option value="5m">5m</option>
+    <option value="10m">10m</option>
+    <option value="15m">15m</option>
+    <option value="30m">30m</option>
+    <option value="1h">1h</option>
+    <option value="2h">2h</option>
+    <option value="4h" selected>4h</option>
+    <option value="1d">1D</option>
+  </select>
 
-              <div class="spacer"></div>
-              <div class="ctrl">
-                <span class="pill" id="status">Booting…</span>
-              </div>
-            </div>
 
-            <div class="wrap">
-              <div class="cardX" id="main">
-                <div class="icon-bar"></div>
-                <div class="slot" id="c-main"></div>
-              </div>
-            </div>
-          </div>
-          <!-- ======= /Chart ======= -->
-        </div>
+  <label style="font-size:12px;color:#9ca3af;">TF 5</label>
+  <select id="tf5">
+    <option value="1m">1m</option>
+    <option value="5m">5m</option>
+    <option value="10m">10m</option>
+    <option value="15m" selected>15m</option>
+    <option value="30m">30m</option>
+    <option value="1h">1h</option>
+    <option value="2h">2h</option>
+    <option value="4h">4h</option>
+    <option value="1d">1D</option>
+  </select>
 
-        <!-- Other sections (kept) -->
-        <div id="content-freebots" class="hidden"><h3>Free Bots</h3></div>
-        <div id="content-botbuilder" class="hidden"><h3>Bot Builder</h3></div>
-        <div id="content-manual" class="hidden"><h3>Manual Analyzer</h3></div>
-        <div id="content-tools" class="hidden"><h3>Analysis Tools</h3></div>
-        <div id="content-signals" class="hidden"><h3>Signals</h3></div>
-        <div id="content-charts" class="hidden"><h3>Charts</h3></div>
-        <div id="content-auto-analyzer" class="hidden"><h3>Auto Analyzer</h3></div>
-        <div id="content-smart" class="hidden"><h3>Smart Auto</h3></div>
+  <button id="load">Load</button>
+  <span id="status">Initializing…</span>
+</header>
+
+<div id="layout">
+  <div id="top-row">
+  <div id="chart-wrap">
+    
+<div id="chart-grid">
+  <div id="chart-row-top">
+    <div class="chartbox">
+      <div class="charthead">
+        <div>Main (<span id="tfLabel1"></span>)</div>
+        <div class="anglewrap"><span id="angle1" class="anglebadge">—</span></div>
       </div>
-    </section>
+      <div class="chartsplit"><div class="chartcanvas" id="chart"></div></div>
+    </div>
+    <div class="chartbox">
+      <div class="charthead">
+        <div>TF 2 (<span id="tfLabel2"></span>)</div>
+        <div class="anglewrap"><span id="angle2" class="anglebadge">—</span></div>
+      </div>
+      <div class="chartsplit"><div class="chartcanvas" id="chart2"></div></div>
+    </div>
   </div>
 
-  <script>
-    /* ===================== Topbar white→yellow mix up to 'p' ===================== */
-    (function paintTopbarGradient(){
-      const topbar = document.getElementById('topbar');
-      const brand  = document.getElementById('brand-name');
-      function apply(){
-        if(!topbar || !brand) return;
-        const tb  = topbar.getBoundingClientRect();
-        const br  = brand.getBoundingClientRect();
-        const stop = Math.round(br.right - tb.left);
-        const blend = 28;
-        topbar.style.background =
-          `linear-gradient(90deg,
-            #ffffff 0,
-            #ffffff ${Math.max(0, stop - blend)}px,
-            #fff7d1 ${stop}px,
-            #ffd166 ${stop + blend}px,
-            #ffd166 100%)`;
-      }
-      window.addEventListener('load', apply);
-      window.addEventListener('resize', apply);
-      new ResizeObserver(apply).observe(document.body);
-      setTimeout(apply, 100);
-    })();
+  <div id="chart-row-bottom">
+    <div class="chartbox">
+      <div class="charthead">
+        <div>TF 3 (<span id="tfLabel3"></span>)</div>
+        <div class="anglewrap"><span id="angle3" class="anglebadge">—</span></div>
+      </div>
+      <div class="chartsplit"><div class="chartcanvas" id="chart3"></div></div>
+    </div>
+    <div class="chartbox">
+      <div class="charthead">
+        <div>TF 4 (<span id="tfLabel4"></span>)</div>
+        <div class="anglewrap"><span id="angle4" class="anglebadge">—</span></div>
+      </div>
+      <div class="chartsplit"><div class="chartcanvas" id="chart4"></div></div>
+    </div>
+    <div class="chartbox">
+      <div class="charthead">
+        <div>TF 5 (<span id="tfLabel5"></span>)</div>
+        <div class="anglewrap"><span id="angle5" class="anglebadge">—</span></div>
+      </div>
+      <div class="chartsplit"><div class="chartcanvas" id="chart5"></div></div>
+    </div>
+  </div>
+</div>
+  </div>
+  <div id="signals">
+    
+    <div id="emaAnglePanel" class="sig-card" style="margin-bottom:10px;">
+      <div class="bpg-panel-title" data-bpg="turbo-scan-gate"><span class="bpg-icon-turbo" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l2.2 6.3H21l-5.4 3.9L17.8 18 12 14.1 6.2 18l2.2-5.8L3 8.3h6.8L12 2z" stroke="currentColor" stroke-width="2" fill="currentColor"/></svg></span><span>B Plus Gaing Turbo Scan Gate</span></div>
 
-    /* ===================== Deriv OAuth (APP ID: 106142) ===================== */
-    const APP_ID = '106142';
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+        <span class="bpg-cutoff" data-bpg="cutoff"><span class="bpg-icon-cutoff" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M7 18V8l5-3 5 3v10" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 12v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg></span><span>Cutoff</span></span>
+        <span id="emaAngleVal" style="font-size:11px;color:#e5e7eb;">5°</span>
+      </div>
 
-    // Get redirect URI from (priority): ?redirect=… → window.DERIV_REDIRECT → <meta name="deriv-redirect"> → fallback (same page)
-    function getRedirectUri(){
-      const q = new URLSearchParams(window.location.search);
-      if (q.get('redirect')) return q.get('redirect');
-      if (window.DERIV_REDIRECT) return window.DERIV_REDIRECT;
-      const meta = document.querySelector('meta[name="deriv-redirect"]');
-      if (meta && meta.content) return meta.content;
-      return window.location.origin + window.location.pathname;
+      <input id="emaAngleSlider" type="range" min="1" max="80" value="5" step="1" style="width:100%;margin-top:6px;">
+
+      <div style="font-size:11px;color:#6b7280;margin-top:6px;line-height:1.25;">
+        DOWN if angle ≤ -<span id="emaAngleVal2">5</span>° &nbsp;|&nbsp;
+        UP if angle ≥ <span id="emaAngleVal3">5</span>°
+      </div>
+
+      <div style="margin-top:6px;font-size:12px;">
+        <span style="color:#9ca3af;">B Plus Gaing Turbo Scan Result:</span>
+        <span id="emaAllTrendLabel" style="font-weight:800;">—</span>
+      
+    <div id="aiPlanPanel" class="sig-card" style="margin-bottom:10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <div style="font-size:12px;color:#e5e7eb;font-weight:600;">OpenAI Trade Plan</div>
+        <div id="aiPlanStatus" style="font-size:11px;color:#9ca3af;">—</div>
+      </div>
+
+      <div style="margin-top:8px;display:grid;grid-template-columns: 1fr 1fr;gap:8px;">
+        <div>
+          <div style="font-size:11px;color:#94a3b8;">Bias</div>
+          <div id="aiBias" style="font-size:14px;font-weight:800;">WAIT</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:#94a3b8;">Confidence</div>
+          <div id="aiConf" style="font-size:14px;font-weight:800;">0%</div>
+        </div>
+      </div>
+
+      <div style="margin-top:8px;">
+        <div style="font-size:11px;color:#94a3b8;">Entry</div>
+        <div id="aiEntry" style="font-size:13px;font-weight:700;">—</div>
+      </div>
+
+      <div style="margin-top:6px;display:grid;grid-template-columns: 1fr 1fr;gap:8px;">
+        <div>
+          <div style="font-size:11px;color:#94a3b8;">SL</div>
+          <div id="aiSL" style="font-size:13px;font-weight:700;">—</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:#94a3b8;">TPs</div>
+          <div id="aiTP" style="font-size:13px;font-weight:700;">—</div>
+        </div>
+      </div>
+
+      <div style="margin-top:8px;">
+        <div style="font-size:11px;color:#94a3b8;">Reasons</div>
+        <div id="aiReason" style="font-size:11px;color:#cbd5e1;line-height:1.35;">—</div>
+      </div>
+
+      <div style="margin-top:6px;">
+        <div style="font-size:11px;color:#94a3b8;">Invalidation</div>
+        <div id="aiInvalid" style="font-size:11px;color:#cbd5e1;line-height:1.35;">—</div>
+      </div>
+    </div>
+
+    <div id="aiComparePanel" class="sig-card" style="margin-bottom:10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <div style="font-size:12px;color:#e5e7eb;font-weight:600;">B Plus Gaing Insight vs Core</div>
+        <div id="cmpStatus" style="font-size:11px;color:#9ca3af;">—</div>
+      </div>
+
+      <div style="margin-top:8px;display:grid;grid-template-columns: 1fr 1fr;gap:8px;">
+        <div>
+          <div style="font-size:11px;color:#94a3b8;">Core</div>
+          <div id="cmpEngine" style="font-size:14px;font-weight:800;">—</div>
+          <div id="cmpEngineMeta" style="font-size:11px;color:#9ca3af;margin-top:2px;">—</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:#94a3b8;">OpenAI</div>
+          <div id="cmpAI" style="font-size:14px;font-weight:800;">—</div>
+          <div id="cmpAIMeta" style="font-size:11px;color:#9ca3af;margin-top:2px;">—</div>
+        </div>
+      </div>
+
+      <div style="margin-top:8px;">
+        <div style="font-size:11px;color:#94a3b8;">Decision</div>
+        <div id="cmpDecision" style="font-size:12px;color:#cbd5e1;line-height:1.35;">—</div>
+      </div>
+    </div>
+</div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;">
+  <div id="signals-title">Live Signals – Selected Market (last 15 minutes)</div>
+  <select id="sigTfFilter" style="background:#0b1220;border:1px solid #1f2937;color:#e5e7eb;border-radius:10px;padding:6px 10px;font-size:12px;">
+    <option value="all" selected>All TF</option>
+    <option value="1m">1m</option>
+    <option value="2m">2m</option>
+    <option value="5m">5m</option>
+    <option value="10m">10m</option>
+    <option value="15m">15m</option>
+    <option value="30m">30m</option>
+    <option value="1h">1h</option>
+  </select>
+</div>
+<div id="sig-list" style="font-size:12px;color:#9ca3af;">Waiting for data…</div>
+  </div>
+  </div>
+  <div id="bottom-indicators">
+    <div class="bi-row">
+      <div class="bi-card">
+        <div class="bi-title">Trend Strength — 1h</div>
+        <div class="bi-sub">Up trend = green candles • Down trend = red candles</div>
+        <div class="bi-slot"><div class="chartind" id="ind1"></div></div>
+      </div>
+      <div class="bi-card">
+        <div class="bi-title">Trend Strength — 2h</div>
+        <div class="bi-sub">Up trend = green candles • Down trend = red candles</div>
+        <div class="bi-slot"><div class="chartind" id="ind2"></div></div>
+      </div>
+      <div class="bi-card">
+        <div class="bi-title">Trend Strength — 4h</div>
+        <div class="bi-sub">Up trend = green candles • Down trend = red candles</div>
+        <div class="bi-slot"><div class="chartind" id="ind3"></div></div>
+      </div>
+      <div class="bi-card">
+        <div class="bi-title">Trend Strength — 1d</div>
+        <div class="bi-sub">Up trend = green candles • Down trend = red candles</div>
+        <div class="bi-slot"><div class="chartind" id="ind4"></div></div>
+      </div>
+    </div>
+
+    <div class="bi-jet">
+      <div class="bi-card jetCard">
+        <div class="bi-title">Jet Detect Strength — 15m</div>
+        <div class="bi-sub">Stronger = darker • Weaker = lighter • BUY green / SELL red</div>
+        <div class="bi-slot"><div class="chartind" id="ind5"></div></div>
+      </div>
+    </div>
+
+      <div class="bi-card availCard">
+        <div class="bi-title">Available Crypto Signals (Auto Scan)</div>
+        <div class="bi-sub">Shows crypto symbols with the most recent BUY/SELL strategy signal (last 15 min)</div>
+        <div class="availList" id="availList">—</div>
+      </div>
+
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- TP Settings -->
+<div id="tpModal" class="tp-modal-backdrop">
+  <div class="tp-modal">
+    <div class="tp-title">TP Settings</div>
+
+    <div class="tp-field">
+      <label>TP places</label>
+      <select id="tpCount">
+        <option value="1">1 TP</option>
+        <option value="2">2 TP</option>
+        <option value="3">3 TP</option>
+        <option value="4">4 TP</option>
+        <option value="5">5 TP</option>
+      </select>
+      <div class="alarm-note">Keep 1 to 5 TP places for each signal.</div>
+    </div>
+
+    <div class="tp-field">
+      <label>TP background color</label>
+      <input type="color" id="tpBgColor" value="#1d4ed8">
+    </div>
+
+    <div class="tp-field">
+      <label>TP font color</label>
+      <input type="color" id="tpFontColor" value="#000000">
+    </div>
+
+    <!-- TP sound ON/OFF -->
+    <div class="tp-field">
+      <label>TP sound</label>
+      <div class="alarm-inline">
+        <select id="tpSoundEnabled">
+          <option value="on" selected>ON</option>
+          <option value="off">OFF</option>
+        </select>
+      </div>
+      <div class="alarm-note">Turn TP achieve sound on or off.</div>
+    </div>
+
+    <div class="tp-field">
+      <label>TP achieve sound</label>
+      <div class="alarm-inline">
+        <select id="tpSoundType">
+          <option value="slot">Slot machine payout</option>
+          <option value="emergency">Emergency alert</option>
+          <option value="hall">Hall alert</option>
+          <option value="facility">Facility alarm</option>
+          <option value="classic">Classic alarm</option>
+        </select>
+        <button id="testTpSound" class="btn-secondary" style="font-size:11px;padding:4px 8px;">Test TP sound</button>
+      </div>
+      <div class="alarm-note">Sound used when TP1–TP5 are achieved.</div>
+    </div>
+
+    <div class="tp-actions">
+      <button id="closeTp" class="btn-secondary">Close</button>
+      <button id="saveTp" class="btn-primary">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Signals Settings -->
+<div id="signalModal" class="signal-modal-backdrop">
+  <div class="signal-modal">
+    <div class="signal-title">Signals Settings</div>
+
+    <div class="signal-field">
+      <label>Graph Timeframe (for notifications)</label>
+      <select id="signalTfFilter">
+        <option value="1m">1 minute</option>
+        <option value="2m">2 minutes</option>
+        <option value="5m">5 minutes</option>
+        <option value="10m">10 minutes</option>
+        <option value="15m">15 minutes</option>
+        <option value="30m">30 minutes</option>
+        <option value="1h">1 hour</option>
+        <option value="4h">4 hours</option>
+      </select>
+      <div class="alarm-note">
+        If saved, notifications & sounds will come only for this timeframe.
+      </div>
+    </div>
+
+    <div class="signal-field">
+      <label>Notification display</label>
+      <select id="notifPosition">
+        <option value="top-left">Top left corner</option>
+        <option value="top-right">Top right corner</option>
+        <option value="bottom-left">Bottom left corner</option>
+        <option value="bottom-right" selected>Bottom right corner</option>
+        <option value="center">Center</option>
+      </select>
+    </div>
+
+    <div class="signal-field">
+      <label>Notification holding time (seconds)</label>
+      <input type="number" id="notifHold" min="2" max="60" value="4" style="width:80px;">
+      <div class="alarm-note">
+        Between 2 – 60 seconds. How long notifications stay visible.
+      </div>
+    </div>
+
+    <!-- Notification colors -->
+    <div class="signal-field">
+      <label>Notification background color</label>
+      <input type="color" id="notifBgColor" value="#020617">
+    </div>
+
+    <div class="signal-field">
+      <label>Notification font color</label>
+      <input type="color" id="notifFontColor" value="#e5e7eb">
+    </div>
+
+    <div class="signal-field">
+      <label>Alarm sound</label>
+      <div class="alarm-inline">
+        <select id="soundType">
+          <option value="1">Beep type 1</option>
+          <option value="2">Beep type 2</option>
+          <option value="3">Beep type 3</option>
+          <option value="4">Beep type 4</option>
+          <option value="5">Beep type 5</option>
+
+          <option value="slot">Slot machine payout (file)</option>
+          <option value="emergency">Emergency alert (file)</option>
+          <option value="hall">Hall alert (file)</option>
+          <option value="facility">Facility alarm (file)</option>
+          <option value="classic">Classic alarm (file)</option>
+
+          <option value="custom">Custom (uploaded)</option>
+        </select>
+        <button id="testSound" class="btn-secondary" style="font-size:11px;padding:4px 8px;">Test</button>
+      </div>
+      <div class="alarm-note">Choose a sound type and test before saving.</div>
+    </div>
+
+    <div class="signal-field">
+      <label>Ringing time</label>
+      <select id="soundDuration">
+        <option value="3">3 seconds</option>
+        <option value="5">5 seconds</option>
+        <option value="7">7 seconds</option>
+        <option value="10">10 seconds</option>
+        <option value="15">15 seconds</option>
+      </select>
+      <div class="alarm-note">Alarm will ring between 3 – 15 seconds.</div>
+    </div>
+
+    <div class="signal-field">
+      <label>Add own alarm sound</label>
+      <input type="file" id="customSoundFile" accept="audio/*">
+      <div class="alarm-note">
+        Upload your own audio and select <strong>Custom (uploaded)</strong> in Alarm sound.
+      </div>
+    </div>
+    <!-- EMA OVERLAYS -->
+    <div class="signal-field" style="margin-top:12px;padding-top:10px;border-top:1px solid #1f2937;">
+      <label>EMA overlays (on chart)</label>
+
+      <div class="signal-inline" style="justify-content:space-between;">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span style="font-size:12px;color:#9ca3af;">EMA 1</span>
+          <select id="ema1Enabled" style="min-width:70px;">
+            <option value="on" selected>ON</option>
+            <option value="off">OFF</option>
+          </select>
+          <input type="number" id="ema1Period" min="1" max="200" value="10" style="width:80px;">
+        </div>
+        <span style="font-size:11px;color:#6b7280;">Period 1–200</span>
+      </div>
+
+      <div class="signal-inline" style="justify-content:space-between;margin-top:8px;">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span style="font-size:12px;color:#9ca3af;">EMA 2</span>
+          <select id="ema2Enabled" style="min-width:70px;">
+            <option value="on" selected>ON</option>
+            <option value="off">OFF</option>
+          </select>
+          <input type="number" id="ema2Period" min="1" max="200" value="1" style="width:80px;">
+        </div>
+        <span style="font-size:11px;color:#6b7280;">Optional 2nd EMA</span>
+      </div>
+
+      <div class="alarm-note" style="margin-top:6px;">
+        EMA lines are drawn on the main price chart. Save to apply.
+      </div>
+    </div>
+
+
+    <div class="signal-actions">
+      <button id="closeSignal" class="btn-secondary">Close</button>
+      <button id="previewSignal" class="btn-secondary">Preview</button>
+      <button id="saveSignal" class="btn-primary">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* CONFIG */
+const APP_ID = 108701;
+const API_TOKEN = "QSDAQPsfjphEvtT";
+const WS_URL  = `wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`;
+
+let ALL_SYMBOLS = [
+  "R_10","R_25","R_50","R_75","R_100",
+  "R_10S","R_25S","R_50S","R_75S","R_100S",
+
+  // Forex pairs
+  "frxAUDCAD","frxAUDCHF","frxAUDJPY","frxAUDNZD","frxAUDUSD",
+  "frxEURAUD","frxEURCAD","frxEURCHF","frxEURGBP","frxEURJPY","frxEURNOK","frxEURNZD","frxEURUSD",
+  "frxGBPAUD","frxGBPCAD","frxGBPCHF","frxGBPJPY","frxGBPNOK","frxGBPUSD",
+  "frxNZDJPY","frxNZDUSD",
+  "frxUSDCAD","frxUSDCHF","frxUSDJPY","frxUSDNOK","frxUSDPLN","frxUSDSEK","frxUSDZAR"
+];
+
+/* === CRYPTO MARKETS (auto-load from Deriv active_symbols) ===
+   This keeps the list up-to-date without hardcoding symbol codes.
+   It will add a "Crypto" group to the Market dropdown and include those symbols
+   in the multi-market signal scan (history+live subscriptions).
+*/
+let CRYPTO_SYMBOLS = [];
+
+function fetchActiveSymbols(productType="basic"){
+  return new Promise((resolve, reject) => {
+    try{
+      const ws = new WebSocket(WS_URL);
+      const timer = setTimeout(() => {
+        try{ ws.close(); }catch(e){}
+        reject(new Error("active_symbols timeout"));
+      }, 9000);
+
+      ws.onopen = () => {
+        ws.send(JSON.stringify({ active_symbols: "brief", product_type: productType }));
+      };
+
+      ws.onmessage = (ev) => {
+        const msg = JSON.parse(ev.data || "{}");
+        if (msg.error){
+          clearTimeout(timer);
+          try{ ws.close(); }catch(e){}
+          reject(new Error(msg.error.message || "active_symbols error"));
+          return;
+        }
+        if (msg.msg_type === "active_symbols" && Array.isArray(msg.active_symbols)){
+          clearTimeout(timer);
+          try{ ws.close(); }catch(e){}
+          resolve(msg.active_symbols);
+        }
+      };
+
+      ws.onerror = () => {
+        clearTimeout(timer);
+        try{ ws.close(); }catch(e){}
+        reject(new Error("active_symbols socket error"));
+      };
+    }catch(e){
+      reject(e);
     }
-    function buildOAuthUrl(redirect){
-      const uri = redirect || getRedirectUri();
-      return `https://oauth.deriv.com/oauth2/authorize?app_id=${APP_ID}&redirect_uri=${encodeURIComponent(uri)}`;
-    }
+  });
+}
 
-    // Handle callback (token + account)
-    (function handleOAuthCallback() {
-      const params = new URLSearchParams(window.location.search);
-      if (params.has('token1') && params.has('acct1')) {
-        localStorage.setItem('deriv_token', params.get('token1'));
-        localStorage.setItem('deriv_loginid', params.get('acct1'));
-        // Clean query after capturing
-        history.replaceState(null, '', window.location.origin + window.location.pathname);
+// Fetch symbols for multiple product types and merge (helps when Crypto is available under Multipliers, etc.)
+async function fetchAllActiveSymbols(){
+  const out = [];
+  const seen = new Set();
+
+  // Try BASIC first, then MULTIPLIERS
+  const types = ["basic","multipliers"];
+  for (const t of types){
+    try{
+      const arr = await fetchActiveSymbols(t);
+      if (Array.isArray(arr)){
+        for (const s of arr){
+          const key = String((s && s.symbol) || "") + "|" + String((s && s.market) || "") + "|" + String((s && s.submarket) || "");
+          if (!seen.has(key)){
+            seen.add(key);
+            out.push(s);
+          }
+        }
       }
-    })();
+    }catch(e){
+      // Ignore if a product_type is not supported for this account/app
+      console.warn("active_symbols failed for product_type:", t, e);
+    }
+  }
+  return out;
+}
 
-    const TOKEN = localStorage.getItem('deriv_token');
 
-    // Login link
-    const loginLink = document.getElementById('loginLink');
-    loginLink.addEventListener('click', (e)=>{
-      e.preventDefault();
-      window.location.href = buildOAuthUrl();
+function fillCryptoGroupOptions(list){
+  const group = document.getElementById("cryptoGroup");
+  if(!group) return;
+
+  // clear old
+  group.innerHTML = "";
+
+  // sort by display name
+  const sorted = list.slice().sort((a,b)=> String(a.display_name||"").localeCompare(String(b.display_name||"")));
+
+  sorted.forEach(s => {
+    const opt = document.createElement("option");
+    opt.value = s.symbol;
+    opt.textContent = s.display_name || s.symbol;
+    group.appendChild(opt);
+  });
+}
+
+async function initCryptoMarkets(){
+  try{
+    const all = await fetchAllActiveSymbols();
+
+    // Deriv uses "market" field like "cryptocurrency" in active_symbols.
+    const crypto = all.filter(sym => {
+      const m = String(sym.market || "");
+      const mdn = String(sym.market_display_name || "");
+      const smdn = String(sym.submarket_display_name || "");
+      return m === "cryptocurrency" || /crypto/i.test(mdn) || /crypto/i.test(smdn);
     });
 
-    // OPTIONAL: If you want a menu item to force OAuth with a custom redirect:
-    // document.querySelector('[data-section="signals"]').addEventListener('click', ()=>{
-    //   window.location.href = buildOAuthUrl('https://your-site.com/after-signals');
-    // });
+    // Fill dropdown group
+    fillCryptoGroupOptions(crypto);
 
-    // Helper: format USD
-    const fmtUSD = (n)=> (Number(n)||0).toFixed(2) + ' USD';
+    // Keep a symbol list for scanning/subscriptions (ALL, not just a few)
+    CRYPTO_SYMBOLS = crypto.map(x => x.symbol).filter(Boolean);
 
-    // Topbar refs
-    const elTopUser   = document.getElementById('top-user');
-    const elTopBal    = document.getElementById('top-balance');
-    const elTopCR     = document.getElementById('top-cr');
-    const elTopPnL    = document.getElementById('top-pnl');
+    // Merge into ALL_SYMBOLS (used by the scanner)
+    ALL_SYMBOLS = Array.from(new Set([...(ALL_SYMBOLS || []), ...CRYPTO_SYMBOLS]));
 
-    // Dashboard cards
-    const elBalCard   = document.getElementById('balance');
-    const elCRCard    = document.getElementById('cr');
-    const elPNLCard   = document.getElementById('pnl');
+    console.log("Crypto markets enabled:", CRYPTO_SYMBOLS.length);
+  }catch(e){
+    console.warn("Crypto markets could not be loaded:", e);
+    // tool still works with existing markets
+  }
+}
 
-    if (TOKEN) {
-      const wsAcct = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`);
-      wsAcct.onopen = ()=> wsAcct.send(JSON.stringify({ authorize: TOKEN }));
+// initialize Binance markets as soon as possible
+try{
+  initBinanceMarkets();
+}catch(e){
+  console.warn("initBinanceMarkets error", e);
+}
 
-      wsAcct.onmessage = (ev)=>{
-        const data = JSON.parse(ev.data);
+let __pendingJetSync = null;
 
-        if(data.msg_type === 'authorize'){
-          const auth = data.authorize||{};
-          const fullName = auth.fullname || auth.loginid || 'User';
-          const loginid  = auth.loginid || '-';
-          const balStr   = fmtUSD(auth.balance);
+function __applyJetSync(payload){
+  if(!payload) return false;
+  const sel = document.getElementById("symbol");
+  if(!sel) return false;
 
-          elTopUser.textContent  = fullName;
-          elTopBal.innerHTML     = `<span class="label">Bal:</span> ${balStr}`;
-          elTopCR.innerHTML      = `<span class="label">CR:</span> ${loginid}`;
-          loginLink.style.display = 'none';
+  const market = (payload.market || "").toString().toLowerCase();
+  const wantsFut = market.startsWith("fut") || /(?:\?|&)market=futures/i.test(location.search);
+  const prefix = wantsFut ? "bf:" : "bn:";
 
-          elBalCard.textContent  = balStr;
-          elCRCard.textContent   = loginid;
+  if(payload.symbol){
+    const val = prefix + String(payload.symbol).toUpperCase();
+    // If options not loaded yet, keep pending
+    if(!sel.querySelector(`option[value="${val}"]`)) return false;
+    sel.value = val;
+  }
 
-          const now = new Date();
-          const utcMidnight = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())/1000;
-          const nowEpoch = Math.floor(Date.now()/1000);
-          wsAcct.send(JSON.stringify({
-            profit_table: 1,
-            description: 1,
-            date_from: utcMidnight,
-            date_to: nowEpoch,
-            limit: 500
+  // Accept either "tf" (used by trades.html/app.js) or "timeframe" (legacy)
+  const tfValue = (payload && payload.tf != null) ? payload.tf : (payload ? payload.timeframe : null);
+  if(tfValue){
+    // Main timeframe selector id is "tf"
+    const tfSel = document.getElementById("tf");
+    if(tfSel) tfSel.value = String(tfValue);
+  }
+
+  try{ loadData(); }catch(_){}
+  return true;
+}
+
+window.addEventListener("message",(ev)=>{
+  const d = ev && ev.data ? ev.data : null;
+  if(!d || d.type !== "JET_ENGINE_SYNC") return;
+  // trades.html/app.js send { tf }, keep backwards-compat with { timeframe }
+  __pendingJetSync = { symbol:d.symbol, tf:(d.tf != null ? d.tf : d.timeframe), market:d.market };
+  try{ __applyJetSync(__pendingJetSync); }catch(_){}
+});
+
+/* === END CRYPTO MARKETS === */
+
+
+/* === BINANCE CRYPTO (ALL PAIRS) ===
+   - Loads ALL Spot + Futures (USD-M PERP) symbols from Binance
+   - Adds them under:
+       Binance Spot                  -> bn:BTCUSDT
+       Binance Futures (USD-M Perp)  -> bf:BTCUSDT
+   - Candles: tries backend (/api/klines) first to avoid browser CORS blocks.
+   - Live:
+       Spot    -> VPS relay (wss://ws.derivesupanalyzer.site/) with fallback to Binance spot WSS
+       Futures -> Binance futures WSS (wss://fstream.binance.com/ws)
+*/
+let BINANCE_SYMBOLS = [];           // Spot
+let BINANCE_FUTURES_SYMBOLS = [];   // USD-M perpetual futures
+let BIN_WS = null;
+
+// Binance relay endpoint (must be WSS because your site is HTTPS)
+const BINANCE_RELAY_WSS = "wss://ws.derivesupanalyzer.site/";
+// Direct Binance WSS fallbacks
+const BINANCE_SPOT_WSS_BASE = "wss://stream.binance.com:9443/ws/";
+const BINANCE_FUTURES_WSS_BASE = "wss://fstream.binance.com/ws/";
+
+async function __tryFetchJson(url){
+  const r = await fetch(url, { cache: "no-store" });
+  if(!r.ok) throw new Error("HTTP "+r.status);
+  return await r.json();
+}
+
+async function fetchBinanceExchangeInfoSpot(){
+  // Spot exchangeInfo (public) – fallback only
+  const urls = [
+    "https://api.binance.com/api/v3/exchangeInfo",
+    "https://api1.binance.com/api/v3/exchangeInfo",
+    "https://api2.binance.com/api/v3/exchangeInfo",
+    "https://api3.binance.com/api/v3/exchangeInfo",
+    "https://data-api.binance.vision/api/v3/exchangeInfo"
+  ];
+  let lastErr = null;
+  for (const u of urls){
+    try{ return await __tryFetchJson(u); }catch(e){ lastErr = e; }
+  }
+  throw lastErr || new Error("Binance spot exchangeInfo failed");
+}
+
+async function fetchBinanceExchangeInfoFutures(){
+  // USD-M futures exchangeInfo (public) – fallback only
+  const urls = [
+    "https://fapi.binance.com/fapi/v1/exchangeInfo",
+    "https://fstream.binance.com/fapi/v1/exchangeInfo",
+    "https://data.binance.vision/fapi/v1/exchangeInfo"
+  ];
+  let lastErr = null;
+  for (const u of urls){
+    try{ return await __tryFetchJson(u); }catch(e){ lastErr = e; }
+  }
+  throw lastErr || new Error("Binance futures exchangeInfo failed");
+}
+
+async function fetchBinanceSpotSymbols(){
+  // Prefer backend (same origin, no CORS)
+  try{
+    const j = await __tryFetchJson("/api/symbols?market=spot");
+    const arr = Array.isArray(j && j.symbols) ? j.symbols : [];
+    if(arr.length){
+      return arr.map(s => ({ symbol:s.symbol, baseAsset:s.baseAsset, quoteAsset:s.quoteAsset }));
+    }
+  }catch(_){}
+  // Fallback: public exchangeInfo (may be blocked by browser CORS)
+  const info = await fetchBinanceExchangeInfoSpot();
+  const symbols = Array.isArray(info && info.symbols) ? info.symbols : [];
+  return symbols
+    .filter(s => s && s.status === "TRADING" && (s.isSpotTradingAllowed !== false))
+    .map(s => ({ symbol:s.symbol, baseAsset:s.baseAsset, quoteAsset:s.quoteAsset }));
+}
+
+async function fetchBinanceFuturesSymbols(){
+  // Prefer backend (same origin, no CORS)
+  try{
+    const j = await __tryFetchJson("/api/symbols?market=futures");
+    const arr = Array.isArray(j && j.symbols) ? j.symbols : [];
+    if(arr.length){
+      return arr.map(s => ({ symbol:s.symbol, baseAsset:s.baseAsset, quoteAsset:s.quoteAsset }));
+    }
+  }catch(_){}
+  // Fallback: public exchangeInfo (may be blocked by browser CORS)
+  const info = await fetchBinanceExchangeInfoFutures();
+  const symbols = Array.isArray(info && info.symbols) ? info.symbols : [];
+  return symbols
+    .filter(s => s && s.status === "TRADING" && s.contractType === "PERPETUAL")
+    .map(s => ({ symbol:s.symbol, baseAsset:s.baseAsset, quoteAsset:s.quoteAsset }));
+}
+
+function fillBinanceGroupOptions(list){
+  const group = document.getElementById("binanceGroup");
+  if(!group) return;
+  group.innerHTML = "";
+
+  const sorted = (list || []).slice().sort((a,b)=> (a.symbol||"").localeCompare(b.symbol||""));
+  for(const s of sorted){
+    const sym = (s && s.symbol) ? String(s.symbol) : "";
+    if(!sym) continue;
+
+    const opt = document.createElement("option");
+    opt.value = "bn:" + sym;
+    const base = s.baseAsset || "";
+    const quote = s.quoteAsset || "";
+    opt.textContent = (base && quote) ? `${base}/${quote}` : sym;
+    group.appendChild(opt);
+  }
+}
+
+function fillBinanceFuturesGroupOptions(list){
+  const group = document.getElementById("binanceFuturesGroup");
+  if(!group) return;
+  group.innerHTML = "";
+
+  const sorted = (list || []).slice().sort((a,b)=> (a.symbol||"").localeCompare(b.symbol||""));
+  for(const s of sorted){
+    const sym = (s && s.symbol) ? String(s.symbol) : "";
+    if(!sym) continue;
+
+    const opt = document.createElement("option");
+    opt.value = "bf:" + sym;
+    const base = s.baseAsset || "";
+    const quote = s.quoteAsset || "";
+    opt.textContent = (base && quote) ? `${base}/${quote}` : sym;
+    group.appendChild(opt);
+  }
+}
+
+async function initBinanceMarkets(){
+  try{
+    const [spot, fut] = await Promise.all([
+      fetchBinanceSpotSymbols().catch(()=>[]),
+      fetchBinanceFuturesSymbols().catch(()=>[])
+    ]);
+
+    BINANCE_SYMBOLS = Array.isArray(spot) ? spot : [];
+    BINANCE_FUTURES_SYMBOLS = Array.isArray(fut) ? fut : [];
+
+    fillBinanceGroupOptions(BINANCE_SYMBOLS);
+    fillBinanceFuturesGroupOptions(BINANCE_FUTURES_SYMBOLS);
+
+    // Default to BTCUSDT if available
+    const sel = document.getElementById("symbol");
+    if(sel){
+      const wantsFut = /(?:\?|&)market=futures/i.test(location.search);
+      const def = wantsFut ? "bf:BTCUSDT" : "bn:BTCUSDT";
+      if(sel.querySelector(`option[value="${def}"]`)) sel.value = def;
+      else{
+        // pick first available option from preferred group
+        const first = wantsFut
+          ? (document.querySelector("#binanceFuturesGroup option") || document.querySelector("#binanceGroup option"))
+          : (document.querySelector("#binanceGroup option") || document.querySelector("#binanceFuturesGroup option"));
+        if(first && first.value) sel.value = first.value;
+      }
+    }
+
+    // If a parent iframe sent a sync message before options were ready, apply it now
+    if(__pendingJetSync){
+      try{
+        if(__applyJetSync(__pendingJetSync)) __pendingJetSync = null;
+      }catch(_){ }
+    }
+
+  }catch(e){
+    console.warn("initBinanceMarkets error:", e);
+  }
+}
+
+// Binance interval mapping
+function toBinanceInterval(tf){
+  const ok = new Set(["1m","3m","5m","15m","30m","1h","2h","4h","6h","8h","12h","1d","3d","1w","1M"]);
+  if(ok.has(tf)) return tf;
+  const map = {"10m":"15m"};
+  return map[tf] || "5m";
+}
+
+async function fetchBinanceKlines(symbol, interval, limit=600, market="spot"){
+  const m = String(market || "spot").toLowerCase();
+  const isFutures = m.startsWith("fut");
+
+  // Prefer backend proxy (same-origin, no CORS)
+  try{
+    const r = await fetch(`/api/klines?market=${encodeURIComponent(isFutures ? "futures" : "spot")}&symbol=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}&limit=${encodeURIComponent(limit)}`, { cache:"no-store" });
+    if(r.ok){
+      const j = await r.json();
+      if(j && Array.isArray(j.klines)) return j.klines;
+    }
+  }catch(_){}
+
+  // Fallback: public REST (may be blocked by browser CORS)
+  const base = isFutures ? "https://fapi.binance.com" : "https://api.binance.com";
+  const path = isFutures ? "/fapi/v1/klines" : "/api/v3/klines";
+  const urls = [
+    `${base}${path}?symbol=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}&limit=${limit}`,
+    // Vision endpoint (spot only) + futures vision
+    (!isFutures ? `https://data-api.binance.vision/api/v3/klines?symbol=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}&limit=${limit}` : `https://data.binance.vision/fapi/v1/klines?symbol=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}&limit=${limit}`)
+  ].filter(Boolean);
+
+  let lastErr=null;
+  for(const u of urls){
+    try{
+      const r=await fetch(u,{cache:"no-store"});
+      if(!r.ok) throw new Error("HTTP "+r.status);
+      const j = await r.json();
+      if(Array.isArray(j)) return j;
+    }catch(e){ lastErr=e; }
+  }
+  throw lastErr || new Error("Binance klines failed");
+}
+
+// Close Binance streams (main + TF bundles)
+function closeBinanceWS(){
+  try{ if(BIN_WS){ BIN_WS.close(); } }catch(e){}
+  BIN_WS=null;
+
+  // bundles (TF2..TF5)
+  try{
+    const bundles = [chart2Bundle, chart3Bundle, chart4Bundle, chart5Bundle];
+    for(const b of bundles){
+      if(b && b.binWs){
+        try{ b.binWs.close(); }catch(e){}
+        b.binWs = null;
+      }
+    }
+  }catch(e){}
+}
+
+function __extractKline(evData){
+  try{
+    const msg = (typeof evData === "string") ? JSON.parse(evData||"{}") : (evData||{});
+    const k = (msg && msg.k) ? msg.k : (msg && msg.data && msg.data.k ? msg.data.k : null);
+    if(!k) return null;
+
+    const t = Math.floor((k.t||0)/1000);
+    const o = parseFloat(k.o);
+    const h = parseFloat(k.h);
+    const l = parseFloat(k.l);
+    const c = parseFloat(k.c);
+    const closed = !!k.x;
+
+    if(!t || !isFinite(o) || !isFinite(h) || !isFinite(l) || !isFinite(c)) return null;
+    return { t, o, h, l, c, closed };
+  }catch(_){
+    return null;
+  }
+}
+
+function __buildWsUrl(symbol, interval, market){
+  const m = String(market || "spot").toLowerCase();
+  const isFutures = m.startsWith("fut");
+  if(isFutures){
+    return `${BINANCE_FUTURES_WSS_BASE}${String(symbol||"").toLowerCase()}@kline_${interval}`;
+  }
+  // Spot: prefer relay
+  return `${BINANCE_RELAY_WSS}?symbol=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}`;
+}
+
+// Spot direct WSS fallback (if relay blocked)
+function __buildSpotFallbackWsUrl(symbol, interval){
+  return `${BINANCE_SPOT_WSS_BASE}${String(symbol||"").toLowerCase()}@kline_${interval}`;
+}
+
+function startBinanceKlineStream(symbol, interval, market="spot"){
+  closeBinanceWS();
+  try{
+    const isFutures = String(market||"").toLowerCase().startsWith("fut");
+    let usedFallback = false;
+
+    const openWs = (url)=>{
+      BIN_WS = new WebSocket(url);
+      BIN_WS.onmessage = (ev)=>{
+        const k = __extractKline(ev.data);
+        if(!k) return;
+
+        const {t,o,h,l,c,closed} = k;
+
+        if(Array.isArray(DATA) && DATA.length){
+          const last = DATA[DATA.length-1];
+          if(last && last.time === t){
+            last.open=o; last.high=h; last.low=l; last.close=c;
+          }else if(t > (last.time||0)){
+            DATA.push({time:t, open:o, high:h, low:l, close:c});
+            if(DATA.length > 800) DATA = DATA.slice(-800);
+          }
+
+          candleSeries.update({ time:t, open:o, high:h, low:l, close:c });
+
+          const now = Date.now();
+          if(closed || !window.__bnMainLastCalc || (now - window.__bnMainLastCalc) > 1000){
+            window.__bnMainLastCalc = now;
+            calcBB();
+            calcEMAs();
+            SIGNALS = filterSignalsByJetDetectorFinal(detectSignalsMain(Math.max(0, DATA.length-2)));
+            applyMarkers();
+          }
+        }
+      };
+      BIN_WS.onopen = ()=>{};
+      BIN_WS.onerror = ()=>{
+        // For spot: if relay fails, fall back to direct Binance spot WSS
+        if(!isFutures && !usedFallback){
+          usedFallback = true;
+          try{ BIN_WS.close(); }catch(_){}
+          BIN_WS = null;
+          try{ openWs(__buildSpotFallbackWsUrl(symbol, interval)); }catch(_){}
+        }
+      };
+      BIN_WS.onclose = ()=>{};
+    };
+
+    openWs(__buildWsUrl(symbol, interval, market));
+  }catch(e){
+    console.warn("startBinanceKlineStream error:", e);
+  }
+}
+
+// Live stream for TF bundles (TF2..TF5)
+function startBinanceKlineStreamToBundle(bundle, symbol, interval, tfLabel, market="spot"){
+  if(!bundle) return;
+  try{ if(bundle.binWs){ bundle.binWs.close(); } }catch(e){}
+  bundle.binWs = null;
+
+  try{
+    const isFutures = String(market||"").toLowerCase().startsWith("fut");
+    let usedFallback = false;
+
+    const openWs = (url)=>{
+      const ws = new WebSocket(url);
+      bundle.binWs = ws;
+
+      ws.onmessage = (ev)=>{
+        const k = __extractKline(ev.data);
+        if(!k) return;
+
+        const {t,o,h,l,c,closed} = k;
+
+        if(!Array.isArray(bundle.data)) bundle.data = [];
+        const arr = bundle.data;
+        const last = arr.length ? arr[arr.length-1] : null;
+        if(last && last.time === t){
+          last.open=o; last.high=h; last.low=l; last.close=c;
+        }else if(!last || t > (last.time||0)){
+          arr.push({time:t, open:o, high:h, low:l, close:c});
+          if(arr.length > 800) bundle.data = arr.slice(-800);
+        }
+
+        bundle.series.update({ time:t, open:o, high:h, low:l, close:c });
+
+        const now = Date.now();
+        if(closed || !bundle.__bnLastCalc || (now - bundle.__bnLastCalc) > 1200){
+          bundle.__bnLastCalc = now;
+          try{ renderStrategyToBundle(bundle, bundle.data, symbol, tfLabel); }catch(_){}
+        }
+      };
+
+      ws.onerror = ()=>{
+        if(!isFutures && !usedFallback){
+          usedFallback = true;
+          try{ ws.close(); }catch(_){}
+          try{ openWs(__buildSpotFallbackWsUrl(symbol, interval)); }catch(_){}
+        }
+      };
+      ws.onclose = ()=>{};
+    };
+
+    openWs(__buildWsUrl(symbol, interval, market));
+  }catch(e){
+    console.warn("startBinanceKlineStreamToBundle error:", e);
+  }
+}
+
+/* === END BINANCE CRYPTO === */
+
+
+
+
+const $ = id => document.getElementById(id);
+const statusEl = $("status");
+
+
+// === Mobile fit helper: keep layout height correct when header wraps ===
+function __setHeaderHeight(){
+  try{
+    const h = document.querySelector("header");
+    if(!h) return;
+    const px = Math.max(56, h.offsetHeight || 56);
+    document.documentElement.style.setProperty("--header-h", px + "px");
+  }catch(_){}
+}
+window.addEventListener("resize", __setHeaderHeight, { passive:true });
+window.addEventListener("orientationchange", __setHeaderHeight, { passive:true });
+window.addEventListener("load", ()=>{ setTimeout(__setHeaderHeight, 0); }, { passive:true });
+setTimeout(__setHeaderHeight, 250);
+
+// === Core vs AI Comparison State ===
+const __engineLastByTf = {}; // tf -> {dir, time, price, label, symbol, tf}
+let __lastAiPlan = null;
+
+function __tfRank(tf){
+  const t = String(tf||"").toLowerCase();
+  if (t==="1h") return 5;
+  if (t==="30m") return 4;
+  if (t==="15m") return 3;
+  if (t==="5m") return 2;
+  if (t==="1m") return 1;
+  return 0;
+}
+function __pickEngineFinal(){
+  // pick latest signal from highest-rank TF. if none, WAIT
+  const list = Object.values(__engineLastByTf).filter(Boolean);
+  if (!list.length) return { bias:"WAIT", tf:null, time:null, price:null };
+  list.sort((a,b)=>{
+    const rb = __tfRank(b.tf) - __tfRank(a.tf);
+    if (rb!==0) return rb;
+    return (b.time||0) - (a.time||0);
+  });
+  const s = list[0];
+  const bias = (s.dir==="buy") ? "BUY" : (s.dir==="sell" ? "SELL" : "WAIT");
+  return { bias, tf:s.tf, time:s.time, price:s.price };
+}
+function __secToTimeStr(sec){
+  if(!sec) return "—";
+  const d = new Date(sec*1000);
+  return d.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit", second:"2-digit"});
+}
+function __renderAiVsEngine(){
+  const eng = __pickEngineFinal();
+  const ai = (__lastAiPlan && __lastAiPlan.bias) ? String(__lastAiPlan.bias).toUpperCase() : ( $("aiBias") ? $("aiBias").textContent.trim().toUpperCase() : "WAIT");
+  const conf = (__lastAiPlan && typeof __lastAiPlan.confidence==="number") ? __lastAiPlan.confidence : null;
+
+  const engEl = $("cmpEngine"), engMeta = $("cmpEngineMeta");
+  const aiEl  = $("cmpAI"), aiMeta  = $("cmpAIMeta");
+  const stEl  = $("cmpStatus"), decEl = $("cmpDecision");
+
+  if (engEl) engEl.textContent = eng.bias;
+  if (engMeta){
+    const p = (eng.price==null) ? "—" : __fmtNum(eng.price);
+    engMeta.textContent = eng.tf ? `${eng.tf} • ${__secToTimeStr(eng.time)} • ${p}` : "—";
+  }
+
+  if (aiEl) aiEl.textContent = ai || "WAIT";
+  if (aiMeta) aiMeta.textContent = (conf===null) ? "—" : `Conf ${Math.max(0,Math.min(100,conf))}%`;
+
+  // status + decision
+  let status = "—";
+  let decision = "—";
+
+  const jetFinal = (window.__emaAllTrend || ($("emaAllTrendLabel") ? $("emaAllTrendLabel").textContent : "") || "").toUpperCase().trim();
+
+  // If Turbo Final is MIXED we expect WAIT
+  if (jetFinal==="MIXED"){
+    status = "WAIT";
+    decision = "Turbo Detector Final = MIXED → block signals and wait.";
+  } else if (ai==="WAIT"){
+    status = "AI WAIT";
+    decision = "OpenAI returned WAIT → no entry.";
+  } else if (eng.bias==="WAIT"){
+    status = "ENGINE WAIT";
+    decision = "Core has no recent signal → treat as WAIT.";
+  } else if (ai===eng.bias){
+    status = "MATCH";
+    decision = `AI and Core agree: ${ai}. Use AI Entry/SL/TP.`;
+  } else {
+    status = "MISMATCH";
+    decision = `AI = ${ai} but Core = ${eng.bias}. Recommended: WAIT (avoid conflict).`;
+  }
+
+  if (stEl) stEl.textContent = status;
+  if (decEl) decEl.textContent = decision;
+}
+
+
+
+
+
+
+// ===== Market State Detector (Manual Analyzer) =====
+function sma(arr){
+  if(!arr.length) return null;
+  return arr.reduce((a,b)=>a+b,0)/arr.length;
+}
+
+function emaSeries(values, period){
+  if(values.length < period) return [];
+  const k = 2/(period+1);
+  const out = [];
+  let prev = sma(values.slice(0, period));
+  out.push(prev);
+  for(let i=period;i<values.length;i++){
+    prev = (values[i]-prev)*k + prev;
+    out.push(prev);
+  }
+  return out;
+}
+
+function bollingerWidth(closes, period=20, mult=2){
+  if(closes.length < period) return null;
+  const w = closes.slice(-period);
+  const mean = sma(w);
+  const varr = sma(w.map(x => (x-mean)*(x-mean)));
+  const sd = Math.sqrt(varr);
+  const upper = mean + mult*sd;
+  const lower = mean - mult*sd;
+  if(!mean) return null;
+  return (upper - lower) / mean; // relative width
+}
+
+// ADX(14) - lightweight JS implementation
+function adx14(high, low, close, period=14){
+  const n = close.length;
+  if(n < period + 2) return null;
+
+  const tr = [];
+  const pdm = [];
+  const ndm = [];
+
+  for(let i=1;i<n;i++){
+    const h = high[i], l = low[i], pc = close[i-1];
+    const trv = Math.max(h-l, Math.abs(h-pc), Math.abs(l-pc));
+    tr.push(trv);
+
+    const up = high[i] - high[i-1];
+    const down = low[i-1] - low[i];
+    pdm.push((up > down && up > 0) ? up : 0);
+    ndm.push((down > up && down > 0) ? down : 0);
+  }
+
+  function wilder(vals, p){
+    const out = [];
+    let first = 0;
+    for(let i=0;i<p;i++) first += vals[i];
+    out.push(first);
+    for(let i=p;i<vals.length;i++){
+      out.push(out[out.length-1] - (out[out.length-1]/p) + vals[i]);
+    }
+    return out;
+  }
+
+  const trS  = wilder(tr, period);
+  const pdmS = wilder(pdm, period);
+  const ndmS = wilder(ndm, period);
+
+  const dx = [];
+  for(let i=0;i<trS.length;i++){
+    const trv = trS[i];
+    if(!trv){ dx.push(0); continue; }
+    const pdi = 100*(pdmS[i]/trv);
+    const ndi = 100*(ndmS[i]/trv);
+    const den = pdi + ndi;
+    dx.push(den ? (100*Math.abs(pdi-ndi)/den) : 0);
+  }
+
+  if(dx.length < period) return null;
+
+  let adx = sma(dx.slice(0, period));
+  for(let i=period;i<dx.length;i++){
+    adx = ((adx*(period-1)) + dx[i]) / period;
+  }
+  return adx;
+}
+
+function detectMarketStateFromData(arr){
+  if(!arr || arr.length < 220){
+    return { state:"CHOPPY", strength:0, details:{reason:"not_enough_data", len:(arr?arr.length:0)} };
+  }
+
+  const closes = arr.map(x=>+x.close);
+  const highs  = arr.map(x=>+x.high);
+  const lows   = arr.map(x=>+x.low);
+
+  const ema50  = emaSeries(closes, 50);
+  const ema200 = emaSeries(closes, 200);
+  const e50  = ema50.length ? ema50[ema50.length-1] : null;
+  const e200 = ema200.length ? ema200[ema200.length-1] : null;
+
+  const A = adx14(highs, lows, closes, 14);
+  const BW = bollingerWidth(closes, 20, 2);
+
+  const ADX_TREND = 25;
+  const ADX_RANGE = 18;
+  const BW_TIGHT  = 0.02; // 2%
+
+  let direction = "FLAT";
+  if(e50 != null && e200 != null){
+    direction = e50 > e200 ? "UP" : (e50 < e200 ? "DOWN" : "FLAT");
+  }
+
+  let state = "CHOPPY";
+  let strength = 0.3;
+
+  if(A != null && A >= ADX_TREND && (direction === "UP" || direction === "DOWN")){
+    state = (direction === "UP") ? "TREND_UP" : "TREND_DOWN";
+    strength = Math.max(0.6, Math.min(1.0, (A-ADX_TREND)/25 + 0.5));
+  } else {
+    if(A != null && A < ADX_RANGE && BW != null && BW <= BW_TIGHT){
+      state = "RANGE";
+      strength = Math.max(0.5, Math.min(1.0, 1 - (A/ADX_RANGE)));
+    } else {
+      state = "CHOPPY";
+      strength = A == null ? 0.35 : Math.max(0.35, Math.min(0.7, A/ADX_TREND));
+    }
+  }
+
+  return {
+    state,
+    strength,
+    details: {
+      ema50: e50, ema200: e200,
+      adx: A, bbWidth: BW,
+      direction
+    }
+  };
+}
+
+function marketStateBadgeHtml(ms){
+  const map = {
+    "TREND_UP":   { bg:"#065f46", fg:"#ffffff", label:"TREND UP" },
+    "TREND_DOWN": { bg:"#7f1d1d", fg:"#ffffff", label:"TREND DOWN" },
+    "RANGE":      { bg:"#1e3a8a", fg:"#ffffff", label:"RANGE" },
+    "CHOPPY":     { bg:"#374151", fg:"#ffffff", label:"CHOPPY" }
+  };
+  const c = map[ms.state] || map.CHOPPY;
+  const pct = Math.round((ms.strength || 0)*100);
+  return `<span style="margin-left:8px;padding:3px 8px;border-radius:999px;background:${c.bg};color:${c.fg};font-size:11px;font-weight:700;">
+    ${c.label} • ${pct}%
+  </span>`;
+}
+// ===== End Market State Detector =====
+
+/* SOUND SETTINGS */
+const soundTypeEl      = $("soundType");
+const soundDurationEl  = $("soundDuration");
+const testSoundBtn     = $("testSound");
+const customSoundInput = $("customSoundFile");
+
+let SOUND_TYPE = soundTypeEl ? soundTypeEl.value : "1";
+let SOUND_DURATION = soundDurationEl ? Number(soundDurationEl.value) || 3 : 3;
+let customAudio = null;
+
+const SIGNAL_SOUNDS_BASE = "https://derivesupanalyzer.site/wp-content/jet%20bot/Turbo%20Manual/notifications%20sounds/";
+const SIGNAL_SOUND_FILES = {
+  slot:     "mixkit-casino-win-alarm-and-coins-1990.wav",
+  emergency:"mixkit-critical-alarm-1004.wav",
+  hall:     "mixkit-clear-announce-tones-2861.wav",
+  facility: "mixkit-interface-option-select-2573.wav",
+  classic:  "mixkit-happy-bells-notification-937.wav"
+};
+let alarmAudio = new Audio();
+
+/* TP SETTINGS */
+const openTpBtn         = $("openTp");
+const tpModal           = $("tpModal");
+const tpCountEl         = $("tpCount");
+const tpBgColorEl       = $("tpBgColor");
+const tpFontColorEl     = $("tpFontColor");
+const tpSoundEnabledEl  = $("tpSoundEnabled");
+const tpSoundTypeEl     = $("tpSoundType");
+const testTpSoundBtn    = $("testTpSound");
+const saveTpBtn         = $("saveTp");
+const closeTpBtn        = $("closeTp");
+
+let TP_COUNT      = tpCountEl ? Number(tpCountEl.value) || 1 : 1;
+let TP_BG_COLOR   = tpBgColorEl ? tpBgColorEl.value : "#1d4ed8";
+let TP_FONT_COLOR = tpFontColorEl ? tpFontColorEl.value : "#000000";
+let TP_SOUND_TYPE = tpSoundTypeEl ? tpSoundTypeEl.value : "slot";
+let TP_SOUND_ENABLED = "on";
+
+const TP_SOUNDS_BASE = "https://derivesupanalyzer.site/wp-content/jet%20bot/Turbo%20Manual/TP%20sounds/";
+const TP_SOUND_FILES = {
+  slot:     "mixkit-slot-machine-payout-alarm-1996.wav",
+  emergency:"mixkit-emergency-alert-alarm-1007.wav",
+  hall:     "mixkit-sound-alert-in-hall-1006.wav",
+  facility: "mixkit-facility-alarm-sound-999.wav",
+  classic:  "mixkit-classic-alarm-995.wav"
+};
+let tpAudio = new Audio();
+
+/* SIGNALS SETTINGS */
+const openSignalSettingsBtn = $("openSignalSettings");
+const signalModal           = $("signalModal");
+const signalTfFilterEl      = $("signalTfFilter");
+const notifPositionEl       = $("notifPosition");
+const notifHoldEl           = $("notifHold");
+const notifBgColorEl        = $("notifBgColor");
+const notifFontColorEl      = $("notifFontColor");
+const saveSignalBtn         = $("saveSignal");
+const closeSignalBtn        = $("closeSignal");
+const previewSignalBtn      = $("previewSignal");
+
+let SIGNAL_FILTER_TF   = null;
+let NOTIF_POSITION     = "bottom-right";
+let NOTIF_HOLD_SECONDS = 4;
+let NOTIF_BG_COLOR     = "#020617";
+let NOTIF_FONT_COLOR   = "#e5e7eb";
+
+
+
+/* EMA SETTINGS */
+const ema1EnabledEl = $("ema1Enabled");
+const ema1PeriodEl  = $("ema1Period");
+const ema2EnabledEl = $("ema2Enabled");
+const ema2PeriodEl  = $("ema2Period");
+
+let EMA1_ENABLED = "on";
+let EMA2_ENABLED = "on";
+let EMA1_PERIOD  = 10;
+let EMA2_PERIOD  = 1;
+
+/* GLOBAL SIGNAL LOG (for last 15 minutes box) */
+let GLOBAL_SIGNALS = [];
+let GLOBAL_SIGNAL_KEYS = new Set(); // only new signals appended here
+
+
+function ensureGlobalSignal(s){
+  try{
+    if(!s) return;
+    const nowSec = Math.floor(Date.now()/1000);
+    // normalize time to seconds (accept ms)
+    if(typeof s.time === "number" && s.time > 20000000000) s.time = Math.floor(s.time/1000);
+    // ignore very old signals to prevent huge history floods
+    if(typeof s.time === "number" && (nowSec - s.time) > 3600) return;
+
+    const key = (s.symbol||"") + "|" + (s.tf||"") + "|" + String(s.time||"") + "|" + (s.dir||"");
+    if(!GLOBAL_SIGNAL_KEYS) GLOBAL_SIGNAL_KEYS = new Set();
+    if(GLOBAL_SIGNAL_KEYS.has(key)) return;
+    GLOBAL_SIGNAL_KEYS.add(key);
+    GLOBAL_SIGNALS.push(s);
+    // keep only last 60 minutes in memory
+    GLOBAL_SIGNALS = GLOBAL_SIGNALS.filter(x => (nowSec - (Number(x.time)||nowSec)) <= 3600);
+  }catch(e){}
+}
+/* TP POPUP */
+if (openTpBtn && tpModal) {
+  openTpBtn.onclick = () => {
+    tpCountEl.value      = String(TP_COUNT);
+    tpBgColorEl.value    = TP_BG_COLOR;
+    tpFontColorEl.value  = TP_FONT_COLOR;
+    tpSoundTypeEl.value  = TP_SOUND_TYPE;
+    if (tpSoundEnabledEl) tpSoundEnabledEl.value = TP_SOUND_ENABLED;
+    tpModal.classList.add("show");
+  };
+}
+if (closeTpBtn && tpModal) {
+  closeTpBtn.onclick = () => tpModal.classList.remove("show");
+}
+if (saveTpBtn && tpModal) {
+  saveTpBtn.onclick = () => {
+    TP_COUNT       = Math.max(1, Math.min(5, Number(tpCountEl.value) || 1));
+    TP_BG_COLOR    = tpBgColorEl.value || "#1d4ed8";
+    TP_FONT_COLOR  = tpFontColorEl.value || "#000000";
+    TP_SOUND_TYPE  = tpSoundTypeEl.value || "slot";
+    TP_SOUND_ENABLED = (tpSoundEnabledEl && tpSoundEnabledEl.value) || "on";
+    renderSignals();
+    tpModal.classList.remove("show");
+    showToast("TP settings saved");
+  };
+}
+if (testTpSoundBtn && tpSoundTypeEl) {
+  testTpSoundBtn.onclick = () => {
+    if (tpSoundEnabledEl && tpSoundEnabledEl.value === "off") {
+      showToast("TP sound is OFF");
+      return;
+    }
+    const prev = TP_SOUND_TYPE;
+    TP_SOUND_TYPE = tpSoundTypeEl.value || "slot";
+    playTpSound();
+    TP_SOUND_TYPE = prev;
+  };
+}
+
+/* SIGNALS SETTINGS POPUP */
+if (openSignalSettingsBtn && signalModal) {
+  openSignalSettingsBtn.onclick = () => {
+    if (!SIGNAL_FILTER_TF) {
+      SIGNAL_FILTER_TF = $("tf").value || "5m";
+    }
+    signalTfFilterEl.value = SIGNAL_FILTER_TF;
+    notifPositionEl.value  = NOTIF_POSITION;
+    notifHoldEl.value      = String(NOTIF_HOLD_SECONDS);
+    if (notifBgColorEl)   notifBgColorEl.value   = NOTIF_BG_COLOR;
+    if (notifFontColorEl) notifFontColorEl.value = NOTIF_FONT_COLOR;
+    if (soundTypeEl)      soundTypeEl.value      = SOUND_TYPE;
+    if (soundDurationEl)  soundDurationEl.value  = String(SOUND_DURATION);
+    signalModal.classList.add("show");
+
+    if (ema1EnabledEl) ema1EnabledEl.value = EMA1_ENABLED;
+    if (ema1PeriodEl)  ema1PeriodEl.value  = String(EMA1_PERIOD);
+    if (ema2EnabledEl) ema2EnabledEl.value = EMA2_ENABLED;
+    if (ema2PeriodEl)  ema2PeriodEl.value  = String(EMA2_PERIOD);
+
+  };
+}
+if (closeSignalBtn && signalModal) {
+  closeSignalBtn.onclick = () => signalModal.classList.remove("show");
+}
+if (saveSignalBtn && signalModal) {
+  saveSignalBtn.onclick = () => {
+    SIGNAL_FILTER_TF = signalTfFilterEl.value || $("tf").value || "5m";
+    NOTIF_POSITION   = notifPositionEl.value || "bottom-right";
+
+    let holdVal = Number(notifHoldEl.value) || 4;
+    holdVal = Math.max(2, Math.min(60, holdVal));
+    NOTIF_HOLD_SECONDS = holdVal;
+    notifHoldEl.value  = String(holdVal);
+
+    if (notifBgColorEl)   NOTIF_BG_COLOR   = notifBgColorEl.value || "#020617";
+    if (notifFontColorEl) NOTIF_FONT_COLOR = notifFontColorEl.value || "#e5e7eb";
+
+    if (soundTypeEl) {
+      SOUND_TYPE = soundTypeEl.value || "1";
+    }
+    if (soundDurationEl) {
+      let v = Number(soundDurationEl.value) || 3;
+      v = Math.max(3, Math.min(15, v));
+      SOUND_DURATION = v;
+      soundDurationEl.value = String(v);
+    }
+
+    signalModal.classList.remove("show");
+    showToast("Signal settings saved");
+
+    // EMA settings (1–200)
+    if (ema1EnabledEl) EMA1_ENABLED = ema1EnabledEl.value || "on";
+    if (ema2EnabledEl) EMA2_ENABLED = ema2EnabledEl.value || "off";
+
+    let p1 = ema1PeriodEl ? Number(ema1PeriodEl.value) : EMA1_PERIOD;
+    let p2 = ema2PeriodEl ? Number(ema2PeriodEl.value) : EMA2_PERIOD;
+    p1 = Math.max(1, Math.min(200, (isFinite(p1) ? p1 : 10)));
+    p2 = Math.max(1, Math.min(200, (isFinite(p2) ? p2 : 20)));
+    EMA1_PERIOD = p1;
+    EMA2_PERIOD = p2;
+    if (ema1PeriodEl) ema1PeriodEl.value = String(p1);
+    if (ema2PeriodEl) ema2PeriodEl.value = String(p2);
+
+    // apply EMA overlays immediately
+    calcEMAs();
+
+  };
+}
+if (previewSignalBtn && signalModal) {
+  previewSignalBtn.onclick = () => {
+    const tempPos  = notifPositionEl.value || "bottom-right";
+    let tempHold   = Number(notifHoldEl.value) || 4;
+    tempHold       = Math.max(2, Math.min(60, tempHold));
+
+    const bg   = notifBgColorEl ? (notifBgColorEl.value || NOTIF_BG_COLOR) : NOTIF_BG_COLOR;
+    const font = notifFontColorEl ? (notifFontColorEl.value || NOTIF_FONT_COLOR) : NOTIF_FONT_COLOR;
+
+    const nowSec = Math.floor(Date.now() / 1000);
+    const previewSignal = {
+      time:  nowSec,
+      dir:   "buy",
+      price: 2332.0140,
+      tp:    2340.0000,
+      label: "B Plus Gaing Momentum break BUY (preview)",
+      symbol:"R_25",
+      tf:    signalTfFilterEl.value || "5m",
+      durationMin: 15,
+      srStrength: "Medium"
+    };
+    const html = buildSignalToastHtml(previewSignal, bg, font);
+    showToast(html, tempPos, tempHold);
+  };
+}
+
+/* CUSTOM ALARM UPLOAD */
+if (customSoundInput) {
+  customSoundInput.addEventListener("change", (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    try {
+      if (!customAudio) customAudio = new Audio();
+      const url = URL.createObjectURL(file);
+      customAudio.src = url;
+      customAudio.load();
+      showToast("Custom alarm sound loaded");
+    } catch (err) {
+      console.warn("Custom sound load error", err);
+      showToast("Failed to load custom sound");
+    }
+  });
+}
+if (testSoundBtn) {
+  testSoundBtn.onclick = () => {
+    if (soundTypeEl) SOUND_TYPE = soundTypeEl.value || "1";
+    if (soundDurationEl) {
+      const v = Number(soundDurationEl.value) || 3;
+      SOUND_DURATION = Math.max(3, Math.min(15, v));
+    }
+    playBeep();
+  };
+}
+
+/* CHART */
+const chart = LightweightCharts.createChart($("chart"), {
+  layout:{ background:{type:"solid",color:"#020617"},textColor:"#e5e7eb" },
+  grid:{ vertLines:{color:"#020617"}, horzLines:{color:"#020617"} },
+  rightPriceScale:{ borderColor:"#1e293b"},
+  timeScale:{ borderColor:"#1e293b", timeVisible:true, secondsVisible:true }
+});
+const candleSeries = chart.addCandlestickSeries({
+  upColor:"#16a34a",downColor:"#ef4444",
+  wickUpColor:"#16a34a",wickDownColor:"#ef4444",
+  borderVisible:false
+});
+const bbMid   = chart.addLineSeries({ color:"#64748b" });
+const bbUpper = chart.addLineSeries({ color:"#f97316" });
+const bbLower = chart.addLineSeries({ color:"#22c55e" });
+
+
+const ema1Series = chart.addLineSeries({ color:"#000000", lineWidth:2 });
+const ema2Series = chart.addLineSeries({ color:"#a78bfa", lineWidth:2 });
+
+// --- Extra charts (TF2/TF3/TF4) - candles only
+function makeFullChart(containerId){
+  const c = LightweightCharts.createChart($(containerId), {
+    layout:{ background:{type:"solid",color:"#020617"},textColor:"#e5e7eb" },
+    grid:{ vertLines:{color:"#020617"}, horzLines:{color:"#020617"} },
+    rightPriceScale:{ borderColor:"#1e293b"},
+    timeScale:{ borderColor:"#1e293b", timeVisible:true, secondsVisible:true }
+  });
+
+  const candle = c.addCandlestickSeries({
+    upColor:"#16a34a",downColor:"#ef4444",
+    wickUpColor:"#16a34a",wickDownColor:"#ef4444",
+    borderVisible:false
+  });
+
+  // Indicators (same as Main)
+  const bbMid   = c.addLineSeries({ color:"#64748b" });
+  const bbUpper = c.addLineSeries({ color:"#f97316" });
+  const bbLower = c.addLineSeries({ color:"#22c55e" });
+
+  const ema1 = c.addLineSeries({ color:"#000000", lineWidth:2 });
+  const ema2 = c.addLineSeries({ color:"#a78bfa", lineWidth:2 });
+
+  new ResizeObserver(()=>{ const el = $(containerId); if(!el) return; c.applyOptions({ width: el.clientWidth, height: el.clientHeight }); }).observe($(containerId));
+
+  return { chart:c, series:candle, bbMid, bbUpper, bbLower, ema1, ema2, data:[] };
+}
+const chart2Bundle = makeFullChart("chart2");
+const chart3Bundle = makeFullChart("chart3");
+const chart4Bundle = makeFullChart("chart4");
+
+const chart5Bundle = makeFullChart("chart5");
+// Angle badge elements (upper area of each chart)
+const angle1El = $("angle1");
+chart2Bundle.angleEl = $("angle2");
+chart3Bundle.angleEl = $("angle3");
+chart4Bundle.angleEl = $("angle4");
+
+
+chart5Bundle.angleEl = $("angle5");
+function clearBundle(b){
+  if(!b) return;
+  try{ b.series.setData([]); }catch(e){}
+  try{ b.series.setMarkers([]); }catch(e){}
+  try{ b.bbMid.setData([]); }catch(e){}
+  try{ b.bbUpper.setData([]); }catch(e){}
+  try{ b.bbLower.setData([]); }catch(e){}
+  try{ b.ema1.setData([]); }catch(e){}
+  try{ b.ema2.setData([]); }catch(e){}
+}
+
+
+
+// ✅ Main chart MUST resize to its own grid cell (same behaviour as TF2/TF3/TF4)
+// Observing #chart-wrap makes the main chart take the whole grid size and can
+// cause blank/incorrect rendering in the first window.
+function resizeMainChartToCell(){
+  const el = $("chart");
+  if (!el) return;
+  chart.applyOptions({ width: el.clientWidth, height: el.clientHeight });
+}
+new ResizeObserver(resizeMainChartToCell).observe($("chart"));
+// Run once on load
+setTimeout(resizeMainChartToCell, 0);
+
+function setStatus(t){ statusEl.textContent = t; }
+
+/* DATA */
+let WS  = null;
+let SUB_MAP = {};
+let SLOT_SUB = {}; // slot -> subscription id (Deriv)
+let DATA = [];
+let DATA2 = [];
+let DATA3 = [];
+let DATA4 = [];
+let DATA5 = [];
+
+let SIGNALS = [];
+let historyLoaded = false;
+
+let OTHER_DATA = {};
+  SUB_MAP = {};
+let OTHER_SIGNALS = {};
+
+/* ✅ ensure chart scrolls into view (restored behaviour) */
+function scrollChartIntoView(){
+  try{
+    const chartWrap = document.getElementById("chart-wrap");
+    if (chartWrap) {
+      chartWrap.scrollIntoView({ behavior:"smooth", block:"start" });
+    }
+  }catch(e){}
+}
+
+/* BB */
+function calcBB(){
+  const p=20,d=2;
+  if(DATA.length < p) return;
+  for(let i=0;i<DATA.length;i++){
+    if(i<p){
+      DATA[i].bbMid = DATA[i].bbUpper = DATA[i].bbLower = null;
+      continue;
+    }
+    let sum=0;
+    for(let j=i-p+1;j<=i;j++) sum += DATA[j].close;
+    let mean = sum/p;
+    let v=0;
+    for(let j=i-p+1;j<=i;j++){
+      let diff = DATA[j].close-mean;
+      v += diff*diff;
+    }
+    let sd = Math.sqrt(v/p);
+    DATA[i].bbMid   = mean;
+    DATA[i].bbUpper = mean + d*sd;
+    DATA[i].bbLower = mean - d*sd;
+  }
+  bbMid.setData(DATA.filter(c=>c.bbMid).map(c=>({time:c.time,value:c.bbMid})));
+  bbUpper.setData(DATA.filter(c=>c.bbUpper).map(c=>({time:c.time,value:c.bbUpper})));
+  bbLower.setData(DATA.filter(c=>c.bbLower).map(c=>({time:c.time,value:c.bbLower})));
+}
+function calcBBForArray(arr){
+  const p=20,d=2;
+  if(!arr || arr.length<p) return;
+  for(let i=0;i<arr.length;i++){
+    if(i<p){
+      arr[i].bbMid = arr[i].bbUpper = arr[i].bbLower = null;
+      continue;
+    }
+    let sum=0;
+    for(let j=i-p+1;j<=i;j++) sum += arr[j].close;
+    let mean = sum/p;
+    let v=0;
+    for(let j=i-p+1;j<=i;j++){
+      let diff = arr[j].close-mean;
+      v += diff*diff;
+    }
+    let sd = Math.sqrt(v/p);
+    arr[i].bbMid   = mean;
+    arr[i].bbUpper = mean + d*sd;
+    arr[i].bbLower = mean - d*sd;
+  }
+}
+
+
+
+function setBBSeriesFromArray(arr, bundle){
+  if(!bundle || !bundle.bbMid) return;
+  bundle.bbMid.setData(arr.filter(c=>c.bbMid).map(c=>({time:c.time,value:c.bbMid})));
+  bundle.bbUpper.setData(arr.filter(c=>c.bbUpper).map(c=>({time:c.time,value:c.bbUpper})));
+  bundle.bbLower.setData(arr.filter(c=>c.bbLower).map(c=>({time:c.time,value:c.bbLower})));
+}
+
+function setEMASeriesFromArray(arr, bundle){
+  if(!bundle || !bundle.ema1) return;
+
+  // EMA 1
+  if (EMA1_ENABLED === "on"){
+    const v1 = calcEMAValues(arr, EMA1_PERIOD);
+
+    // persist values on candles so other features (e.g., Super Momentum badges) can use them
+    for(let i=0;i<arr.length;i++){
+      arr[i].ema1 = (v1[i] === null || v1[i] === undefined) ? null : v1[i];
+    }
+
+    bundle.ema1.setData(
+      arr.map((c, i)=> (v1[i] === null ? null : ({ time:c.time, value:v1[i] }))).filter(Boolean)
+    );
+  } else {
+    for(let i=0;i<arr.length;i++) arr[i].ema1 = null;
+    bundle.ema1.setData([]);
+  }
+
+  // EMA 2 (default period = 1, optional second EMA)
+  if (EMA2_ENABLED === "on"){
+    const v2 = calcEMAValues(arr, EMA2_PERIOD);
+
+    // persist values on candles so Super Momentum uses EMA2 (not close)
+    for(let i=0;i<arr.length;i++){
+      arr[i].ema2 = (v2[i] === null || v2[i] === undefined) ? null : v2[i];
+    }
+
+    bundle.ema2.setData(
+      arr.map((c, i)=> (v2[i] === null ? null : ({ time:c.time, value:v2[i] }))).filter(Boolean)
+    );
+  } else {
+    for(let i=0;i<arr.length;i++) arr[i].ema2 = null;
+    bundle.ema2.setData([]);
+  }
+}
+
+
+function applyMarkersToSeries(series, sigs){
+  const markers = (sigs || []).map(s=>{
+    const isBuy = (s.dir === 'buy');
+    const isSell = (s.dir === 'sell');
+    const isClose = (s.dir === 'close');
+
+    // Candle indication per strategy:
+    // - BUY/SELL markers show the BB↔EMA2 cross angle (Δ degrees) when available
+    // - CLOSE markers show which side is being closed (BUY or SELL)
+    const ang = (s && isFinite(s.crossAngleDeg)) ? Number(s.crossAngleDeg) : null;
+    const angTxt = (ang === null) ? "" : ` Δ${ang.toFixed(1)}°`;
+
+    let text = isBuy ? ("BUY" + angTxt) : (isSell ? ("SELL" + angTxt) : "CLOSE");
+    let position = isBuy ? "belowBar" : "aboveBar";
+    if(isClose){
+      const co = (s && s.closeOf) ? String(s.closeOf).toUpperCase() : "";
+      text = co ? `CLOSE ${co}` : "CLOSE";
+      // Close SELL (bullish) belowBar, Close BUY (bearish) aboveBar
+      if(co === "SELL") position = "belowBar";
+      else if(co === "BUY") position = "aboveBar";
+    }
+
+    return {
+      time: s.time,
+      position,
+      color: isBuy ? '#22c55e' : (isSell ? '#ef4444' : '#eab308'),
+      shape: isBuy ? 'arrowUp' : (isSell ? 'arrowDown' : 'circle'),
+      text
+    };
+  });
+  series.setMarkers(markers);
+}
+
+
+
+// ===== SUPER TREND (EMA2 vs BB Upper/Lower) =====
+// When EMA2 is ABOVE BB Upper -> "SUPER UP TREND"
+// When EMA2 is BELOW BB Lower -> "SUPER DOWN TREND"
+// Also computes angle difference (degrees) between EMA2 slope and BB band slope.
+function computeSuperTrendInfoFromEma2(arr, lookbackCandles=10){
+  if(!arr || arr.length < 3) return null;
+
+  // Use last CLOSED candle (avoid partial realtime candle noise)
+  const i = Math.max(1, arr.length - 2);
+  const prev = i - 1;
+
+  const cNow = arr[i] || {};
+  const cPrev = arr[prev] || {};
+
+  // Prefer EMA2 values if available; fallback to close
+  const eNow  = (typeof cNow.ema2 === "number")  ? cNow.ema2  : ((typeof cNow.close === "number") ? cNow.close : null);
+  const ePrev = (typeof cPrev.ema2 === "number") ? cPrev.ema2 : ((typeof cPrev.close === "number") ? cPrev.close : null);
+
+  const uNow  = (typeof cNow.bbUpper === "number") ? cNow.bbUpper : null;
+  const uPrev = (typeof cPrev.bbUpper === "number") ? cPrev.bbUpper : null;
+  const lNow  = (typeof cNow.bbLower === "number") ? cNow.bbLower : null;
+  const lPrev = (typeof cPrev.bbLower === "number") ? cPrev.bbLower : null;
+
+  if(eNow === null || ePrev === null) return null;
+
+  let mode = null;
+  let bNow = null, bPrev = null;
+
+  if(uNow !== null && eNow > uNow){
+    mode = "UP";
+    bNow = uNow; bPrev = uPrev;
+  }else if(lNow !== null && eNow < lNow){
+    mode = "DOWN";
+    bNow = lNow; bPrev = lPrev;
+  }else{
+    return null; // inside BB => no super trend
+  }
+
+  if(bNow === null || bPrev === null) return null;
+
+  // Angle between EMA2 slope and BB line slope (last-step, candle-to-candle)
+  const emaSlope = (eNow - ePrev);
+  const bbSlope  = (bNow - bPrev);
+  const emaAng   = Math.atan(emaSlope) * 180 / Math.PI;
+  const bbAng    = Math.atan(bbSlope)  * 180 / Math.PI;
+  const diffDeg  = Math.abs(emaAng - bbAng);
+
+  return { mode, diffDeg, atIdx:i, emaAng, bbAng };
+}
+
+// ===== EMA ANGLE (normalized by average candle range) =====
+function computeEmaAngleDeg(arr, period, lookbackCandles){
+  if(!arr || arr.length < 50) return null;
+  period = Math.max(1, Math.min(200, Number(period)||10));
+  lookbackCandles = Math.max(5, Math.min(60, Number(lookbackCandles)||10));
+
+  const emaVals = calcEMAValues(arr, period);
+  if(!emaVals || !emaVals.length) return null;
+
+  // find latest non-null EMA
+  let i = emaVals.length - 1;
+  while(i > 0 && emaVals[i] === null) i--;
+  const j = i - lookbackCandles;
+  if(i <= 0 || j < 0) return null;
+  if(emaVals[j] === null) return null;
+
+  // normalize by average candle range for scale-free angle
+  let sumR = 0, cnt = 0;
+  const start = Math.max(0, i - lookbackCandles + 1);
+  for(let k=start; k<=i; k++){
+    const bar = arr[k];
+    if(!bar) continue;
+    const r = (Number(bar.high) - Number(bar.low));
+    if(isFinite(r) && r > 0){ sumR += r; cnt++; }
+  }
+  let avgRange = cnt ? (sumR / cnt) : 0;
+  if(!isFinite(avgRange) || avgRange <= 0){
+    const px = arr[i] ? Number(arr[i].close) : 1;
+    avgRange = Math.max(1e-9, Math.abs(px) * 0.0001);
+  }
+
+  const rise = emaVals[i] - emaVals[j];
+  const slopeNorm = (rise / avgRange) / lookbackCandles;
+  const angle = Math.atan(slopeNorm) * 180 / Math.PI;
+  return isFinite(angle) ? angle : null;
+}
+
+function angleMeaning(angle){
+  if(angle === null) return { label:"—", tone:"neutral" };
+  if(angle <= -40) return { label:"Dump", tone:"bear" };
+  if(angle <= -30) return { label:"Strong Bear", tone:"bear" };
+  if(angle <= -15) return { label:"Bear", tone:"bear" };
+  if(angle <  15) return { label:"Sideways", tone:"flat" };
+  if(angle <  30) return { label:"Bull", tone:"bull" };
+  if(angle <  40) return { label:"Strong Bull", tone:"bull" };
+  return { label:"Explosive", tone:"bull" };
+}
+
+// ===== BB MID ↔ EMA10 ANGLE (divergence / momentum) =====
+function bbEmaAngleMeaning(angle){
+  if(angle === null || angle === undefined) return { label:"—" };
+  if(angle < 5)  return { label:"No Momentum" };
+  if(angle < 15) return { label:"Weak" };
+  if(angle < 30) return { label:"Building" };
+  if(angle < 45) return { label:"Breakout" };
+  return { label:"Impulse" };
+}
+
+function computeBbMidEmaAngleDeg(arr, emaPeriod, lookbackCandles){
+  if(!arr || arr.length < 50) return null;
+  emaPeriod = Math.max(1, Math.min(200, Number(emaPeriod)||10));
+  lookbackCandles = Math.max(5, Math.min(60, Number(lookbackCandles)||10));
+
+  // Ensure BB mid exists (calcBBForArray usually called before this)
+  const emaVals = calcEMAValues(arr, emaPeriod);
+  if(!emaVals || !emaVals.length) return null;
+
+  // find latest index where both EMA and bbMid exist
+  let i = arr.length - 1;
+  while(i > 0){
+    const hasE = (emaVals[i] !== null && emaVals[i] !== undefined);
+    const hasM = (arr[i] && arr[i].bbMid !== null && arr[i].bbMid !== undefined);
+    if(hasE && hasM) break;
+    i--;
+  }
+  const j = i - lookbackCandles;
+  if(i <= 0 || j < 0) return null;
+  if(emaVals[j] === null || emaVals[j] === undefined) return null;
+  if(!arr[j] || arr[j].bbMid === null || arr[j].bbMid === undefined) return null;
+
+  // normalize by average candle range (same idea as Turbo Scan)
+  let sumR = 0, cnt = 0;
+  const start = Math.max(0, i - lookbackCandles + 1);
+  for(let k=start; k<=i; k++){
+    const bar = arr[k];
+    if(!bar) continue;
+    const r = (Number(bar.high) - Number(bar.low));
+    if(isFinite(r) && r > 0){ sumR += r; cnt++; }
+  }
+  let avgRange = cnt ? (sumR / cnt) : 0;
+  if(!isFinite(avgRange) || avgRange <= 0){
+    const px = arr[i] ? Number(arr[i].close) : 1;
+    avgRange = Math.max(1e-9, Math.abs(px) * 0.0001);
+  }
+
+  const emaRise = emaVals[i] - emaVals[j];
+  const midRise = Number(arr[i].bbMid) - Number(arr[j].bbMid);
+
+  const emaSlope = (emaRise / avgRange) / lookbackCandles;
+  const midSlope = (midRise / avgRange) / lookbackCandles;
+
+  // angle between two lines: atan(|m1-m2| / (1 + m1*m2))
+  const denom = (1 + (emaSlope * midSlope));
+  const ratio = Math.abs(emaSlope - midSlope) / (Math.abs(denom) < 1e-9 ? 1e-9 : denom);
+  const ang = Math.atan(Math.abs(ratio)) * 180 / Math.PI;
+
+  return isFinite(ang) ? ang : null;
+}
+
+
+/**
+ * Compute EMA10 ↔ Bollinger Upper/Lower distances and whether they are shrinking.
+ * Returns percentages (distance/close*100) for readability and a direction arrow:
+ *  "↓" shrinking (stronger pressure), "↑" expanding (weakening), "→" flat
+ */
+function computeEmaBbGapInfo(arr, emaPeriod=10, lookbackCandles=10){
+  if(!arr || !arr.length) return null;
+  emaPeriod = Math.max(1, Math.min(200, Number(emaPeriod) || 10));
+  lookbackCandles = Math.max(2, Math.min(100, Number(lookbackCandles) || 10));
+
+  const emaVals = calcEMAValues(arr, emaPeriod);
+  const i = arr.length - 1;
+  const j = i - lookbackCandles;
+  if(j < 0) return null;
+
+  const a0 = arr[i], a1 = arr[j];
+  if(!a0 || !a1) return null;
+
+  const e0 = emaVals[i], e1 = emaVals[j];
+  if(!isFinite(e0) || !isFinite(e1)) return null;
+
+  const u0 = Number(a0.bbUpper), l0 = Number(a0.bbLower);
+  const u1 = Number(a1.bbUpper), l1 = Number(a1.bbLower);
+  if(!isFinite(u0) || !isFinite(l0) || !isFinite(u1) || !isFinite(l1)) return null;
+
+  const c0 = Number(a0.close);
+  const denom0 = (isFinite(c0) && Math.abs(c0) > 0) ? Math.abs(c0) : Math.max(1e-9, Math.abs(e0));
+
+  const distUp0 = Math.abs(u0 - e0);
+  const distDn0 = Math.abs(e0 - l0);
+  const distUp1 = Math.abs(u1 - e1);
+  const distDn1 = Math.abs(e1 - l1);
+
+  const upPct = (distUp0 / denom0) * 100;
+  const dnPct = (distDn0 / denom0) * 100;
+
+  const eps = 1e-9;
+  const upDir = (distUp0 + eps < distUp1) ? "↓" : (distUp0 > distUp1 + eps) ? "↑" : "→";
+  const dnDir = (distDn0 + eps < distDn1) ? "↓" : (distDn0 > distDn1 + eps) ? "↑" : "→";
+
+  const upStrong = (upDir === "↓");
+  const dnStrong = (dnDir === "↓");
+  const compression = (upStrong && dnStrong);
+
+  return { upPct, dnPct, upDir, dnDir, upStrong, dnStrong, compression };
+}
+
+
+
+// --- EMA ALL-CHART TREND RULE (Turbo Scan) ---
+
+// === EMA ANGLE FILTER (user adjustable) ===
+// User sets threshold (1°–80°):
+//   angle <= -threshold  => DOWN
+//   angle >=  threshold  => UP
+// Otherwise => MIXED
+let EMA_ANGLE_THRESHOLD = 5;
+
+function loadEmaAngleThreshold(){
+  try{
+    const v = Number(localStorage.getItem("emaAngleThreshold"));
+    if(isFinite(v) && v >= 1 && v <= 80) EMA_ANGLE_THRESHOLD = v;
+  }catch(e){}
+}
+function saveEmaAngleThreshold(){
+  try{ localStorage.setItem("emaAngleThreshold", String(EMA_ANGLE_THRESHOLD)); }catch(e){}
+}
+function updateEmaAnglePanelUI(){
+  const v = Math.round(Number(EMA_ANGLE_THRESHOLD) || 5);
+  const a = $("emaAngleVal");
+  const a2 = $("emaAngleVal2");
+  const a3 = $("emaAngleVal3");
+  const s = $("emaAngleSlider");
+  if(a) a.textContent = v + "°";
+  if(a2) a2.textContent = String(v);
+  if(a3) a3.textContent = String(v);
+  if(s) s.value = String(v);
+
+  // update side label (if angles already known)
+  const lbl = $("emaAllTrendLabel");
+  if(lbl){
+    const t = (__emaAllTrend || "—");
+    lbl.textContent = t;
+    lbl.style.color = (t==="UP") ? "#4ade80" : (t==="DOWN") ? "#f87171" : "#e5e7eb";
+  }
+}
+function setEmaAngleThreshold(v){
+  v = Math.max(1, Math.min(80, Math.round(Number(v)||5)));
+  EMA_ANGLE_THRESHOLD = v;
+  saveEmaAngleThreshold();
+  __emaAllTrend = __computeAllEmaTrend();
+  __applyAllTrendToBadges();
+  updateEmaAnglePanelUI();
+}
+// === /EMA ANGLE FILTER ===
+
+// init Turbo Scan threshold UI (right panel slider)
+try{
+  loadEmaAngleThreshold();
+  const s = $("emaAngleSlider");
+  if(s){
+    s.value = String(EMA_ANGLE_THRESHOLD);
+    s.addEventListener("input", (e)=> setEmaAngleThreshold(e.target.value));
+  }
+  updateEmaAnglePanelUI();
+}catch(e){}
+
+
+// If ALL charts Turbo Scan is between -80° and -5° => DOWN trend
+// If ALL charts Turbo Scan is between  5° and 80° => UP trend
+const __emaAngleLatest = {1:null,2:null,3:null,4:null,5:null};
+const __emaAnglePrev   = {1:null,2:null,3:null,4:null,5:null};
+let __emaAllTrend = null;
+let __lastAllTrendForSignals = null;
+
+// Recompute MAIN chart markers after Turbo Detector Final becomes available.
+// Reason: on first load, TF2/TF3/TF4 angles may not be ready yet, so the
+// Turbo Detector Final gate can filter signals to empty on the main chart.
+// When ALL EMA trend becomes UP/DOWN later, we refresh main signals once.
+function __refreshMainSignalsIfNeeded(force){
+  try{
+    const t = (__emaAllTrend || null);
+    if(!force){
+      // refresh only when trend becomes a concrete UP/DOWN or changes
+      if(t !== 'UP' && t !== 'DOWN') return;
+      if(__lastAllTrendForSignals === t) return;
+    }
+    __lastAllTrendForSignals = t;
+
+    if(!Array.isArray(DATA) || !DATA.length) return;
+    // Evaluate on closed candles only
+    const maxIdx = Math.max(0, DATA.length - 2);
+    SIGNALS = filterSignalsByJetDetectorFinal(detectSignalsMain(maxIdx));
+    applyMarkers();
+  }catch(e){}
+}
+
+
+function __inRange(v, lo, hi){
+  return (v !== null && v !== undefined && isFinite(v) && v >= lo && v <= hi);
+}
+function __computeAllEmaTrend(){
+  const vals = [__emaAngleLatest[1],__emaAngleLatest[2],__emaAngleLatest[3],__emaAngleLatest[4]];
+  if(vals.some(v => v === null || v === undefined || !isFinite(v))) return null;
+
+  const allDown = vals.every(v => __inRange(v, -80, -EMA_ANGLE_THRESHOLD));
+  const allUp   = vals.every(v => __inRange(v, EMA_ANGLE_THRESHOLD, 80));
+
+  if(allDown) return "DOWN";
+  if(allUp)   return "UP";
+  return "MIXED";
+}
+function __applyAllTrendToBadges(){
+  const suffix = __emaAllTrend ? ` • ALL EMA: ${__emaAllTrend}` : "";
+  for(let i=1;i<=4;i++){
+    const el = $("angle"+i);
+    if(el && el.dataset && el.dataset.baseText){
+      const base = String(el.dataset.baseText || "");
+      if(base.indexOf("\n") !== -1){
+        const parts = base.split("\n");
+        const l1 = parts[0] || "";
+        const l2 = parts.slice(1).join("\n") || "";
+        el.innerHTML = `<div style="font-size:12px;font-weight:700;margin-bottom:2px;">${l1}</div><div>${l2 + suffix}</div>`;
+      }else{
+        el.textContent = base + suffix;
+      }
+    }
+
+    // Apply the ALL-chart glow consistently to every TF badge.
+    // Previously the glow could appear only on the last chart whose badge
+    // was updated, which makes it look like only 1–2 charts are "green".
+    if(el){
+      if(__emaAllTrend === "DOWN"){
+        el.style.background  = "rgba(239, 68, 68, 0.10)";
+        el.style.boxShadow   = "0 0 14px rgba(239, 68, 68, 0.35)";
+        el.style.borderColor = "#ef4444";
+      }else if(__emaAllTrend === "UP"){
+        el.style.background  = "rgba(34, 197, 94, 0.10)";
+        el.style.boxShadow   = "0 0 14px rgba(34, 197, 94, 0.35)";
+        el.style.borderColor = "#22c55e";
+      }else{
+        el.style.background = "";
+        el.style.boxShadow  = "";
+        // do not reset borderColor here; it is used by per-chart tone
+      }
+    }
+  }
+}
+// --- /EMA ALL-CHART TREND RULE ---
+
+// --- SIGNAL GATE: Turbo Detector Final (ALL EMA) ---
+// If Turbo Detector Final = UP   -> show ONLY BUY signals
+// If Turbo Detector Final = DOWN -> show ONLY SELL signals
+// Otherwise (MIXED/unknown)    -> show NO signals
+function filterSignalsByJetDetectorFinal(sigs){
+  if(!Array.isArray(sigs)) return [];
+  const trend = __emaAllTrend; // "UP" | "DOWN" | "MIXED" | null
+
+  // CLOSE always allowed (exit positions)
+  if(trend === "UP")   return sigs.filter(s => s.dir === "buy"  || s.dir === "close");
+  if(trend === "DOWN") return sigs.filter(s => s.dir === "sell" || s.dir === "close");
+
+  // MIXED/unknown -> no new opens, only CLOSE
+  return sigs.filter(s => s.dir === "close");
+}
+// --- /SIGNAL GATE ---
+
+function updateAngleBadge(el, emaAngle, bbEmaAngle, gapInfo, superInfo){
+  if(!el) return;
+
+  // track per-chart Turbo Scan to evaluate ALL-chart trend
+  try{
+    const m = (el.id || "").match(/angle(\d+)/);
+    if(m){
+      const k = Number(m[1]);
+      __emaAnglePrev[k] = __emaAngleLatest[k];
+      __emaAngleLatest[k] = (emaAngle === null || emaAngle === undefined) ? null : Number(emaAngle);
+    }
+  }catch(e){}
+  __emaAllTrend = __computeAllEmaTrend();
+  __refreshMainSignalsIfNeeded(false);
+  // Ensure ALL EMA label + glow stays consistent across all 4 badges
+  // every time any timeframe updates.
+  try{ __applyAllTrendToBadges(); }catch(e){}
+  // keep side panel in sync
+  try{ updateEmaAnglePanelUI(); }catch(e){}
+  // Trigger AI plan refresh when Turbo Detector Final changes/updates
+  try{ scheduleAiPlan("angle_update"); }catch(e){}
+  const __allSuffix = __emaAllTrend ? ` • ALL EMA: ${__emaAllTrend}` : "";
+
+  const m1 = angleMeaning(emaAngle);
+  const __isTF5 = (el && el.id === "angle5");
+  const __fmtDeg = (v)=>{
+    if(v === null || v === undefined) return "—";
+    const num = Number(v);
+    if(!isFinite(num)) return "—";
+    const sign = (__isTF5 && num > 0) ? "+" : "";
+    return sign + num.toFixed(1) + "°";
+  };
+  const deg1 = __fmtDeg(emaAngle);
+
+  // BB Midline ↔ EMA10 separation angle (momentum / divergence)
+  const m2 = bbEmaAngleMeaning(bbEmaAngle);
+  const deg2 = __fmtDeg(bbEmaAngle);
+
+  // EMA ↔ BB Upper/Lower gaps (pressure / compression)
+  let gapText = "";
+  if(gapInfo){
+    const lPct = isFinite(gapInfo.dnPct) ? gapInfo.dnPct.toFixed(2) : "—";
+    const uPct = isFinite(gapInfo.upPct) ? gapInfo.upPct.toFixed(2) : "—";
+    const lStr = gapInfo.dnDir ? `${gapInfo.dnDir} ${gapInfo.dnStrong ? "Strong" : "Weak"}` : "—";
+    const uStr = gapInfo.upDir ? `${gapInfo.upDir} ${gapInfo.upStrong ? "Strong" : "Weak"}` : "—";
+    gapText = ` | LGap: ${lPct}% • ${lStr} | UGap: ${uPct}% • ${uStr}`;
+    if(gapInfo.compression){
+      gapText += ` | Compression`;
+    }
+  }
+
+
+// SUPER TREND (EMA2 vs BB Upper/Lower)
+// Show as a separate line ABOVE Turbo Scan line inside the badge.
+let superLine = "";
+if (superInfo && superInfo.mode){
+  const sDeg = (isFinite(superInfo.diffDeg) ? superInfo.diffDeg.toFixed(1) : "—") + "°";
+  superLine = (superInfo.mode === "UP")
+    ? `SUPER UP TREND • Δ${sDeg}`
+    : `SUPER DOWN TREND • Δ${sDeg}`;
+}
+
+  // text (keep compact for 4 charts)
+  // Build Turbo Scan line WITHOUT super text (super is its own line)
+  if(bbEmaAngle === null || bbEmaAngle === undefined){
+    const __jetText = `Turbo Scan: ${deg1} • ${m1.label}${gapText}`;
+    if(superLine){
+      el.dataset.baseText = superLine + "\n" + __jetText;
+      el.innerHTML = `<div style="font-size:12px;font-weight:700;margin-bottom:2px;">${superLine}</div><div>${__jetText + __allSuffix}</div>`;
+    }else{
+      el.dataset.baseText = __jetText;
+      el.textContent = __jetText + __allSuffix;
+    }
+  }else{
+    const __jetText = `Turbo Scan: ${deg1} • ${m1.label} | BB↔EMA: ${deg2} • ${m2.label}${gapText}`;
+    if(superLine){
+      el.dataset.baseText = superLine + "\n" + __jetText;
+      el.innerHTML = `<div style="font-size:12px;font-weight:700;margin-bottom:2px;">${superLine}</div><div>${__jetText + __allSuffix}</div>`;
+    }else{
+      el.dataset.baseText = __jetText;
+      el.textContent = __jetText + __allSuffix;
+    }
+  }
+
+  // if ALL-chart trend is available, push it to every badge
+  if(__emaAllTrend){ __applyAllTrendToBadges(); }
+
+
+  
+// SUPER TREND highlight (EMA2 outside BB)
+if (superInfo && superInfo.mode === "DOWN"){
+  el.style.background = "rgba(239, 68, 68, 0.08)";
+} else if (superInfo && superInfo.mode === "UP"){
+  el.style.background = "rgba(34, 197, 94, 0.08)";
+}
+
+// subtle coloring driven mainly by EMA direction
+  if(m1.tone === "bear"){
+    el.style.color = "#fca5a5";
+    el.style.borderColor = "#7f1d1d";
+  }else if(m1.tone === "bull"){
+    el.style.color = "#86efac";
+    el.style.borderColor = "#14532d";
+  }else{
+    el.style.color = "#9eb1c7";
+    el.style.borderColor = "#1e293b";
+  }
+
+
+  // highlight based on ALL-chart EMA trend alignment (light glow)
+  // IMPORTANT: do NOT force ALL-EMA glow on TF5. TF5 should reflect its own angle color,
+  // just like the other chart badges.
+  if(!__isTF5){
+    if(__emaAllTrend === "DOWN"){
+      el.style.background = "rgba(239, 68, 68, 0.10)";
+      el.style.boxShadow  = "0 0 14px rgba(239, 68, 68, 0.35)";
+      el.style.borderColor = "#ef4444";
+    }else if(__emaAllTrend === "UP"){
+      el.style.background = "rgba(34, 197, 94, 0.10)";
+      el.style.boxShadow  = "0 0 14px rgba(34, 197, 94, 0.35)";
+      el.style.borderColor = "#22c55e";
+    }else{
+      el.style.background = "";
+      el.style.boxShadow  = "";
+    }
+  }else{
+    // TF5: keep per-chart tone only
+    el.style.background = "";
+    el.style.boxShadow  = "";
+  }
+}
+
+
+
+
+/* ==========================
+   Trend Strength Indicators (4-line) + 15m Jet Candle
+   ========================== */
+function __slotFromAngleEl(angleEl){
+  try{
+    const m = (angleEl && angleEl.id) ? String(angleEl.id).match(/angle(\d+)/) : null;
+    return m ? Number(m[1]) : null;
+  }catch(e){ return null; }
+}
+
+
+function updateTrendStrength4(slot){
+  const indEl = $("ind"+slot);
+  if(!indEl) return;
+
+  const tfMap = {1:"1h",2:"2h",3:"4h",4:"1d"};
+  const tf = tfMap[slot] || ("TF"+slot);
+
+  // build once
+  if(!indEl.dataset || indEl.dataset.kind !== "trendH"){
+    indEl.dataset.kind = "trendH";
+    indEl.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+        <div class="hTrack">
+          <div class="hMid"></div>
+          <div class="hCandle" id="trendCandle${slot}">
+            <div class="hFill" id="trendFill${slot}"></div>
+          </div>
+        </div>
+        <div class="hMeta">
+          <span class="tfTag">${tf}</span>
+          <span class="jetTag" id="trendJet${slot}">—°</span>
+          <span class="pctTag" id="trendPct${slot}">—%</span>
+          <span class="pctSub" id="trendSub${slot}">trend</span>
+        </div>
+      </div>
+    `;
+  }
+
+  const candle = $("trendCandle"+slot);
+  const fill = $("trendFill"+slot);
+  const pctEl = $("trendPct"+slot);
+  const subEl = $("trendSub"+slot);
+  const jetEl = $("trendJet"+slot);
+
+// Trend direction must be identified by Jet Detect value moving UP/DOWN (delta)
+  const cur = __emaAngleLatest[slot];
+  const prev = __emaAnglePrev[slot];
+
+  let dir = "range";
+  let delta = null;
+
+  if(cur !== null && cur !== undefined && prev !== null && prev !== undefined && isFinite(cur) && isFinite(prev)){
+    delta = cur - prev;
+    if(delta > 0.05) dir = "up";
+    else if(delta < -0.05) dir = "down";
+  }
+
+  // Signal strength uses movement magnitude (not candle up/down)
+  const maxDelta = 10; // degrees-per-update mapped to 100%
+  let strength = 0;
+  if(delta !== null && isFinite(delta)){
+    strength = Math.min(1, Math.abs(delta) / maxDelta);
+  }
+
+  const pct = Math.round(strength * 100);
+  if(pctEl) pctEl.textContent = pct + "%";
+  if(subEl){
+    subEl.textContent = (dir === "up") ? "UP trend" : (dir === "down") ? "DOWN trend" : "RANGE";
+  }
+
+  const apply = ()=>{
+    if(!candle || !fill) return;
+
+    // fixed candle position; the color "moves inside" based on strength
+    const w = Math.max(0, Math.min(100, strength * 100));
+    fill.style.left = "0%";
+    fill.style.width = w.toFixed(1) + "%";
+    const alpha = (0.10 + 0.90 * strength);
+    fill.style.opacity = (0.25 + 0.75 * strength).toFixed(3);
+
+    if(dir === "up"){
+      fill.style.background = `rgba(34,197,94,${alpha.toFixed(3)})`;
+      candle.style.borderColor = `rgba(22,163,74,0.85)`;
+    }else if(dir === "down"){
+      fill.style.background = `rgba(239,68,68,${alpha.toFixed(3)})`;
+      candle.style.borderColor = `rgba(220,38,38,0.85)`;
+    }else{
+      fill.style.background = `rgba(148,163,184,${(0.10 + 0.40*strength).toFixed(3)})`;
+      candle.style.borderColor = `rgba(30,41,59,0.95)`;
+    }
+  };
+
+  requestAnimationFrame(apply);
+}
+
+function updateJetCandleIndicator(angleDeg, lastDir){
+  const indEl = $("ind5");
+  if(!indEl) return;
+
+  // build once (or rebuild if children got wiped)
+  const needsBuild = (!indEl.dataset || indEl.dataset.kind !== "jetH" || !$("jetCandleBar") || !$("jetFill"));
+  if(needsBuild){
+    if(!indEl.dataset) indEl.dataset = {};
+    indEl.dataset.kind = "jetH";
+    indEl.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+        <div class="hTrack jet">
+          <div class="hMid"></div>
+          <div class="hCandle" id="jetCandleBar">
+            <div class="hFill" id="jetFill"></div>
+          </div>
+        </div>
+        <div class="hMeta" style="width:620px;">
+          <span class="tfTag">15m</span>
+          <span class="pctTag" id="jetPct">—%</span>
+          <span class="pctSub" id="jetInfo">—</span>
+        </div>
+      </div>
+    `;
+  }
+
+  const candle = $("jetCandleBar");
+  const fill = $("jetFill");
+  const pctEl = $("jetPct");
+  const infoEl = $("jetInfo");
+
+  const a = (angleDeg === null || angleDeg === undefined) ? null : Number(angleDeg);
+  const absA = (a === null || !isFinite(a)) ? 0 : Math.abs(a);
+
+  // Trend direction (UP/DOWN/RANGE) based on the Jet value moving up/down (delta)
+  let delta = null;
+  if(a !== null && isFinite(a)){
+    const prev = (typeof window.__jetPrevAngle === "number" && isFinite(window.__jetPrevAngle)) ? window.__jetPrevAngle : null;
+    if(prev !== null) delta = a - prev;
+    window.__jetPrevAngle = a;
+  }
+  let jetTrend = "RANGE";
+  if(delta !== null && isFinite(delta)){
+    if(delta > 0.05) jetTrend = "UP";
+    else if(delta < -0.05) jetTrend = "DOWN";
+  }
+
+  // Strength: how far |angle| is beyond the EMA angle threshold (maps to 0..100%)
+  const thr = (typeof EMA_ANGLE_THRESHOLD === "number" && isFinite(EMA_ANGLE_THRESHOLD)) ? EMA_ANGLE_THRESHOLD : 5;
+  const strength = Math.max(0, Math.min(1, (absA - thr) / (80 - thr)));
+  const pct = Math.round(strength * 100);
+  if(pctEl) pctEl.textContent = pct + "%";
+
+  // Color direction for the candle: prefer last signal dir, otherwise infer from angle sign
+  let dir = (lastDir === "buy" || lastDir === "sell") ? lastDir : null;
+  if(!dir){
+    dir = (a !== null && isFinite(a) && a >= 0) ? "buy" : "sell";
+  }
+
+  if(infoEl){
+    const s = (dir === "buy") ? "BUY" : "SELL";
+    const aTxt = (a !== null && isFinite(a)) ? (a.toFixed(1) + "°") : "—";
+    const dTxt = (delta !== null && isFinite(delta)) ? (((delta>=0?"+":"") + delta.toFixed(2)) + "°") : "—";
+    infoEl.textContent = `${s} • ${aTxt} • Δ ${dTxt} • ${jetTrend}`;
+    infoEl.style.color = (dir === "buy") ? "#4ade80" : "#f87171";
+  }
+
+  const apply = ()=>{
+    if(!candle || !fill) return;
+
+    // fill from start based on strength
+    const w = Math.max(0, Math.min(100, strength * 100));
+    fill.style.left = "0%";
+    fill.style.width = w.toFixed(1) + "%";
+
+    const alpha = (0.10 + 0.90 * strength);
+    fill.style.opacity = (0.25 + 0.75 * strength).toFixed(3);
+
+    if(dir === "buy"){
+      fill.style.backgroundColor = `rgba(34,197,94,${alpha.toFixed(3)})`;
+      candle.style.borderColor = `rgba(22,163,74,0.85)`;
+    }else{
+      fill.style.backgroundColor = `rgba(239,68,68,${alpha.toFixed(3)})`;
+      candle.style.borderColor = `rgba(220,38,38,0.85)`;
+    }
+  };
+
+  requestAnimationFrame(apply);
+}
+
+
+function renderStrategyToBundle(bundle, arr, symbol, tf){
+  if(!bundle || !arr) return;
+  calcBBForArray(arr);
+  setBBSeriesFromArray(arr, bundle);
+  setEMASeriesFromArray(arr, bundle);
+
+  // Turbo Scan badge (uses EMA1 period if enabled, otherwise 10)
+  const p = (EMA1_ENABLED === "on") ? EMA1_PERIOD : 10;
+  const ang = computeEmaAngleDeg(arr, p, 10);
+  const bbAng = computeBbMidEmaAngleDeg(arr, 10, 10);
+  const gapInfo = computeEmaBbGapInfo(arr, 10, 10);
+  const superInfo = computeSuperTrendInfoFromEma2(arr, 10);
+  updateAngleBadge(bundle.angleEl, ang, bbAng, gapInfo, superInfo);
+
+  const sigsRaw = detectSignalsOnArray(arr, symbol, tf, Math.max(0, arr.length-2));
+  const sigs = filterSignalsByJetDetectorFinal(sigsRaw);
+  applyMarkersToSeries(bundle.series, sigs);
+
+  // Trend strength indicator (4-line) for TF1–TF4, and Jet candle for TF5
+  try{
+    const slot = __slotFromAngleEl(bundle.angleEl);
+    if(slot >= 1 && slot <= 4){
+      const msSlot = detectMarketStateFromData(arr);
+      updateTrendStrength4(slot);
+    }else if(slot === 5){
+      const last = (Array.isArray(sigs) && sigs.length) ? sigs[sigs.length-1] : null;
+      const lastDir = last ? last.dir : null;
+      updateJetCandleIndicator(ang, lastDir);
+    }
+  }catch(e){}
+
+  // keep last engine signal per TF (post Turbo Detector Final filter)
+  try{
+    if (Array.isArray(sigs) && sigs.length){
+      const last = sigs[sigs.length-1];
+      __engineLastByTf[String(tf||"").toLowerCase()] = last;
+    }
+  }catch(e){}
+
+  // update comparison panel
+  try{ __renderAiVsEngine(); }catch(e){}
+}
+/* EMA (1–200) */
+function calcEMAValues(arr, period){
+  if(!arr || !arr.length) return [];
+  period = Math.max(1, Math.min(200, Number(period) || 10));
+  const k = 2 / (period + 1);
+
+  // start with SMA for first period to avoid early bias
+  let sum = 0;
+  let ema = null;
+  const out = new Array(arr.length).fill(null);
+
+  for (let i = 0; i < arr.length; i++){
+    const c = arr[i];
+    const close = (c && typeof c.close === "number") ? c.close : null;
+    if (close === null) continue;
+
+    if (i < period){
+      sum += close;
+      if (i === period - 1){
+        ema = sum / period;
+        out[i] = ema;
+      }
+      continue;
+    }
+
+    if (ema === null){
+      // fallback (shouldn't happen often)
+      ema = close;
+      out[i] = ema;
+      continue;
+    }
+
+    ema = (close - ema) * k + ema;
+    out[i] = ema;
+  }
+  return out;
+}
+
+function calcEMAs(){
+  // EMA 1
+  if (EMA1_ENABLED === "on"){
+    const v1 = calcEMAValues(DATA, EMA1_PERIOD);
+
+    // persist EMA1 on candles (used by Turbo Scan computations)
+    for(let i=0;i<DATA.length;i++){
+      DATA[i].ema1 = (v1[i] === null || v1[i] === undefined) ? null : v1[i];
+    }
+
+    ema1Series.setData(
+      DATA.map((c, i)=> (v1[i] === null ? null : ({ time:c.time, value:v1[i] }))).filter(Boolean)
+    );
+  } else {
+    for(let i=0;i<DATA.length;i++) DATA[i].ema1 = null;
+    ema1Series.setData([]);
+  }
+
+  // EMA 2 (default period = 1, optional second EMA)
+  if (EMA2_ENABLED === "on"){
+    const v2 = calcEMAValues(DATA, EMA2_PERIOD);
+
+    // persist EMA2 on candles so Super Momentum + signal logic use EMA2 (not close)
+    for(let i=0;i<DATA.length;i++){
+      DATA[i].ema2 = (v2[i] === null || v2[i] === undefined) ? null : v2[i];
+    }
+
+    ema2Series.setData(
+      DATA.map((c, i)=> (v2[i] === null ? null : ({ time:c.time, value:v2[i] }))).filter(Boolean)
+    );
+  } else {
+    for(let i=0;i<DATA.length;i++) DATA[i].ema2 = null;
+    ema2Series.setData([]);
+  }
+
+  // Turbo Scan badge on main chart
+  try{
+    const p = (EMA1_ENABLED === "on") ? EMA1_PERIOD : 10;
+    const ang = computeEmaAngleDeg(DATA, p, 10);
+    const bbAng = computeBbMidEmaAngleDeg(DATA, 10, 10);
+    const gapInfo = computeEmaBbGapInfo(DATA, 10, 10);
+    const superInfo = computeSuperTrendInfoFromEma2(DATA, 10);
+    updateAngleBadge(angle1El, ang, bbAng, gapInfo, superInfo);
+    // ✅ Trend strength for Main (slot 1)
+    try{ updateTrendStrength4(1); }catch(e){}
+
+  }catch(e){}
+}
+
+
+
+/* TP / S&R */
+function calcAvgRangeAround(arr, centerIdx, window){
+  window = window || 10;
+  let sum = 0;
+  let count = 0;
+  const start = Math.max(0, centerIdx - window);
+  const end   = Math.min(arr.length - 1, centerIdx + window);
+  for (let i = start; i <= end; i++){
+    const bar = arr[i];
+    if (!bar) continue;
+    sum += (bar.high - bar.low);
+    count++;
+  }
+  return count ? (sum / count) : 0;
+}
+
+function findTakeProfit(arr, idx, dir){
+  const c = arr[idx];
+  if (!c) return null;
+
+  let pivotIndex = null;
+  let pivotPrice = null;
+
+  if (dir === "sell") {
+    // pivot LOW below price = support
+    for (let j = idx - 1; j >= 1; j--) {
+      if (j - 1 < 0 || j + 1 > idx) continue;
+      const a = arr[j - 1], b = arr[j], d = arr[j + 1];
+      if (!a || !b || !d) continue;
+      const isPivotLow = (b.low < a.low) && (b.low < d.low);
+      if (isPivotLow && b.low < c.close) {
+        pivotIndex = j;
+        pivotPrice = b.low;
+        break;
+      }
+    }
+  } else if (dir === "buy") {
+    // pivot HIGH above price = resistance
+    for (let j = idx - 1; j >= 1; j--) {
+      if (j - 1 < 0 || j + 1 > idx) continue;
+      const a = arr[j - 1], b = arr[j], d = arr[j + 1];
+      if (!a || !b || !d) continue;
+      const isPivotHigh = (b.high > a.high) && (b.high > d.high);
+      if (isPivotHigh && b.high > c.close) {
+        pivotIndex = j;
+        pivotPrice = b.high;
+        break;
+      }
+    }
+  }
+
+  if (pivotIndex === null || pivotPrice === null) return null;
+
+  const avgRange = calcAvgRangeAround(arr, pivotIndex, 10) || (arr[pivotIndex].high - arr[pivotIndex].low) || 0.000001;
+  const tolerance = avgRange * 0.25;
+
+  let touchCount = 0;
+  const startScan = Math.max(0, pivotIndex - 20);
+  const endScan   = Math.min(arr.length - 1, pivotIndex + 20);
+  for (let k = startScan; k <= endScan; k++){
+    if (k >= idx) break;
+    const bar = arr[k];
+    if (!bar) continue;
+    let refPrice = pivotPrice;
+    let comparePrice = (dir === "sell") ? bar.low : bar.high;
+    if (Math.abs(comparePrice - refPrice) <= tolerance){
+      touchCount++;
+    }
+  }
+
+  let score = 1;
+  if (touchCount >= 2) score++;
+  if (touchCount >= 3) score++;
+  if (touchCount >= 4) score++;
+
+  const pivotBar = arr[pivotIndex];
+  if (dir === "sell" && pivotBar && typeof pivotBar.bbLower === "number" && pivotPrice <= pivotBar.bbLower){
+    score++;
+  }
+  if (dir === "buy" && pivotBar && typeof pivotBar.bbUpper === "number" && pivotPrice >= pivotBar.bbUpper){
+    score++;
+  }
+
+  if (score > 5) score = 5;
+
+  return {
+    price: pivotPrice,
+    score: score
+  };
+}
+
+function computeRecommendedDuration(arr, idx, c, tpPrice, tf, srScore){
+  if (typeof tpPrice !== "number" || !isFinite(tpPrice)) {
+    return {
+      minutes: null,
+      strength: "N/A",
+      score: srScore || 0
+    };
+  }
+
+  let sum = 0;
+  let count = 0;
+  const start = Math.max(0, idx - 10);
+  const end   = idx;
+  for (let i = start; i <= end; i++){
+    const bar = arr[i];
+    if (!bar) continue;
+    sum += (bar.high - bar.low);
+    count++;
+  }
+  const avgRange = count ? (sum / count) : 0;
+  if (avgRange <= 0){
+    return {
+      minutes: null,
+      strength: "N/A",
+      score: srScore || 0
+    };
+  }
+
+  const distance = Math.abs(tpPrice - c.close);
+  if (distance <= 0){
+    return {
+      minutes: null,
+      strength: "N/A",
+      score: srScore || 0
+    };
+  }
+
+  let candlesNeeded = distance / avgRange;
+  if (!isFinite(candlesNeeded) || candlesNeeded <= 0) candlesNeeded = 1;
+
+  const tfMinMap = {
+    "1m": 1,
+    "2m": 2,
+    "5m": 5,
+    "10m": 10,
+    "15m": 15,
+    "30m": 30,
+    "1h": 60,
+    "4h": 240
+  };
+  const tfMinutes = tfMinMap[tf] || 5;
+
+  let baseMinutes = candlesNeeded * tfMinutes;
+
+  let strengthLabel = "Weak";
+  let multiplier = 0.7;
+  const score = srScore || 0;
+
+  if (score >= 5){
+    strengthLabel = "Strong";
+    multiplier = 1.3;
+  } else if (score >= 3){
+    strengthLabel = "Medium";
+    multiplier = 1.0;
+  }
+
+  let finalMinutes = baseMinutes * multiplier;
+  if (!isFinite(finalMinutes) || finalMinutes <= 0){
+    finalMinutes = tfMinutes * 3;
+  }
+
+  finalMinutes = Math.round(finalMinutes);
+  if (finalMinutes < 2) finalMinutes = 2;
+  if (finalMinutes > 60) finalMinutes = 60;
+
+  return {
+    minutes: finalMinutes,
+    strength: strengthLabel,
+    score: score
+  };
+}
+
+/* NEW: detect recent super trends (BB crosses) */
+function hasRecentSuperDown(arr, idx, lookback){
+  const lb = lookback || 30;
+  const start = Math.max(0, idx - lb);
+  for (let i = start; i < idx; i++){
+    const c = arr[i];
+    if (!c || typeof c.bbLower !== "number") continue;
+    const isRed = c.close < c.open;
+    const crossesLower = c.low <= c.bbLower;
+    if (isRed && crossesLower) return true;
+  }
+  return false;
+}
+function hasRecentSuperUp(arr, idx, lookback){
+  const lb = lookback || 30;
+  const start = Math.max(0, idx - lb);
+  for (let i = start; i < idx; i++){
+    const c = arr[i];
+    if (!c || typeof c.bbUpper !== "number") continue;
+    const isGreen = c.close > c.open;
+    const crossesUpper = c.high >= c.bbUpper;
+    if (isGreen && crossesUpper) return true;
+  }
+  return false;
+}
+
+/* NEW: filter – after super DOWN require support touch for BUY, after super UP require resistance touch for SELL */
+function passesSuperTrendSRFilter(arr, idx, tradeDir){
+  const bar = arr[idx];
+  if (!bar) return true;
+
+  const lookback = 30;
+  const touchWindow = 6;
+
+  if (tradeDir === "buy"){
+    // BUY after super DOWN: require support
+    if (!hasRecentSuperDown(arr, idx, lookback)) return true; // no super down -> allow as before
+
+    const supportInfo = findTakeProfit(arr, idx, "sell"); // pivot low (support)
+    if (!supportInfo || typeof supportInfo.price !== "number") return false;
+
+    const support = supportInfo.price;
+    const avgRange = calcAvgRangeAround(arr, idx, 10) || (bar.high - bar.low) || 0.000001;
+    const tolerance = avgRange * 0.35;
+
+    const start = Math.max(0, idx - touchWindow);
+    for (let k = start; k <= idx; k++){
+      const b = arr[k];
+      if (!b) continue;
+      if (Math.abs(b.low - support) <= tolerance){
+        return true; // touched support
+      }
+    }
+    return false;
+  }
+
+  if (tradeDir === "sell"){
+    // SELL after super UP: require resistance
+    if (!hasRecentSuperUp(arr, idx, lookback)) return true; // no super up -> allow as before
+
+    const resistInfo = findTakeProfit(arr, idx, "buy"); // pivot high (resistance)
+    if (!resistInfo || typeof resistInfo.price !== "number") return false;
+
+    const resistance = resistInfo.price;
+    const avgRange = calcAvgRangeAround(arr, idx, 10) || (bar.high - bar.low) || 0.000001;
+    const tolerance = avgRange * 0.35;
+
+    const start = Math.max(0, idx - touchWindow);
+    for (let k = start; k <= idx; k++){
+      const b = arr[k];
+      if (!b) continue;
+      if (Math.abs(b.high - resistance) <= tolerance){
+        return true; // touched resistance
+      }
+    }
+    return false;
+  }
+
+  return true;
+}
+
+/* TREND-BREAK STRATEGY – EXISTING CANDLE LOGIC KEPT */
+function detectSignalsMain(maxIdx){
+  // maxIdx = last index (inclusive) to consider as CLOSED.
+  // When streaming, we pass DATA.length-2 so we don't generate signals on the forming candle.
+  return detectSignalsOnArray(DATA, $("symbol").value, $("tf").value, maxIdx);
+}
+function detectSignalsOnArray(arr, symbol, tf, maxIdx){
+  const sigs = [];
+  if (!arr || arr.length < 5) return sigs;
+
+  // Only evaluate signals on candles that are fully closed.
+  // If maxIdx is provided, we will NOT evaluate candles after that index.
+  let endIdx = (arr.length - 1);
+  if (typeof maxIdx === "number" && isFinite(maxIdx)){
+    endIdx = Math.min(endIdx, Math.floor(maxIdx));
+  }
+  if (endIdx < 1) return sigs;
+
+  // EMA2 is the ONLY signal driver requested.
+  // If EMA2 is OFF, do not generate signals (keeps chart clean).
+  if (EMA2_ENABLED !== "on") return sigs;
+
+  const ema2Vals = calcEMAValues(arr, EMA2_PERIOD);
+  let openPos = null; let pendingClose = null;
+  // tracks last open BUY/SELL for CLOSE signals
+
+  function makeTpHitsArray(){
+    const n = Math.max(1, Math.min(5, TP_COUNT));
+    return new Array(n).fill(false);
+  }
+
+  // Angle (degrees) between EMA2 slope and the relevant BB line slope at the CROSS candle.
+  // Uses the last step only (prev -> now), which matches "when EMA go under/above the BB line".
+  function crossAngleDeg(ePrev, eNow, bPrev, bNow){
+    try{
+      if(!isFinite(ePrev) || !isFinite(eNow) || !isFinite(bPrev) || !isFinite(bNow)) return null;
+      const emaAng = Math.atan2((eNow - ePrev), 1) * 180 / Math.PI;
+      const bbAng  = Math.atan2((bNow - bPrev), 1) * 180 / Math.PI;
+      const diff   = Math.abs(emaAng - bbAng);
+      return isFinite(diff) ? diff : null;
+    }catch(_){
+      return null;
+    }
+  }
+
+  for (let i = 1; i <= endIdx; i++){
+    const prev = arr[i - 1];
+    const c    = arr[i];
+    if (!prev || !c) continue;
+
+    // Need BB values
+    if (typeof prev.bbUpper !== "number" || typeof prev.bbLower !== "number") continue;
+    if (typeof c.bbUpper !== "number"   || typeof c.bbLower !== "number") continue;
+
+    const ePrev = ema2Vals[i - 1];
+    const eNow  = ema2Vals[i];
+    if (!isFinite(ePrev) || !isFinite(eNow)) continue;
+
+    // CROSS rules (requested):
+    // - SELL when EMA2 crosses BELOW BB Lower
+    // - BUY  when EMA2 crosses ABOVE BB Upper
+    const sellCross = (ePrev >= prev.bbLower) && (eNow < c.bbLower);
+    const buyCross  = (ePrev <= prev.bbUpper) && (eNow > c.bbUpper);
+
+    // CLOSE rules (enhanced as requested):
+    // 1) EMA2 crosses back INSIDE the band (via BB lower/upper)
+    // 2) then the NEXT candle must "cross the last candle" (reversal attempt)
+    // 3) and only if an earlier BUY/SELL exists (openPos)
+    const closeCrossAfterSell = (openPos === "sell") && (ePrev < prev.bbLower) && (eNow >= c.bbLower);
+    const closeCrossAfterBuy  = (openPos === "buy")  && (ePrev > prev.bbUpper) && (eNow <= c.bbUpper);
+
+    // If we already have a "cross back inside" candle stored, validate reversal on the very next candle only.
+    if (pendingClose && i === (pendingClose.index + 1)){
+      const last = arr[pendingClose.index]; // the candle that crossed back inside BB
+      if(last){
+        // "new candle cross the last candle" => body-cross confirmation (reversal attempt)
+        const lastBodyHigh = Math.max(Number(last.open), Number(last.close));
+        const lastBodyLow  = Math.min(Number(last.open), Number(last.close));
+
+        const bullishReversal = (Number(c.close) >= Number(c.open)) && (Number(c.close) > lastBodyHigh);
+        const bearishReversal = (Number(c.close) <= Number(c.open)) && (Number(c.close) < lastBodyLow);
+
+        if ((pendingClose.of === "sell" && bullishReversal) || (pendingClose.of === "buy" && bearishReversal)){
+          sigs.push({
+            time: c.time,
+            dir: "close",
+            closeOf: pendingClose.of,
+            price: c.close,
+            tp: null,
+            label: `CLOSE (confirmed): EMA2 back inside BB + reversal candle`,
+            symbol: symbol,
+            tf: tf,
+            tpHits: makeTpHitsArray()
+          });
+          openPos = null;
+          pendingClose = null;
+          continue;
+        }
+      }
+      // Not confirmed on the next candle => cancel pending, keep position open
+      pendingClose = null;
+    }
+
+    // Store the "cross back inside" event and wait for the next candle for confirmation
+    if (closeCrossAfterSell){
+      pendingClose = { of: "sell", index: i };
+      continue;
+    }
+
+    if (closeCrossAfterBuy){
+      pendingClose = { of: "buy", index: i };
+      continue;
+    }
+
+    if (sellCross){
+      const ang = crossAngleDeg(ePrev, eNow, prev.bbLower, c.bbLower);
+      const angTxt = (ang === null) ? "" : ` • Δ${ang.toFixed(1)}°`;
+
+      const tpInfo = findTakeProfit(arr, i, "sell");
+      let tp = null;
+      let srScore = 0;
+      if (tpInfo){
+        tp = tpInfo.price;
+        srScore = tpInfo.score || 0;
+      }
+      const durInfo = computeRecommendedDuration(arr, i, c, tp, tf, srScore);
+
+      sigs.push({
+        time: c.time,
+        dir: "sell",
+        price: c.close,
+        tp: tp,
+        label: `EMA2 cross BELOW BB Lower${angTxt}`,
+        crossAngleDeg: (ang === null ? null : ang),
+        symbol: symbol,
+        tf: tf,
+        tpHits: makeTpHitsArray(),
+        srScore: srScore,
+        srStrength: durInfo.strength,
+        durationMin: durInfo.minutes
+      });
+      openPos = "sell";
+      pendingClose = null;
+      continue;
+    }
+
+    if (buyCross){
+      const ang = crossAngleDeg(ePrev, eNow, prev.bbUpper, c.bbUpper);
+      const angTxt = (ang === null) ? "" : ` • Δ${ang.toFixed(1)}°`;
+
+      const tpInfo = findTakeProfit(arr, i, "buy");
+      let tp = null;
+      let srScore = 0;
+      if (tpInfo){
+        tp = tpInfo.price;
+        srScore = tpInfo.score || 0;
+      }
+      const durInfo = computeRecommendedDuration(arr, i, c, tp, tf, srScore);
+
+      sigs.push({
+        time: c.time,
+        dir: "buy",
+        price: c.close,
+        tp: tp,
+        label: `EMA2 cross ABOVE BB Upper${angTxt}`,
+        crossAngleDeg: (ang === null ? null : ang),
+        symbol: symbol,
+        tf: tf,
+        tpHits: makeTpHitsArray(),
+        srScore: srScore,
+        srStrength: durInfo.strength,
+        durationMin: durInfo.minutes
+      });
+      openPos = "buy";
+      pendingClose = null;
+      continue;
+    }
+  }
+
+  return sigs;
+}
+
+/* TP LEVELS */
+function getTpLevelsForSignal(s){
+  const levels = [];
+  if (typeof s.tp !== "number" || typeof s.price !== "number") return levels;
+  const n = Math.max(1, Math.min(5, TP_COUNT));
+  const entry = s.price;
+  const final = s.tp;
+  if (final === entry) {
+    levels.push(entry);
+    return levels;
+  }
+  for (let i = 1; i <= n; i++){
+    const frac = i / n;
+    const lvl = entry + (final - entry) * frac;
+    levels.push(lvl);
+  }
+  return levels;
+}
+
+
+function updateSignalsTitle(){
+  const titleEl = $("signals-title");
+  if(!titleEl) return;
+  const symSel = $("symbol");
+  const symLabel = (symSel && symSel.options && symSel.selectedIndex >= 0)
+    ? (symSel.options[symSel.selectedIndex].textContent || symSel.value)
+    : (symSel ? symSel.value : "Selected Market");
+  const tfFilter = ($("sigTfFilter") ? $("sigTfFilter").value : "all");
+  const tfSuffix = (tfFilter && tfFilter !== "all") ? (" • TF: " + tfFilter) : "";
+  titleEl.textContent = "Live Signals – " + symLabel + " (last 15 minutes)" + tfSuffix;
+}
+/* RENDER SIGNAL LIST (uses GLOBAL_SIGNALS only) */
+
+function isCryptoSymbol(sym){
+  if(!sym) return false;
+  if(sym.startsWith("cry")) return true;
+  if(Array.isArray(CRYPTO_SYMBOLS) && CRYPTO_SYMBOLS.includes(sym)) return true;
+  return false;
+}
+
+function updateAvailableCryptoSignals(){
+  const el = $("availList");
+  if(!el) return;
+
+  const nowSec = Math.floor(Date.now()/1000);
+  const windowSec = 15*60;
+
+  // pick latest BUY/SELL per crypto symbol within the window
+  const latest = new Map();
+  for(const s of (GLOBAL_SIGNALS||[])){
+    if(!s || !isCryptoSymbol(s.symbol)) continue;
+    const t = Number(s.time)||0;
+    if(!t || (nowSec - t) > windowSec) continue;
+    const dir = (s.dir||"").toUpperCase();
+    if(dir !== "BUY" && dir !== "SELL") continue;
+
+    const prev = latest.get(s.symbol);
+    if(!prev || t > (Number(prev.time)||0)) latest.set(s.symbol, s);
+  }
+
+  const arr = [...latest.values()].sort((a,b)=>(Number(b.time)||0)-(Number(a.time)||0)).slice(0, 80);
+  if(arr.length===0){
+    el.textContent = "No crypto signals in the last 15 minutes.";
+    return;
+  }
+
+  el.innerHTML = "";
+  for(const s of arr){
+    const row = document.createElement("div");
+    row.className = "availItem";
+
+    const left = document.createElement("div");
+    left.textContent = s.symbol;
+
+    const right = document.createElement("div");
+    const dir = (s.dir||"").toUpperCase();
+    const tag = document.createElement("span");
+    tag.className = (dir==="BUY") ? "tagBuy" : "tagSell";
+    tag.textContent = dir;
+
+    const tf = document.createElement("span");
+    tf.style.color = "#9eb1c7";
+    tf.style.marginLeft = "8px";
+    tf.textContent = s.tf || "";
+
+    right.appendChild(tag);
+    right.appendChild(tf);
+
+    row.appendChild(left);
+    row.appendChild(right);
+    el.appendChild(row);
+  }
+}
+function renderSignals(){
+  const list = $("sig-list");
+  // Always reflect current selections in the title
+  updateSignalsTitle();
+
+  const nowSec = Math.floor(Date.now() / 1000);
+
+  // keep log reasonable (last 60 minutes)
+  GLOBAL_SIGNALS = GLOBAL_SIGNALS.filter(s => (nowSec - s.time) <= 3600);
+
+  const symSel = $("symbol");
+  const selectedSymbol = symSel ? symSel.value : "";
+  const tfFilter = ($("sigTfFilter") ? $("sigTfFilter").value : "all");
+
+  // last 15 minutes only + selected market + optional TF filter
+  const recent = GLOBAL_SIGNALS.filter(s => {
+    if ((nowSec - s.time) > 900) return false;
+    if (selectedSymbol && s.symbol !== selectedSymbol) return false;
+    if (tfFilter !== "all" && s.tf !== tfFilter) return false;
+    return true;
+  });
+
+  if (!recent.length){
+    list.innerHTML = `<span style="color:#9ca3af;font-size:12px;">No signals in last 15 minutes…</span>`;
+    return;
+  }
+
+  list.innerHTML = "";
+  const ordered = [...recent].sort((a,b)=>b.time-a.time).slice(0,120);
+
+  ordered.forEach(s=>{
+    const dt = new Date(s.time * 1000);
+    const dateStr = dt.toLocaleDateString();
+    const timeStr = dt.toLocaleTimeString();
+
+    const baseTpText = (typeof s.tp === "number")
+      ? s.tp.toFixed(4)
+      : "Not found";
+
+    const tpLevels = getTpLevelsForSignal(s);
+    let tpLevelsText = "";
+    if (tpLevels.length){
+      tpLevelsText = " | TP1: " + tpLevels[0].toFixed(4);
+      if (tpLevels.length > 1){
+        tpLevelsText += " … TP" + tpLevels.length + ": " + tpLevels[tpLevels.length-1].toFixed(4);
+      }
+    }
+
+    const durText = (typeof s.durationMin === "number")
+      ? (s.durationMin + " min")
+      : "N/A";
+    const strengthText = s.srStrength || "N/A";
+
+    const div = document.createElement("div");
+    div.className = "sig-card";
+    div.innerHTML = `
+      <div>
+        <span class="symbol">${s.symbol}</span>
+        <span>${s.label}</span>
+      </div>
+      <div class="${s.dir}" style="margin-top:3px;">${s.dir.toUpperCase()}</div>
+      <div class="price">Entry: ${s.price.toFixed(4)}</div>
+      <div class="tp" style="background:${TP_BG_COLOR};color:${TP_FONT_COLOR};">
+        TP (auto S/R): ${baseTpText}${tpLevelsText}
+      </div>
+      <div class="time">Duration: ${durText} &nbsp; | &nbsp; S/R: ${strengthText}</div>
+      <div class="time">${dateStr} &nbsp; ${timeStr} &nbsp; TF: ${s.tf}</div>
+    `;
+    list.appendChild(div);
+  });
+  updateAvailableCryptoSignals();
+}
+function applyMarkers(){
+  const markers = SIGNALS.map(s=>{
+    const isBuy = (s.dir === 'buy');
+    const isSell = (s.dir === 'sell');
+    const isClose = (s.dir === 'close');
+
+    return {
+      time: s.time,
+      position: isBuy ? 'belowBar' : 'aboveBar',
+      color: isBuy ? '#22c55e' : (isSell ? '#ef4444' : '#eab308'),
+      shape: isBuy ? 'arrowUp' : (isSell ? 'arrowDown' : 'circle'),
+      text: isBuy ? 'BUY' : (isSell ? 'SELL' : 'CLOSE')
+    };
+  });
+  candleSeries.setMarkers(markers);
+}
+
+/* TOAST + SOUND */
+let toastTimer = null;
+let audioCtx = null;
+
+function buildSignalToastHtml(s, bgColorOverride, fontColorOverride){
+  const bg   = bgColorOverride  || NOTIF_BG_COLOR;
+  const font = fontColorOverride|| NOTIF_FONT_COLOR;
+
+  const dirClass = s.dir === "buy" ? "toast-dir-buy" : "toast-dir-sell";
+  const dirText  = s.dir.toUpperCase();
+  const dt       = new Date(s.time * 1000);
+  const timeStr  = dt.toLocaleTimeString();
+  const dateStr  = dt.toLocaleDateString();
+
+  const baseTpText = (typeof s.tp === "number")
+    ? s.tp.toFixed(4)
+    : "Not found";
+
+  const tpLevels = getTpLevelsForSignal(s);
+  let tpLevelsText = "";
+  if (tpLevels.length){
+    tpLevelsText = " | TP1: " + tpLevels[0].toFixed(4);
+    if (tpLevels.length > 1){
+      tpLevelsText += " … TP" + tpLevels.length + ": " +
+        tpLevels[tpLevels.length-1].toFixed(4);
+    }
+  }
+
+  const durText = (typeof s.durationMin === "number")
+    ? (s.durationMin + " min")
+    : "N/A";
+  const strengthText = s.srStrength || "N/A";
+
+  return `
+    <div class="toast-card" style="background:${bg};">
+      <div>
+        <span class="symbol">${s.symbol}</span>
+        <span class="toast-title" style="color:${font};">${s.label}</span>
+      </div>
+      <div class="${dirClass}">${dirText}</div>
+      <div class="toast-entry" style="color:${font};">Entry: ${s.price.toFixed(4)}</div>
+      <div class="toast-tp" style="background:${TP_BG_COLOR};color:${TP_FONT_COLOR};">
+        TP (auto S/R): ${baseTpText}${tpLevelsText}
+      </div>
+      <div class="toast-time" style="color:${font};">Duration: ${durText} • S/R: ${strengthText}</div>
+      <div class="toast-time" style="color:${font};">${dateStr} &nbsp; ${timeStr} &nbsp; TF: ${s.tf}</div>
+    </div>
+  `;
+}
+
+function applyToastPosition(positionOverride){
+  const toast = $("toast");
+  if (!toast) return;
+
+  const pos = positionOverride || NOTIF_POSITION;
+  toast.style.top = "";
+  toast.style.bottom = "";
+  toast.style.left = "";
+  toast.style.right = "";
+  toast.style.transform = "";
+
+  switch (pos) {
+    case "top-left":
+      toast.style.top = "16px";
+      toast.style.left = "16px";
+      toast.style.transform = "translateY(-20px)";
+      break;
+    case "top-right":
+      toast.style.top = "16px";
+      toast.style.right = "16px";
+      toast.style.transform = "translateY(-20px)";
+      break;
+    case "bottom-left":
+      toast.style.bottom = "16px";
+      toast.style.left = "16px";
+      toast.style.transform = "translateY(20px)";
+      break;
+    case "center":
+      toast.style.top = "50%";
+      toast.style.left = "50%";
+      toast.style.transform = "translate(-50%, calc(-50% + 20px))";
+      break;
+    case "bottom-right":
+    default:
+      toast.style.bottom = "16px";
+      toast.style.right = "16px";
+      toast.style.transform = "translateY(20px)";
+      break;
+  }
+}
+function showToast(msgHtml, positionOverride, holdSecondsOverride){
+  const toast = $("toast");
+  toast.innerHTML = msgHtml;
+  applyToastPosition(positionOverride);
+
+  toast.classList.add("show");
+  if(toastTimer) clearTimeout(toastTimer);
+
+  const baseHold = (typeof holdSecondsOverride === "number" && !isNaN(holdSecondsOverride))
+    ? holdSecondsOverride
+    : (NOTIF_HOLD_SECONDS || 4);
+
+  const holdMs = Math.max(2000, Math.min(60000, baseHold * 1000));
+  toastTimer = setTimeout(()=>toast.classList.remove("show"), holdMs);
+}
+function playBeep(){
+  const duration = Math.max(3, Math.min(15, SOUND_DURATION || 3));
+
+  if (SOUND_TYPE === "custom" && customAudio && customAudio.src) {
+    try {
+      customAudio.pause();
+      customAudio.currentTime = 0;
+      customAudio.play();
+      setTimeout(()=>{ try{ customAudio.pause(); }catch(e){} }, duration * 1000);
+    } catch (e) {
+      console.warn("Custom audio play error", e);
+    }
+    return;
+  }
+
+  if (SIGNAL_SOUND_FILES[SOUND_TYPE]) {
+    try{
+      const fileName = SIGNAL_SOUND_FILES[SOUND_TYPE];
+      const fileUrl  = SIGNAL_SOUNDS_BASE + fileName;
+      if (!alarmAudio) alarmAudio = new Audio();
+      alarmAudio.pause();
+      alarmAudio.currentTime = 0;
+      alarmAudio.src = fileUrl;
+      alarmAudio.play();
+      setTimeout(()=>{ try{ alarmAudio.pause(); }catch(e){} }, duration * 1000);
+      return;
+    }catch(e){
+      console.warn("Hosted alarm sound error", e);
+    }
+  }
+
+  try{
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!audioCtx) audioCtx = new AudioCtx();
+
+    const osc = audioCtx.createOscillator();
+    const gain= audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    const now = audioCtx.currentTime;
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+    switch (SOUND_TYPE) {
+      case "1": osc.type = "sine";     osc.frequency.setValueAtTime(880, now); break;
+      case "2": osc.type = "square";   osc.frequency.setValueAtTime(660, now); break;
+      case "3": osc.type = "sawtooth"; osc.frequency.setValueAtTime(520, now); break;
+      case "4": osc.type = "triangle"; osc.frequency.setValueAtTime(440, now); break;
+      case "5":
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.linearRampToValueAtTime(1400, now + duration);
+        break;
+      default:
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(880, now);
+        break;
+    }
+
+    osc.start(now);
+    osc.stop(now + duration + 0.05);
+  }catch(e){
+    console.warn("Audio not allowed", e);
+  }
+}
+function playTpSound(){
+  if (TP_SOUND_ENABLED === "off") return;
+  const duration = Math.max(3, Math.min(15, SOUND_DURATION || 3));
+  const fileName = TP_SOUND_FILES[TP_SOUND_TYPE] || TP_SOUND_FILES.slot;
+  const fileUrl  = TP_SOUNDS_BASE + fileName;
+
+  try{
+    tpAudio.pause();
+    tpAudio.currentTime = 0;
+    tpAudio.src = fileUrl;
+    tpAudio.play();
+    setTimeout(()=>{ try{ tpAudio.pause(); }catch(e){} }, duration * 1000);
+  }catch(e){
+    console.warn("TP sound error", e);
+  }
+}
+
+/* TF FILTER FOR NOTIFICATIONS */
+function isTfAllowedForNotifications(tf){
+  if (!SIGNAL_FILTER_TF) return true;
+  if (!tf) return true;
+  if (SIGNAL_FILTER_TF === "any") return true;
+
+  const validTfs = ["1m","5m","10m","15m","30m","1h","2m","4h"];
+  if (!validTfs.includes(SIGNAL_FILTER_TF)) {
+    return true;
+  }
+  return tf === SIGNAL_FILTER_TF;
+}
+
+/* WEBSOCKET + LIVE */
+
+async function loadBinanceData(selectedTf, binanceSymbol, marketType="spot"){
+  try{
+    // close Deriv WS if open
+    try{ if(WS){ WS.close(); } }catch(e){}
+    WS = null;
+
+    const m = String(marketType || "spot").toLowerCase();
+    const isFutures = m.startsWith("fut");
+
+    setStatus(isFutures ? "Loading Binance Futures…" : "Loading Binance Spot…");
+
+    const interval = toBinanceInterval(selectedTf);
+    const kl = await fetchBinanceKlines(binanceSymbol, interval, 600, isFutures ? "futures" : "spot");
+
+    const arr = [];
+    if(Array.isArray(kl)){
+      for(const row of kl){
+        // [ openTime, open, high, low, close, volume, closeTime, ...]
+        const t = Math.floor((row[0]||0)/1000);
+        const o = parseFloat(row[1]);
+        const h = parseFloat(row[2]);
+        const l = parseFloat(row[3]);
+        const c = parseFloat(row[4]);
+        if(!t || !isFinite(o) || !isFinite(h) || !isFinite(l) || !isFinite(c)) continue;
+        arr.push({time:t, open:o, high:h, low:l, close:c});
+      }
+    }
+
+    if(!arr.length){
+      setStatus("No Binance data");
+      return;
+    }
+
+    DATA = arr;
+    candleSeries.setData(DATA);
+    calcBB(); calcEMAs();
+    SIGNALS = filterSignalsByJetDetectorFinal(detectSignalsMain(Math.max(0, DATA.length-2)));
+    applyMarkers();
+
+    // Auto-fit main chart so user doesn't need to drag/zoom after market change
+    try{ chart.timeScale().fitContent(); }catch(e){}
+    try{ chart.timeScale().scrollToRealTime(); }catch(e){}
+
+    historyLoaded = true;
+
+    const label = isFutures ? "Binance Futures" : "Binance Spot";
+    $("signals-title").textContent = `${label} Signals – ${binanceSymbol} (live)`;
+    $("sig-list").innerHTML = `<span style="color:#9ca3af;font-size:12px;">Streaming ${label} ${binanceSymbol} (${interval})…</span>`;
+
+    // Start live stream
+    startBinanceKlineStream(binanceSymbol, interval, isFutures ? "futures" : "spot");
+
+    setStatus(isFutures ? "Binance Futures Live" : "Binance Spot Live");
+  }catch(e){
+    console.warn("loadBinanceData error:", e);
+    setStatus("Binance error");
+  }
+}
+
+async function loadBinanceDataToBundle(selectedTf, binanceSymbol, bundle, marketType="spot"){
+  try{
+    const m = String(marketType || "spot").toLowerCase();
+    const isFutures = m.startsWith("fut");
+
+    const interval = toBinanceInterval(selectedTf);
+    const kl = await fetchBinanceKlines(binanceSymbol, interval, 600, isFutures ? "futures" : "spot");
+
+    const arr = [];
+    if(Array.isArray(kl)){
+      for(const k of kl){
+        arr.push({
+          time: Math.floor(+k[0]/1000),
+          open: +k[1],
+          high: +k[2],
+          low:  +k[3],
+          close:+k[4]
+        });
+      }
+    }
+    bundle.data = arr;
+    bundle.series.setData(arr);
+
+    // Apply indicators + Turbo Scan badge on TF2/TF3/TF4/TF5 for Binance mode
+    try{ renderStrategyToBundle(bundle, arr, binanceSymbol, selectedTf); }catch(e){}
+
+    // Auto-fit bundle chart so user doesn't need to drag/zoom after market change
+    try{ bundle.chart.timeScale().fitContent(); }catch(e){}
+    try{ bundle.chart.timeScale().scrollToRealTime(); }catch(e){}
+
+    // Start live stream for this TF bundle (Binance)
+    try{ startBinanceKlineStreamToBundle(bundle, binanceSymbol, interval, selectedTf, isFutures ? "futures" : "spot"); }catch(e){}
+  }catch(e){
+    console.warn("loadBinanceDataToBundle error:", e);
+  }
+}
+async function loadData(){
+  // ensure chart is visible after selecting from control panel
+  scrollChartIntoView();
+
+  const mySeq = ++__loadSeq;
+
+  const tf     = $("tf").value;
+  const tf2    = $("tf2").value;
+  const tf3    = $("tf3").value;
+  const tf4    = $("tf4").value;
+  $("tfLabel1").textContent = tf;
+  $("tfLabel2").textContent = tf2;
+  $("tfLabel3").textContent = tf3;
+  $("tfLabel4").textContent = tf4;
+
+  
+  const tf5 = $("tf5") ? $("tf5").value : "1m";
+  if($("tfLabel5")) $("tfLabel5").textContent = tf5;
+const symVal = $("symbol").value;
+  if(!symVal){ setStatus("Select Market"); return; }
+  if(String(symVal).startsWith("bn:") || String(symVal).startsWith("bf:")){
+    // Binance pair selected (Spot: bn:..., Futures: bf:...)
+    closeBinanceWS();
+    const isFutures = String(symVal).startsWith("bf:");
+    const bnSymbol = String(symVal).slice(3);
+    const marketType = isFutures ? "futures" : "spot";
+
+    // main chart keeps the full Binance logic (signals + live stream)
+    await loadBinanceData(tf, bnSymbol, marketType);
+
+    // extra charts: historical + live stream (same behavior as before)
+    await loadBinanceDataToBundle(tf2, bnSymbol, chart2Bundle, marketType);
+    await loadBinanceDataToBundle(tf3, bnSymbol, chart3Bundle, marketType);
+    await loadBinanceDataToBundle(tf4, bnSymbol, chart4Bundle, marketType);
+    await loadBinanceDataToBundle(tf5, bnSymbol, chart5Bundle, marketType);
+    return;
+  }else{
+    // ensure any Binance stream is closed when using Deriv
+    closeBinanceWS();
+    $("signals-title").textContent = "Live Signals – All Markets (last 15 minutes)";
+  }
+const granMap = {
+    "1m":60,
+    "5m":300,
+    "10m":600,
+    "15m":900,
+    "30m":1800,
+    "1h":3600,
+    "2h":7200,
+    "4h":14400,
+    "1d":86400
+};
+  const gran = granMap[tf];
+  const gran2 = granMap[$("tf2").value];
+  const gran3 = granMap[$("tf3").value];
+  const gran4 = granMap[$("tf4").value];
+  const gran5 = granMap[$("tf5").value];
+  if(!gran || !gran2 || !gran3 || !gran4 || !gran5){
+    setStatus("Invalid TF");
+    return;
+  }
+
+  if(WS){
+    try{ WS.close(); }catch(e){}
+    WS = null;
+  }
+
+  DATA = [];
+  DATA2 = [];
+  DATA3 = [];
+  DATA4 = [];
+  DATA5 = [];
+  SIGNALS = [];
+  OTHER_DATA = {};
+  OTHER_SIGNALS = {};
+  SUB_MAP = {};
+  SLOT_SUB = {};
+  GLOBAL_SIGNALS = [];
+  historyLoaded = false;
+  $("sig-list").innerHTML = `<span style="color:#9ca3af;font-size:12px;">Loading markets (${tf})…</span>`;
+  candleSeries.setData([]);
+  try{ candleSeries.setMarkers([]); }catch(e){}
+  clearBundle(chart2Bundle);
+  clearBundle(chart3Bundle);
+  clearBundle(chart4Bundle);
+    clearBundle(chart5Bundle);
+bbMid.setData([]); bbUpper.setData([]); bbLower.setData([]);
+  
+  ema1Series.setData([]);
+  ema2Series.setData([]);
+setStatus("Connecting…");
+
+  WS = new WebSocket(WS_URL);
+
+  WS.onopen = ()=>{
+    if (mySeq !== __loadSeq) return;
+    setStatus("Authorizing…");
+    if(API_TOKEN){
+      WS.send(JSON.stringify({ authorize: API_TOKEN }));
+    }else{
+      WS.send(JSON.stringify({ authorize: "guest" }));
+    }
+  };
+
+  WS.onmessage = (ev)=>{
+    if (mySeq !== __loadSeq) return; // ignore stale messages from older connections
+    const msg = JSON.parse(ev.data);
+
+    if(msg.error){
+      console.error("Deriv error:", msg.error);
+      setStatus("API error: " + (msg.error.message || "error"));
+      return;
+    }
+
+    if(msg.msg_type === "authorize"){
+      if (mySeq !== __loadSeq) return;
+
+      setStatus("Authorized – loading history…");
+
+      const selectedSym = $("symbol").value;
+
+      const requests = [
+        { slot: 1, tf: $("tf").value,  gran: gran  },
+        { slot: 2, tf: $("tf2").value, gran: gran2 },
+        { slot: 3, tf: $("tf3").value, gran: gran3 },
+        { slot: 4, tf: $("tf4").value, gran: gran4 },
+        { slot: 5, tf: $("tf5").value, gran: gran5 },
+      ];
+
+      requests.forEach(r=>{
+        if(!r.gran) return;
+        try{
+          WS.send(JSON.stringify({
+            ticks_history: selectedSym,
+            style: "candles",
+            granularity: r.gran,
+            count: 450,
+            end: "latest",
+            subscribe: 1,
+            passthrough: { slot: r.slot, tf: r.tf, seq: mySeq }
           }));
-        }
+        }catch(e){}
+      });
 
-        if(data.msg_type === 'profit_table' && data.profit_table){
-          const rows = (data.profit_table.transactions || []);
-          const sum = rows.reduce((a,r)=> a + (Number(r.profit)||0), 0);
-          const signCls = sum >= 0 ? 'green' : 'red';
-          const pnlStr = (Number(sum).toFixed(2)) + ' USD';
-
-          elTopPnL.innerHTML = `<span class="label">PnL:</span> ${pnlStr}`;
-          elTopPnL.classList.remove('green','red');
-          elTopPnL.classList.add(signCls);
-
-          elPNLCard.textContent = (sum>=0?'+':'') + pnlStr.replace(' USD','');
-          elPNLCard.classList.remove('green','red');
-          elPNLCard.classList.add(signCls);
-        }
-
-        if(data.error){
-          console.error(data.error);
-        }
-      };
+      return;
     }
 
-    /* ===================== Top menu routing ===================== */
-    document.querySelectorAll('.sidebar-item').forEach(el => {
-      el.onclick = () => {
-        document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
-        el.classList.add('active');
-        document.querySelectorAll('[id^="content-"]').forEach(c => c.classList.add('hidden'));
-        document.getElementById('content-' + el.dataset.section).classList.remove('hidden');
+    if(msg.msg_type === "candles"){
+      const sym = msg.echo_req && msg.echo_req.ticks_history ? msg.echo_req.ticks_history : null;
+      if(!sym) return;
+
+      const slot = (msg.echo_req && msg.echo_req.passthrough && msg.echo_req.passthrough.slot) ? msg.echo_req.passthrough.slot : 1;
+      const tfStr = (msg.echo_req && msg.echo_req.passthrough && msg.echo_req.passthrough.tf) ? msg.echo_req.passthrough.tf : $("tf").value;
+
+      // map subscription id -> slot so we can route live ohlc updates
+      if(msg.subscription && msg.subscription.id){
+        SUB_MAP[msg.subscription.id] = slot;
+        SLOT_SUB[slot] = msg.subscription.id;
+      }
+
+      const arr = msg.candles.map(c=>({
+        time:(c.open_time ?? c.epoch),
+        open:+c.open,
+        high:+c.high,
+        low:+c.low,
+        close:+c.close
+      }));
+
+      if(slot === 1){
+        DATA = arr;
+        calcBB();
+        candleSeries.setData(DATA);
+        calcEMAs();
+        SIGNALS = filterSignalsByJetDetectorFinal(detectSignalsMain(Math.max(0, DATA.length-2)));
+        applyMarkers();
+        // Auto-fit main chart so user doesn't need to drag/zoom
+        try{ chart.timeScale().fitContent(); }catch(e){}
+        historyLoaded = true;
+        setStatus("Live: " + sym + " " + tfStr);
+      }else if(slot === 2){
+        DATA2 = arr;
+        chart2Bundle.data = arr;
+        chart2Bundle.series.setData(arr);
+        renderStrategyToBundle(chart2Bundle, DATA2, sym, $("tf2").value);
+        try{ chart2Bundle.chart.timeScale().fitContent(); }catch(e){}
+        try{ chart2Bundle.chart.timeScale().scrollToRealTime(); }catch(e){}
+      }else if(slot === 3){
+        DATA3 = arr;
+        chart3Bundle.data = arr;
+        chart3Bundle.series.setData(arr);
+        renderStrategyToBundle(chart3Bundle, DATA3, sym, $("tf3").value);
+        try{ chart3Bundle.chart.timeScale().fitContent(); }catch(e){}
+        try{ chart3Bundle.chart.timeScale().scrollToRealTime(); }catch(e){}
+      }else if(slot === 4){
+        DATA4 = arr;
+        chart4Bundle.data = arr;
+        chart4Bundle.series.setData(arr);
+        renderStrategyToBundle(chart4Bundle, DATA4, sym, $("tf4").value);
+        try{ chart4Bundle.chart.timeScale().fitContent(); }catch(e){}
+        try{ chart4Bundle.chart.timeScale().scrollToRealTime(); }catch(e){}
+      }else if(slot === 5){
+        DATA5 = arr;
+        chart5Bundle.data = arr;
+        chart5Bundle.series.setData(arr);
+        renderStrategyToBundle(chart5Bundle, DATA5, sym, $("tf5").value);
+        try{ chart5Bundle.chart.timeScale().fitContent(); }catch(e){}
+        try{ chart5Bundle.chart.timeScale().scrollToRealTime(); }catch(e){}
+        // ✅ Populate Live Signals panel from TF5 history (last 15 minutes)
+        try{
+          const sigs5 = filterSignalsByJetDetectorFinal(detectSignalsOnArray(DATA5, sym, tfStr, Math.max(0, DATA5.length - 200)));
+          const nowSec = Math.floor(Date.now()/1000);
+          (sigs5||[]).forEach(s=>{
+            if(!s) return;
+            const tt = (typeof s.time === "number" && s.time > 20000000000) ? Math.floor(s.time/1000) : (s.time||0);
+            if(tt && (nowSec - tt) <= 900){
+              // ensure tf is TF5 and time normalized
+              ensureGlobalSignal(Object.assign({}, s, { tf: tfStr, time: tt }));
+            }
+          });
+        }catch(e){}
+
+      
+      // ✅ Refresh OpenAI trade plan once all TF histories are loaded
+      try{ scheduleAiPlan('history'); }catch(e){}
+
+}
+
+
+// keep right panel focused on the selected symbol (main TF signals)
+      updateSignalsTitle(); // keep Live Signals title in sync
+      renderSignals();
+      return;
+    }
+
+    if(msg.msg_type === "ohlc"){
+      const c = msg.ohlc;
+      const sym = c.symbol;
+
+      const subId = (msg.subscription && msg.subscription.id) ? msg.subscription.id : null;
+      const slot = (subId && SUB_MAP[subId]) ? SUB_MAP[subId] : 1;
+
+      const tfStr = (slot===1)?$("tf").value: (slot===2?$("tf2").value:(slot===3?$("tf3").value:(slot===4?$("tf4").value:$("tf5").value)));
+
+      const t = (c.open_time ?? c.epoch);
+      const bar = {
+        time:t,
+        open:+c.open,
+        high:+c.high,
+        low:+c.low,
+        close:+c.close
       };
+
+      // Route live bars to the right chart by subscription slot
+      if(slot === 2){
+        const last = DATA2[DATA2.length-1];
+        if(last && last.time === t){ DATA2[DATA2.length-1] = bar; } else { DATA2.push(bar); if(DATA2.length>2000) DATA2.shift(); }
+        chart2Bundle.series.update(bar);
+        renderStrategyToBundle(chart2Bundle, DATA2, $("symbol").value, $("tf2").value);
+        return;
+      }
+      if(slot === 3){
+        const last = DATA3[DATA3.length-1];
+        if(last && last.time === t){ DATA3[DATA3.length-1] = bar; } else { DATA3.push(bar); if(DATA3.length>2000) DATA3.shift(); }
+        chart3Bundle.series.update(bar);
+        renderStrategyToBundle(chart3Bundle, DATA3, $("symbol").value, $("tf3").value);
+        return;
+      }
+      if(slot === 4){
+        const last = DATA4[DATA4.length-1];
+        if(last && last.time === t){ DATA4[DATA4.length-1] = bar; } else { DATA4.push(bar); if(DATA4.length>2000) DATA4.shift(); }
+        chart4Bundle.series.update(bar);
+        renderStrategyToBundle(chart4Bundle, DATA4, $("symbol").value, $("tf4").value);
+        return;
+      }
+      if(slot === 5){
+        const last = DATA5[DATA5.length-1];
+        if(last && last.time === t){ DATA5[DATA5.length-1] = bar; } else { DATA5.push(bar); if(DATA5.length>2000) DATA5.shift(); }
+        chart5Bundle.series.update(bar);
+        renderStrategyToBundle(chart5Bundle, DATA5, $("symbol").value, $("tf5").value);
+        return;
+      }
+
+ // MAIN SYMBOL PATH
+      if (sym === $("symbol").value){
+        const last = DATA[DATA.length-1];
+        const sameCandle = !!(last && last.time === t);
+
+        if(sameCandle){
+          DATA[DATA.length-1] = bar;
+        }else{
+          DATA.push(bar);
+          if(DATA.length > 2000) DATA.shift();
+        }
+
+        calcBB();
+        candleSeries.update(bar);
+        // Keep main chart pinned to the latest candle
+        try{ chart.timeScale().scrollToRealTime(); }catch(e){}
+
+        calcEMAs();
+
+        // ✅ Only generate NEW signals after a candle is fully completed.
+        // In Deriv candle streaming, we know the previous candle is closed when a NEW candle open_time appears.
+        // So when a new candle starts, evaluate signals up to DATA.length-2 (the last closed candle).
+        if(!sameCandle && DATA.length >= 2){
+          const prevLen = SIGNALS.length;
+          const newSignals = filterSignalsByJetDetectorFinal(detectSignalsMain(DATA.length - 2));
+for (let i = 0; i < newSignals.length; i++){
+          const ns = newSignals[i];
+          const old = SIGNALS.find(os =>
+            os.time === ns.time &&
+            os.dir === ns.dir &&
+            os.symbol === ns.symbol
+          );
+          if (old && Array.isArray(old.tpHits)) {
+            ns.tpHits = old.tpHits.slice();
+          }
+        }
+
+        if(newSignals.length > prevLen){
+          for(let i=prevLen;i<newSignals.length;i++){
+            const s = newSignals[i];
+
+            // push to global log
+            ensureGlobalSignal(s);
+
+            // popup + sound as per settings
+            if (historyLoaded && isTfAllowedForNotifications(s.tf)) {
+              const html = buildSignalToastHtml(s);
+              showToast(html);
+              playBeep();
+            }
+          }
+        }
+
+        SIGNALS = newSignals;
+        applyMarkers();
+
+        // Market State (main symbol) - Manual Analyzer
+        try{
+          const ms = detectMarketStateFromData(DATA);
+          window.MARKET_STATE = ms;
+          statusEl.innerHTML = `Live: ${$("symbol").value} ${$("tf").value}` + marketStateBadgeHtml(ms);
+          try{ updateTrendStrength4(1); }catch(e){}
+        }catch(e){
+          // keep running even if detector fails
+          console.warn("MarketState detector error", e);
+        }
+
+        renderSignals();
+        }
+
+        // TP checks only for main symbol
+        if (SIGNALS && SIGNALS.length){
+          SIGNALS.forEach((s)=>{
+            if (s.symbol !== $("symbol").value) return;
+            if (typeof s.tp !== "number") return;
+
+            const levels = getTpLevelsForSignal(s);
+            if (!levels.length) return;
+
+            if (!Array.isArray(s.tpHits) || s.tpHits.length !== levels.length){
+              s.tpHits = new Array(levels.length).fill(false);
+            }
+
+            levels.forEach((lvl, idx)=>{
+              if (s.tpHits[idx]) return;
+              if (s.dir === "buy"){
+                if (bar.high >= lvl){
+                  s.tpHits[idx] = true;
+                  if (historyLoaded && isTfAllowedForNotifications(s.tf)) {
+                    showToast(`TP${idx+1} HIT ${s.symbol} @ ${lvl.toFixed(4)}`);
+                    playTpSound();
+                  }
+                }
+              }else if (s.dir === "sell"){
+                if (bar.low <= lvl){
+                  s.tpHits[idx] = true;
+                  if (historyLoaded && isTfAllowedForNotifications(s.tf)) {
+                    showToast(`TP${idx+1} HIT ${s.symbol} @ ${lvl.toFixed(4)}`);
+                    playTpSound();
+                  }
+                }
+              }
+            });
+          });
+        }
+        return;
+      }
+
+      // OTHER MARKETS LIVE PATH
+      let arr = OTHER_DATA[sym] || [];
+      const lastO = arr[arr.length-1];
+      const sameCandleO = !!(lastO && lastO.time === t);
+
+      if(sameCandleO){
+        arr[arr.length-1] = bar;
+      }else{
+        arr.push(bar);
+        if (arr.length > 2000) arr.shift();
+      }
+      OTHER_DATA[sym] = arr;
+      calcBBForArray(arr);
+
+      // ✅ TF5 LIVE FIX: capture intrabar signals too (so Signal Board shows immediately),
+      // without affecting Turbo Scan Gate decision logic (TF5 is display-only there).
+      // We dedupe by (symbol, tf, time, dir) to avoid duplicates.
+      try {
+        const intrabarSignals = filterSignalsByJetDetectorFinal(detectSignalsOnArray(arr, sym, tfStr, arr.length - 1));
+        if (intrabarSignals && intrabarSignals.length){
+          for (let k=0;k<intrabarSignals.length;k++){
+            const s = intrabarSignals[k];
+            const key = s.symbol + "|" + s.tf + "|" + s.time + "|" + s.dir;
+            if (!GLOBAL_SIGNAL_KEYS) window.GLOBAL_SIGNAL_KEYS = new Set();
+            if (!GLOBAL_SIGNAL_KEYS.has(key)){
+              GLOBAL_SIGNAL_KEYS.add(key);
+              if(slot===5) ensureGlobalSignal(s);
+              // panel refresh
+              renderSignals();
+            }
+          }
+        }
+      } catch(e){}
+
+      // ✅ Only update global signals once a candle is closed (when a new candle starts).
+      if(!sameCandleO && arr.length >= 2){
+        const prevLenO = (OTHER_SIGNALS[sym] || []).length;
+        const newSignalsO = filterSignalsByJetDetectorFinal(detectSignalsOnArray(arr, sym, tfStr, arr.length - 2));
+const oldArr = OTHER_SIGNALS[sym] || [];
+      for (let i=0;i<newSignalsO.length;i++){
+        const ns = newSignalsO[i];
+        const old = oldArr.find(os =>
+          os.time === ns.time &&
+          os.dir === ns.dir &&
+          os.symbol === ns.symbol
+        );
+        if (old && Array.isArray(old.tpHits)) {
+          ns.tpHits = old.tpHits.slice();
+        }
+      }
+
+      if(newSignalsO.length > prevLenO){
+        for(let i=prevLenO;i<newSignalsO.length;i++){
+          const s = newSignalsO[i];
+
+          // push to global log (TF5 only)
+          if(slot===5) ensureGlobalSignal(s);
+
+          // popup + sound as per settings
+          if (historyLoaded && isTfAllowedForNotifications(s.tf)) {
+            const html = buildSignalToastHtml(s);
+            showToast(html);
+            playBeep();
+          }
+        }
+      }
+
+      OTHER_SIGNALS[sym] = newSignalsO;
+      renderSignals();
+      }
+    }
+  };
+
+  WS.onerror = (e)=>{
+    console.error("WS error", e);
+    setStatus("WebSocket error");
+  };
+  WS.onclose = (e)=>{
+    console.log("WS closed", e);
+    setStatus("Disconnected");
+  };
+}
+
+
+// --- Change TF5 chart from Live Signals TF filter (without affecting other charts) ---
+async function loadChart5OnlyFromLiveSignals(){
+  const tfLive = $("sigTfFilter") ? $("sigTfFilter").value : "all";
+  if(!tfLive || tfLive === "all") return; // "All" is only a filter for the list, not a chart TF
+  if(!$("tf5")) return;
+
+  // Update TF5 selector + label (do NOT trigger tf5 onchange handler)
+  $("tf5").value = tfLive;
+  if($("tfLabel5")) $("tfLabel5").textContent = tfLive;
+
+  const symVal = $("symbol") ? $("symbol").value : "";
+  if(!symVal) return;
+
+  // Binance
+  if(String(symVal).startsWith("bn:") || String(symVal).startsWith("bf:")){
+    const isFutures = String(symVal).startsWith("bf:");
+    const bnSymbol = String(symVal).slice(3);
+    const marketType = isFutures ? "futures" : "spot";
+    try{
+      await loadBinanceDataToBundle(tfLive, bnSymbol, chart5Bundle, marketType);
+    }catch(e){
+      console.warn("LiveSignals->TF5 Binance reload error:", e);
+    }
+    return;
+  }
+
+// Deriv (history-only request to avoid creating multiple live subscriptions)
+  const granMap = { "1m":60, "5m":300, "10m":600, "15m":900, "30m":1800, "1h":3600 };
+  const gran = granMap[tfLive];
+  if(!gran) return;
+
+  try{
+    clearBundle(chart5Bundle);
+  }catch(e){}
+
+  if(WS && WS.readyState === 1){
+    try{
+      // ✅ stop previous TF5 live stream first (prevents mixing timeframes)
+      if(SLOT_SUB && SLOT_SUB[5]){
+        try{ WS.send(JSON.stringify({ forget: SLOT_SUB[5] })); }catch(e){}
+        delete SUB_MAP[SLOT_SUB[5]];
+        delete SLOT_SUB[5];
+      }
+
+      // ✅ re-subscribe TF5 only (does NOT affect other slots)
+      WS.send(JSON.stringify({
+        ticks_history: symVal,
+        style: "candles",
+        granularity: gran,
+        count: 450,
+        end: "latest",
+        subscribe: 1,
+        passthrough: { slot: 5, tf: tfLive }
+      }));
+    }catch(e){
+      console.warn("LiveSignals->TF5 Deriv request error:", e);
+    }
+  } else {
+    // fallback (keeps behavior consistent if WS isn't ready yet)
+    loadData();
+  }
+}
+
+
+/* EVENTS */
+$("load").onclick   = () => { scrollChartIntoView(); updateSignalsTitle(); loadData(); };
+
+/* ==========================
+   OpenAI Trade Plan (5 TF)
+   ========================== */
+let __aiPlanTimer = null;
+let __aiPlanLastKey = "";
+let __loadSeq = 0; // ignore stale WS messages on fast market changes
+
+function __fmtNum(x){
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  // adaptive decimals
+  const ax = Math.abs(x);
+  const d = ax >= 1000 ? 2 : (ax >= 100 ? 2 : (ax >= 1 ? 3 : 5));
+  return x.toFixed(d);
+}
+function __setAiStatus(t){
+  const el = $("aiPlanStatus");
+  if (el) el.textContent = t || "—";
+}
+function __renderAiPlan(plan){
+  try{ __lastAiPlan = plan || null; }catch(e){}
+
+  const biasEl = $("aiBias"), confEl = $("aiConf"), entryEl = $("aiEntry"),
+        slEl = $("aiSL"), tpEl = $("aiTP"), rsEl = $("aiReason"), invEl = $("aiInvalid");
+
+  const bias = (plan && plan.bias) ? String(plan.bias).toUpperCase() : "WAIT";
+  const conf = (plan && typeof plan.confidence === "number") ? Math.max(0, Math.min(100, plan.confidence)) : 0;
+  const ez = (plan && Array.isArray(plan.entry_zone)) ? plan.entry_zone : null;
+  const sl = (plan && typeof plan.sl === "number") ? plan.sl : null;
+  const tp = (plan && Array.isArray(plan.tp)) ? plan.tp : null;
+
+  if (biasEl) biasEl.textContent = bias;
+  if (confEl) confEl.textContent = conf + "%";
+
+  if (entryEl){
+    if (ez && ez.length === 2) entryEl.textContent = `${__fmtNum(ez[0])} – ${__fmtNum(ez[1])}`;
+    else entryEl.textContent = "—";
+  }
+  if (slEl) slEl.textContent = (sl===null) ? "—" : __fmtNum(sl);
+  if (tpEl){
+    if (tp && tp.length){
+      tpEl.textContent = tp.map((v,i)=>`TP${i+1}:${__fmtNum(v)}`).join("  ");
+    } else tpEl.textContent = "—";
+  }
+
+  if (rsEl){
+    const rr = (plan && Array.isArray(plan.reason)) ? plan.reason : [];
+    rsEl.textContent = rr.length ? rr.join(" • ") : "—";
+  }
+  if (invEl){
+    const ii = (plan && Array.isArray(plan.invalidation)) ? plan.invalidation : [];
+    invEl.textContent = ii.length ? ii.join(" • ") : "—";
+  }
+
+  try{ __renderAiVsEngine(); }catch(e){}
+}
+
+function __findSwings(arr, look){
+  look = look || 3;
+  const highs = [];
+  const lows = [];
+  if (!Array.isArray(arr)) return { highs, lows };
+  const start = Math.max(look, arr.length - 140);
+  const end = arr.length - look - 1;
+  for (let i = start; i <= end; i++){
+    const b = arr[i];
+    if (!b) continue;
+    let isPH = true, isPL = true;
+    for (let k = 1; k <= look; k++){
+      const p = arr[i-k], n = arr[i+k];
+      if (!p || !n) continue;
+      if (!(b.high > p.high && b.high > n.high)) isPH = false;
+      if (!(b.low  < p.low  && b.low  < n.low )) isPL = false;
+    }
+    if (isPH) highs.push({ time: b.time, price: b.high });
+    if (isPL) lows.push({ time: b.time, price: b.low  });
+  }
+  // keep latest few
+  return { highs: highs.slice(-6), lows: lows.slice(-6) };
+}
+
+function __tfSnapshot(arr, tfLabel){
+  if (!Array.isArray(arr) || arr.length < 30) return null;
+
+  // ensure BB fields exist
+  try{
+    const last = arr[arr.length-1];
+    if (!last || typeof last.bbMid !== "number") calcBBForArray(arr);
+  }catch(e){}
+
+  const last = arr[arr.length-1];
+  const closes = arr.map(x=>x.close);
+
+  // EMAs computed ad-hoc (do not mutate DATA)
+  let emaFast = null, emaSlow = null;
+  try{
+    const v1 = calcEMAValues(arr, EMA1_PERIOD);
+    const v2 = calcEMAValues(arr, EMA2_PERIOD);
+    emaFast = v1 && v1.length ? v1[v1.length-1] : null;
+    emaSlow = v2 && v2.length ? v2[v2.length-1] : null;
+  }catch(e){}
+
+  const swings = __findSwings(arr, 3);
+
+  const bbU = (last && typeof last.bbUpper === "number") ? last.bbUpper : null;
+  const bbM = (last && typeof last.bbMid   === "number") ? last.bbMid   : null;
+  const bbL = (last && typeof last.bbLower === "number") ? last.bbLower : null;
+  const bbW = (bbU!==null && bbL!==null) ? (bbU - bbL) : null;
+
+  // candidate zones from confluence (client-side list)
+  const supports = [];
+  const resistances = [];
+
+  if (bbL!==null) supports.push(bbL);
+  if (bbM!==null) { supports.push(bbM); resistances.push(bbM); }
+  if (bbU!==null) resistances.push(bbU);
+  if (emaSlow!==null) { supports.push(emaSlow); resistances.push(emaSlow); }
+
+  swings.lows.forEach(x=>supports.push(x.price));
+  swings.highs.forEach(x=>resistances.push(x.price));
+
+  const uniq = (vals)=>{
+    const out = [];
+    const tol = (bbW && isFinite(bbW)) ? (bbW * 0.06) : (Math.abs(last.close) * 0.001);
+    vals.filter(v=>typeof v==="number" && isFinite(v)).sort((a,b)=>a-b).forEach(v=>{
+      if (!out.length) { out.push(v); return; }
+      if (Math.abs(out[out.length-1]-v) > tol) out.push(v);
     });
+    return out.slice(0, 12);
+  };
 
-    /* ===================== Deriv Volatility Chart ===================== */
-    (function initDerivChart(){
-      const $ = (id)=>document.getElementById(id);
-      const els = { vol:$('vol'), tf:$('tf'), status:$('status') };
-      const setStatus = (t)=> els.status.textContent = t;
+  return {
+    tf: tfLabel,
+    last: { time:last.time, open:last.open, high:last.high, low:last.low, close:last.close },
+    bb: { upper:bbU, mid:bbM, lower:bbL, width:bbW },
+    ema: { fast: emaFast, slow: emaSlow, fast_period: EMA1_PERIOD, slow_period: EMA2_PERIOD },
+    swings: swings,
+    candidates: {
+      support: uniq(supports),
+      resistance: uniq(resistances)
+    }
+  };
+}
 
-      const MARKET_WS_URL = `wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`;
-      let WS = null, DATA = [], OLDEST_EPOCH=null, LOADING_OLD=false, liveSubId=null;
+function __buildAiPayload(){
+  const jetFinal = (function(){
+    try{
+      const lbl = $("emaAllTrendLabel");
+      const t = lbl ? String(lbl.textContent||"").trim().toUpperCase() : "";
+      if(t==="UP"||t==="DOWN"||t==="MIXED") return t;
+    }catch(e){}
+    return (__emaAllTrend || "MIXED");
+  })();
+  const sym = $("symbol").value;
+  const tf = $("tf").value, tf2=$("tf2").value, tf3=$("tf3").value, tf4=$("tf4").value, tf5=$("tf5").value;
 
-      const GRAN = { '1m':60, '5m':300, '15m':900, '1h':3600, '4h':14400, '1d':86400 };
-      const mapSymbol = (sel)=> sel.endsWith('S') ? sel.replace('S','_1s') : sel;
+  const s1 = __tfSnapshot(DATA, tf);
+  const s2 = __tfSnapshot(DATA2, tf2);
+  const s3 = __tfSnapshot(DATA3, tf3);
+  const s4 = __tfSnapshot(DATA4, tf4);
+  const s5 = __tfSnapshot(DATA5, tf5);
 
-      const elMain = document.getElementById('c-main');
-      const chart = LightweightCharts.createChart(elMain, {
-        layout:{background:{type:'solid',color:'transparent'},textColor:'#cfe3ff'},
-        grid:{vertLines:{color:'#0e1a28'},horzLines:{color:'#0e1a28'}},
-        rightPriceScale:{borderColor:'#223246'},
-        timeScale:{borderColor:'#223246', rightOffset: 20, barSpacing: 8},
-        crosshair:{mode:0},
-      });
-      const sCandle = chart.addCandlestickSeries({
-        upColor:'#16a34a',downColor:'#ef4444',
-        borderUpColor:'#16a34a',borderDownColor:'#ef4444',
-        wickUpColor:'#16a34a',wickDownColor:'#ef4444'
-      });
-      const resize=()=>chart.applyOptions({width:elMain.clientWidth,height:elMain.clientHeight});
-      new ResizeObserver(resize).observe(elMain); resize();
+  const lastClose = s1 && s1.last ? s1.last.close : null;
 
-      function closeWS(){
-        try{ if(WS){ WS.onmessage=null; WS.onclose=null; WS.onerror=null; WS.close(); } }catch(_){}
-        WS=null;
-      }
-      function openWS(){
-        closeWS();
-        WS = new WebSocket(MARKET_WS_URL);
-        WS.onopen = ()=> setStatus('Connected');
-        WS.onerror = ()=> setStatus('Socket error');
-        WS.onclose = ()=> setStatus('Disconnected');
-        WS.onmessage = handleWSMessage;
-      }
-      function sendWS(obj){
-        if(WS && WS.readyState===1){ WS.send(JSON.stringify(obj)); }
-        else {
-          openWS();
-          const iv = setInterval(()=>{
-            if(WS && WS.readyState===1){
-              clearInterval(iv);
-              WS.send(JSON.stringify(obj));
-            }
-          },150);
-        }
-      }
+  return {
+    symbol: sym,
+    jet_final: jetFinal,
+    price: lastClose,
+    timeframes: {
+      main: s1, tf2: s2, tf3: s3, tf4: s4, tf5: s5
+    }
+  };
+}
 
-      function requestCandles(symbol, gran, count=1000, end='latest'){
-        sendWS({ ticks_history: symbol, style:'candles', granularity: gran, count, end });
-      }
-      function subscribeLive(symbol, gran){
-        if(liveSubId){ sendWS({ forget: liveSubId }); liveSubId = null; }
-        sendWS({ ticks_history: symbol, style:'candles', granularity: gran, count:1, end:'latest', subscribe:1 });
-      }
+function __aiEndpointUrl(){
+  const url = new URL(window.location.href);
+  url.searchParams.set("ai_trade_plan", "1");
+  return url.toString();
+}
 
-      function handleWSMessage(e){
-        try{
-          const msg = JSON.parse(e.data);
 
-          if(msg.msg_type === 'candles' && Array.isArray(msg.candles)){
-            const arr = msg.candles.map(c=>({ time:c.epoch, open:+c.open, high:+c.high, low:+c.low, close:+c.close }));
-            if(!DATA.length || (arr.length && arr[arr.length-1].time > (DATA[DATA.length-1]?.time||0))){
-              DATA = arr;
-            }else{
-              DATA = arr.concat(DATA);
-            }
-            OLDEST_EPOCH = DATA[0]?.time ?? OLDEST_EPOCH;
-            sCandle.setData(DATA);
-            queueMicrotask(()=> chart.timeScale().scrollToPosition(-2, false));
-            setStatus('History loaded');
-          }
+// Debounced auto-run for OpenAI plan (runs after data/angle updates and market changes)
+let __aiDebounceT = null;
+let __aiLastTrigger = 0;
+function scheduleAiPlan(reason){
+  // avoid spamming (market change can fire multiple updates)
+  const now = Date.now();
+  __aiLastTrigger = now;
+  try{ __setAiStatus("Waiting data…"); }catch(e){}
+  if(__aiDebounceT) clearTimeout(__aiDebounceT);
+  __aiDebounceT = setTimeout(() => {
+    try{ requestAiPlanNow(); }catch(e){ /* ignore */ }
+  }, 700); // debounce window
+}
+async function requestAiPlanNow(reason){
+  const jetFinal = (__emaAllTrend || "MIXED");
+  const key = `${$("symbol").value}|${$("tf").value}|${$("tf2").value}|${$("tf3").value}|${$("tf4").value}|${$("tf5").value}|${jetFinal}`;
 
-          if(msg.msg_type === 'ohlc' && msg.ohlc){
-            const k = msg.ohlc;
-            const t = +k.open_time;
-            const bar = { time:t, open:+k.open, high:+k.high, low:+k.low, close:+k.close };
-            const lastT = DATA[DATA.length-1]?.time;
-            if(lastT === t){
-              DATA[DATA.length-1] = bar;
-              sCandle.update(bar);
-            }else if(!lastT || t > lastT){
-              DATA.push(bar);
-              if(DATA.length>5000) DATA.shift();
-              sCandle.update(bar);
-            }
-            setStatus(`Live: ${els.vol.value} • ${els.tf.value}`);
-          }
+  // avoid spamming the API with identical state
+  if (key === __aiPlanLastKey) return;
+  __aiPlanLastKey = key;
 
-          if(msg.subscription && msg.subscription.id){
-            liveSubId = msg.subscription.id;
-          }
+  if (String(jetFinal).toUpperCase() === "MIXED"){
+    __setAiStatus("WAIT (Turbo Final MIXED)");
+    __renderAiPlan({ bias:"WAIT", confidence:0, entry_zone:null, sl:null, tp:[], reason:["Turbo Detector Final is MIXED"], invalidation:["Wait for UP/DOWN confirmation"] });
+    return;
+  }
 
-          if(msg.error){
-            console.error(msg.error);
-            setStatus('API error');
-            alert('Deriv API error: ' + (msg.error.message||'Unknown'));
-          }
-        }catch(err){ console.error(err); }
-      }
+  // Ensure data exists
+  if (!DATA.length || !DATA2.length || !DATA3.length || !DATA4.length || !DATA5.length){
+    __setAiStatus("Waiting data…");
+    return;
+  }
 
-      function debounce(fn, ms=250){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; }
-      const watchBackfill = debounce(()=>{
-        const range = chart.timeScale().getVisibleLogicalRange?.();
-        if(!range || LOADING_OLD) return;
-        if(range.from !== undefined && range.from < 20 && OLDEST_EPOCH){
-          LOADING_OLD = true;
-          const symbol = mapSymbol(els.vol.value);
-          const gran = GRAN[els.tf.value];
-          requestCandles(symbol, gran, 1000, String(OLDEST_EPOCH - 1));
-          setTimeout(()=>{ LOADING_OLD = false; }, 400);
-        }
-      }, 150);
-      chart.timeScale().subscribeVisibleLogicalRangeChange?.(watchBackfill);
+  __setAiStatus("Analyzing…");
 
-      async function loadAll(){
-        try{
-          setStatus('Loading…');
-          const symbol = mapSymbol(els.vol.value);
-          const gran = GRAN[els.tf.value];
+  const payload = __buildAiPayload();
 
-          if(!WS || WS.readyState!==1) openWS();
+  try{
+    const resp = await fetch(__aiEndpointUrl(), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const j = await resp.json();
+    if (!resp.ok || (j && j.error)){
+      __setAiStatus("Error");
+      __renderAiPlan({ bias:"WAIT", confidence:0, reason:[(j && (j.error||j.hint)) ? (j.error||j.hint) : "Request failed"], invalidation:["Check API key/server"] });
+      return;
+    }
+    __setAiStatus("Updated");
+    __renderAiPlan(j);
+  }catch(e){
+    __setAiStatus("Error");
+    __renderAiPlan({ bias:"WAIT", confidence:0, reason:["Network/server error"], invalidation:["Retry after reload"] });
+  }
+}
 
-          DATA = []; OLDEST_EPOCH = null; sCandle.setData([]);
+function scheduleAiPlan(reason){
+  if (__aiPlanTimer) clearTimeout(__aiPlanTimer);
+  __aiPlanTimer = setTimeout(()=>requestAiPlanNow(reason||"change"), 650);
+}
 
-          requestCandles(symbol, gran, 1000, 'latest');
-          subscribeLive(symbol, gran);
-        }catch(err){
-          console.error(err);
-          setStatus('Error loading');
-          alert('Failed to load Deriv candles. Check network.');
-        }
-      }
+$("symbol").onchange= () => { scrollChartIntoView(); updateSignalsTitle(); loadData().then(()=>scheduleAiPlan("market")); };
+$("sigTfFilter").onchange = () => { updateSignalsTitle(); renderSignals(); loadChart5OnlyFromLiveSignals(); };
+$("tf").onchange    = () => { scrollChartIntoView(); loadData().then(()=>scheduleAiPlan("tf")); };
+$("tf2").onchange   = () => { scrollChartIntoView(); loadData().then(()=>scheduleAiPlan("tf2")); };
+$("tf3").onchange   = () => { scrollChartIntoView(); loadData().then(()=>scheduleAiPlan("tf3")); };
+$("tf4").onchange   = () => { scrollChartIntoView(); loadData().then(()=>scheduleAiPlan("tf4")); };
+$("tf5").onchange   = () => { scrollChartIntoView(); loadData().then(()=>scheduleAiPlan("tf5")); };
 
-      document.getElementById('reload').addEventListener('click', loadAll);
-      els.tf.addEventListener('change', loadAll);
-      els.vol.addEventListener('change', loadAll);
+// START
+loadData().then(()=>scheduleAiPlan("init"));
 
-      openWS();
-      loadAll();
-    })();
-  </script>
+// --- Ensure Gold is present even if the theme/plugin rewrites the dropdown ---
+function ensureGoldOption(){
+  const sel = document.getElementById("symbol");
+  if(!sel) return;
+  const has = Array.from(sel.options || []).some(o => o.value === "frxXAUUSD");
+  if(!has){
+    const opt = document.createElement("option");
+    opt.value = "frxXAUUSD";
+    opt.textContent = "Gold (XAU/USD)";
+    sel.appendChild(opt);
+  }
+  // Also ensure scan list includes it
+  if(Array.isArray(ALL_SYMBOLS) && !ALL_SYMBOLS.includes("frxXAUUSD")){
+    ALL_SYMBOLS.push("frxXAUUSD");
+  }
+}
+document.addEventListener("DOMContentLoaded", ensureGoldOption);
+setTimeout(ensureGoldOption, 800);
+</script>
 </body>
 </html>
+
