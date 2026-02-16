@@ -582,7 +582,11 @@
     min-height: 0 !important;
     max-height: 30dvh !important;
     padding: 6px !important;
-    overflow: hidden !important; /* no scroll to fit one screen */
+
+    /* ✅ FIX: allow scrolling to see all indicators */
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* indicators tighter */
@@ -692,7 +696,8 @@
       <optgroup label="Deriv (Manual)" id="derivGroup"></optgroup>
   </select>
 
-  <label style="font-size:12px;color:#9ca3af;">Main TF</label>
+  <!-- ✅ TF renamed to Interval -->
+  <label style="font-size:12px;color:#9ca3af;">Main Interval</label>
   <select id="tf">
     <option value="1m">1m</option>
     <option value="5m">5m</option>
@@ -705,7 +710,7 @@
     <option value="1d">1D</option>
   </select>
 
-  <label style="font-size:12px;color:#9ca3af;">TF 2</label>
+  <label style="font-size:12px;color:#9ca3af;">Interval 2</label>
   <select id="tf2">
     <option value="1m">1m</option>
     <option value="5m">5m</option>
@@ -718,7 +723,7 @@
     <option value="1d">1D</option>
   </select>
 
-  <label style="font-size:12px;color:#9ca3af;">TF 3</label>
+  <label style="font-size:12px;color:#9ca3af;">Interval 3</label>
   <select id="tf3">
     <option value="1m">1m</option>
     <option value="5m">5m</option>
@@ -731,7 +736,7 @@
     <option value="1d" selected>1D</option>
   </select>
 
-  <label style="font-size:12px;color:#9ca3af;">TF 4</label>
+  <label style="font-size:12px;color:#9ca3af;">Interval 4</label>
   <select id="tf4">
     <option value="1m">1m</option>
     <option value="5m">5m</option>
@@ -744,7 +749,7 @@
     <option value="1d">1D</option>
   </select>
 
-  <label style="font-size:12px;color:#9ca3af;">TF 5</label>
+  <label style="font-size:12px;color:#9ca3af;">Interval 5</label>
   <select id="tf5">
     <option value="1m">1m</option>
     <option value="5m">5m</option>
@@ -775,7 +780,7 @@
 
         <div class="chartbox">
           <div class="charthead">
-            <div>TF 2 (<span id="tfLabel2"></span>)</div>
+            <div>Interval 2 (<span id="tfLabel2"></span>)</div>
             <div class="anglewrap"><span id="angle2" class="anglebadge">—</span></div>
           </div>
           <div class="chartsplit"><div class="chartcanvas" id="chart2"></div></div>
@@ -783,7 +788,7 @@
 
         <div class="chartbox">
           <div class="charthead">
-            <div>TF 3 (<span id="tfLabel3"></span>)</div>
+            <div>Interval 3 (<span id="tfLabel3"></span>)</div>
             <div class="anglewrap"><span id="angle3" class="anglebadge">—</span></div>
           </div>
           <div class="chartsplit"><div class="chartcanvas" id="chart3"></div></div>
@@ -791,7 +796,7 @@
 
         <div class="chartbox">
           <div class="charthead">
-            <div>TF 4 (<span id="tfLabel4"></span>)</div>
+            <div>Interval 4 (<span id="tfLabel4"></span>)</div>
             <div class="anglewrap"><span id="angle4" class="anglebadge">—</span></div>
           </div>
           <div class="chartsplit"><div class="chartcanvas" id="chart4"></div></div>
@@ -799,7 +804,7 @@
 
         <div class="chartbox">
           <div class="charthead">
-            <div>TF 5 (<span id="tfLabel5"></span>)</div>
+            <div>Interval 5 (<span id="tfLabel5"></span>)</div>
             <div class="anglewrap"><span id="angle5" class="anglebadge">—</span></div>
           </div>
           <div class="chartsplit"><div class="chartcanvas" id="chart5"></div></div>
@@ -893,7 +898,8 @@
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;">
         <div id="signals-title">Live Signals – Selected Market (last 15 minutes)</div>
         <select id="sigTfFilter" style="background:#0b1220;border:1px solid #1f2937;color:#e5e7eb;border-radius:10px;padding:6px 10px;font-size:12px;">
-          <option value="all" selected>All TF</option>
+          <!-- ✅ TF renamed -->
+          <option value="all" selected>All Intervals</option>
           <option value="1m">1m</option>
           <option value="2m">2m</option>
           <option value="5m">5m</option>
@@ -1016,7 +1022,7 @@
     <div class="signal-title">Signals Settings</div>
 
     <div class="signal-field">
-      <label>Graph Timeframe (for notifications)</label>
+      <label>Graph Interval (for notifications)</label>
       <select id="signalTfFilter">
         <option value="1m">1 minute</option>
         <option value="2m">2 minutes</option>
@@ -1027,7 +1033,7 @@
         <option value="1h">1 hour</option>
         <option value="4h">4 hours</option>
       </select>
-      <div class="alarm-note">If saved, notifications & sounds will come only for this timeframe.</div>
+      <div class="alarm-note">If saved, notifications & sounds will come only for this interval.</div>
     </div>
 
     <div class="signal-field">
@@ -2298,7 +2304,8 @@ function renderSignals(){
     return `
       <div class="sig-card">
         <div><span class="symbol">${String(s.symbol||"")}</span> <span class="${dirCls}">${String(s.dir||"").toUpperCase()}</span></div>
-        <div class="price">Entry: ${__fmtNum(s.price)} <span style="color:#64748b;">•</span> TF: ${String(s.tf||"")}</div>
+        <!-- ✅ TF renamed -->
+        <div class="price">Entry: ${__fmtNum(s.price)} <span style="color:#64748b;">•</span> Interval: ${String(s.tf||"")}</div>
         ${s.tp!=null ? `<div class="tp" style="background:${TP_BG_COLOR};color:${TP_FONT_COLOR};">TP ${__fmtNum(s.tp)}</div>` : ``}
         <div class="time">${ts} • ${String(s.label||"")}</div>
       </div>
@@ -2754,7 +2761,7 @@ function startDerivLive(symbol, tf){
 }
 
 /* ============================
-   Bundle render (TF2..TF5)
+   Bundle render (Interval2..Interval5)
    ============================ */
 function renderStrategyToBundle(bundle, arr, symbol, tf){
   if(!bundle || !arr) return;
