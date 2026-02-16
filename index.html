@@ -47,7 +47,7 @@
   }
   #top-row{ flex:1; min-height:0; display:flex; width:100%; }
 
-  /* ========= UPDATED: bottom indicators = vertical stack + scroll ========= */
+  /* ========= bottom indicators = vertical stack + scroll ========= */
   #bottom-indicators{
     flex:0 0 38%;
     min-height:260px;
@@ -136,7 +136,7 @@
     box-sizing:border-box;
   }
 
-  /* legacy grid rows (kept; will be disabled by override below) */
+  /* legacy grid rows (kept; can be disabled by overrides below) */
   #chart-row-top{
     display:grid;
     grid-template-columns: 1fr 1fr;
@@ -306,7 +306,7 @@
   }
   .time{ color:#64748b; font-size:11px; margin-top:2px; }
 
-  /* ========= UPDATED: Toast supports true center without breaking animation ========= */
+  /* ========= Toast supports true center without breaking animation ========= */
   #toast{
     position:fixed;
     background:transparent;
@@ -397,7 +397,7 @@
       overflow:hidden;
     }
 
-    /* legacy mobile grid (kept; overridden by FORCE STACK below) */
+    /* legacy mobile grid (kept; may be overridden below) */
     #chart-grid{
       height:100%;
       display:grid;
@@ -427,7 +427,7 @@
       -webkit-overflow-scrolling:touch;
     }
 
-    /* keep indicators as vertical stack on mobile too */
+    /* indicators as vertical stack on mobile too */
     #bottom-indicators{
       flex:0 0 auto;
       height:28dvh;
@@ -563,78 +563,117 @@
   #emaAngleSlider{accent-color:var(--bpg-red);}
   /* BPG_UI_THEME_END */
 
+
   /* =========================================================
-     FORCE STACK: Charts one-by-one downward + scroll
-     + indicators smaller
+     ONE-SCREEN FIT (Charts small + same screen)
      ========================================================= */
-  #chart-wrap{
-    flex:1;
-    min-width:0;
-    height:100%;
-    overflow:auto;                 /* NEW */
+  body{ overflow:hidden !important; }
+  #layout{ overflow:hidden !important; }
+
+  /* Give top area more space, indicators less space */
+  #top-row{
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+  }
+
+  /* Make bottom indicators smaller so charts can fit */
+  #bottom-indicators{
+    flex: 0 0 26% !important;
+    min-height: 0 !important;
+    max-height: 30dvh !important;
+    padding: 6px !important;
+    overflow: hidden !important; /* no scroll to fit one screen */
+  }
+
+  /* indicators tighter */
+  #bottom-indicators .bi-row{ gap:6px !important; }
+  #bottom-indicators .bi-card{ padding:6px !important; border-radius:10px !important; }
+  #bottom-indicators .bi-title{ font-size:10px !important; }
+  #bottom-indicators .bi-sub{ font-size:9px !important; }
+  #bottom-indicators .chartind{ max-height:52px !important; }
+  .histWrap{ max-height:110px !important; }
+
+  /* Signals: tighter + internal scroll only */
+  #signals{
+    width: 260px !important;
+    max-width: 34vw !important;
+    padding: 6px !important;
+    overflow: hidden !important;
+    display:flex !important;
+    flex-direction:column !important;
+  }
+  #sig-list{
+    overflow:auto !important;
+    min-height:0 !important;
     -webkit-overflow-scrolling:touch;
   }
+
+  /* Chart area: NO scroll. Fit to remaining height */
+  #chart-wrap{
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    height: 100% !important;
+    overflow: hidden !important;
+  }
+
+  /* Charts in a grid that fits one screen */
   #chart-grid{
-    height:auto;                   /* NEW */
-    min-height:100%;
-    display:flex !important;        /* NEW */
-    flex-direction:column !important;
-    gap:10px;
-    padding:10px;
-    box-sizing:border-box;
+    height: 100% !important;
+    min-height: 0 !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    grid-template-rows: repeat(3, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+    padding: 6px !important;
+    box-sizing: border-box !important;
   }
   #chart-row-top, #chart-row-bottom{ display:none !important; }
 
   #chart-grid .chartbox{
-    flex:0 0 auto;
-    height:260px;
-    min-height:260px;
+    height: auto !important;
+    min-height: 0 !important;
   }
 
-  /* make bottom candle indicators smaller */
-  #bottom-indicators .bi-card{ padding:8px; }
-  #bottom-indicators .bi-title{ font-size:11px; }
-  #bottom-indicators .bi-sub{ font-size:10px; }
+  .charthead{
+    padding: 3px 6px !important;
+    font-size: 10px !important;
+  }
+  .anglebadge{
+    font-size: 9px !important;
+    padding: 1px 6px !important;
+  }
 
-  .hTrack{
-    width:320px;
-    height:52px;
-    border-radius:10px;
-  }
-  .hCandle{
-    height:12px;
-    border-radius:8px;
-  }
-  .hFill{
-    top:1px;
-    bottom:1px;
-    border-radius:6px;
-  }
-  .hMeta{
-    width:320px;
-    margin-top:4px;
-  }
-  .tfTag{ font-size:10px; padding:2px 7px; }
-  .jetTag{ font-size:10px; padding:2px 6px; }
-  .pctTag{ font-size:10px; }
-  .pctSub{ font-size:10px; }
+  .chartsplit{ flex:1; min-height:0 !important; }
+  .chartcanvas{ flex:1; min-height:0 !important; }
 
-  .hTrack.jet{ width:100%; max-width:680px; height:22px; }
-  .hTrack.jet .hCandle{ height:9px; border-radius:6px; }
-  .hTrack.jet .hFill{ top:1px; bottom:1px; border-radius:5px; }
+  /* Place 5 charts in 2x3 grid, last chart spans full width */
+  #chart-grid .chartbox:nth-child(1){ grid-column:1; grid-row:1; }
+  #chart-grid .chartbox:nth-child(2){ grid-column:2; grid-row:1; }
+  #chart-grid .chartbox:nth-child(3){ grid-column:1; grid-row:2; }
+  #chart-grid .chartbox:nth-child(4){ grid-column:2; grid-row:2; }
+  #chart-grid .chartbox:nth-child(5){ grid-column:1 / span 2; grid-row:3; }
 
   @media (max-width: 700px){
-    #chart-wrap{ height:56dvh; overflow:auto; }
-    #chart-grid{ padding:6px; gap:8px; }
-    #chart-grid .chartbox{
-      height:220px;
-      min-height:220px;
+    #top-row{ flex-direction:column !important; }
+
+    #chart-wrap{ height: 58dvh !important; }
+
+    #signals{
+      height: 18dvh !important;
+      width: 100% !important;
+      max-width:100% !important;
+      border-left:none !important;
+      border-top:2px solid #1e293b !important;
+    }
+    #bottom-indicators{
+      flex: 0 0 24% !important;
+      max-height: 24dvh !important;
     }
 
-    .hTrack{ width:min(280px, 100%); height:44px; }
-    .hMeta{ width:min(280px, 100%); }
-    .hTrack.jet{ height:20px; }
-    .hTrack.jet .hCandle{ height:8px; }
+    #chart-grid{
+      gap: 5px !important;
+      padding: 5px !important;
+    }
   }
 </style>
 </head>
@@ -725,7 +764,6 @@
 <div id="layout">
   <div id="top-row">
     <div id="chart-wrap">
-      <!-- ========= UPDATED: Charts stack vertically one-by-one ========= -->
       <div id="chart-grid">
         <div class="chartbox">
           <div class="charthead">
@@ -768,7 +806,7 @@
         </div>
       </div>
 
-      <!-- legacy (not used now) -->
+      <!-- legacy (not used) -->
       <div id="chart-row-top" style="display:none"></div>
       <div id="chart-row-bottom" style="display:none"></div>
     </div>
@@ -1104,7 +1142,7 @@ const APP_ID = 108701;
 const API_TOKEN = "QSDAQPsfjphEvtT";
 const WS_URL  = `wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`;
 
-/* Deriv manual symbols (kept from your list) */
+/* Deriv manual symbols */
 let ALL_SYMBOLS = [
   "R_10","R_25","R_50","R_75","R_100",
   "R_10S","R_25S","R_50S","R_75S","R_100S",
@@ -1137,7 +1175,6 @@ function __posToast(pos){
   t.style.top = "";
   t.style.bottom = "";
 
-  // reset vars
   t.style.setProperty("--toast-tx","0px");
   t.style.setProperty("--toast-ty","20px");
 
@@ -1233,7 +1270,7 @@ function playTpSound(){
   __playAudio(tpAudio, TP_SOUNDS_BASE + f, 4);
 }
 
-/* ========== UI settings state (kept) ========== */
+/* ========== UI settings state ========== */
 const soundTypeEl      = $("soundType");
 const soundDurationEl  = $("soundDuration");
 const testSoundBtn     = $("testSound");
@@ -1305,7 +1342,7 @@ function ensureGlobalSignal(s){
   }catch(_){}
 }
 
-/* ========= NEW: render history under indicators ========= */
+/* render history under indicators */
 function renderIndicatorHistory(){
   const el = $("indHistory");
   if(!el) return;
@@ -1346,7 +1383,7 @@ function renderIndicatorHistory(){
 }
 
 /* ============================
-   POPUPS wiring (kept)
+   POPUPS wiring
    ============================ */
 if (openTpBtn && tpModal) {
   openTpBtn.onclick = () => {
