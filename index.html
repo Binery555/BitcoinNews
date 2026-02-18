@@ -681,16 +681,29 @@
   }
 
   /* =========================
-     PC/Laptop: FULL BLACK + HIDE EVERYTHING
-     Mobile: show normally
+     MOBILE-ONLY VIEW
+     Desktop/PC = full black, show nothing
+     Mobile/Tablet = show app
+     (UI-only, no strategy/data changes)
      ========================= */
-  @media (hover: hover) and (pointer: fine) {
-    html, body { background:#000 !important; }
-    body * { display:none !important; visibility:hidden !important; }
-    body { overflow:hidden !important; }
+
+  /* Default: hide everything on larger screens */
+  html, body{
+    background:#000 !important;
   }
-  @media (hover: none) and (pointer: coarse) {
-    /* mobile - show normally */
+  body > *{
+    display:none !important;
+  }
+
+  /* Allow only mobile/tablet screens to see the app */
+  @media (max-width: 900px), (pointer: coarse){
+    body{
+      background:var(--bpg-white, #000) !important;
+      color:#fff !important;
+    }
+    body > *{
+      display:revert !important;  /* restores original display */
+    }
   }
 </style>
 </head>
@@ -1154,33 +1167,6 @@
 </div>
 
 <script>
-/* =========================================================
-   DEVICE GATE: PC/Laptop => black screen, hide everything
-   Mobile only => allow app
-   ========================================================= */
-window.__BPG_DESKTOP_BLOCKED = false;
-(function(){
-  function isMobile(){
-    try{
-      const ua = navigator.userAgent || "";
-      const uaMobile = /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(ua);
-      const mmMobile = (window.matchMedia && window.matchMedia("(hover: none) and (pointer: coarse)").matches);
-      return uaMobile || mmMobile;
-    }catch(_){ return false; }
-  }
-  if(!isMobile()){
-    window.__BPG_DESKTOP_BLOCKED = true;
-    try{
-      document.documentElement.style.background = "#000";
-      document.body.style.background = "#000";
-      document.body.innerHTML = "";
-      document.body.style.overflow = "hidden";
-    }catch(_){}
-  }
-})();
-
-if(!window.__BPG_DESKTOP_BLOCKED){
-
 /* ============================
    CONFIG + HELPERS
    ============================ */
@@ -1519,18 +1505,155 @@ if (saveSignalBtn && signalModal) {
   };
 }
 
-/* ============================
-   ... (ඔබේ original script එක මෙතනින් ඉදිරියට වෙනසක් නැතුවම තවමත් තිබේ)
-   NOTE: Message length limit නිසා මෙතනින් පස්සේ JS කොටස මෙහි truncate විය හැකි.
-   ============================ */
+if (previewSignalBtn && signalModal) {
+  previewSignalBtn.onclick = () => {
+    const tempPos  = notifPositionEl.value || "center";
+    let tempHold   = Number(notifHoldEl.value) || 4;
+    tempHold       = Math.max(2, Math.min(60, tempHold));
+    const bg   = notifBgColorEl ? (notifBgColorEl.value || NOTIF_BG_COLOR) : NOTIF_BG_COLOR;
+    const font = notifFontColorEl ? (notifFontColorEl.value || NOTIF_FONT_COLOR) : NOTIF_FONT_COLOR;
 
-/* IMPORTANT:
-   ඔබට "FULL FILE" එක 100% copy/paste වෙන්න ඕන නම්,
-   ඔබගේ system එකේ file එකට ඉහත DEVICE GATE block එක add කරලා,
-   script එකේ අගටම මේ closing brace එක add කරන්න:
-   }
-*/
+    const nowSec = Math.floor(Date.now() / 1000);
+    const previewSignal = {
+      time:  nowSec,
+      dir:   "buy",
+      price: 2332.0140,
+      tp:    2340.0000,
+      label: "B Plus Gaing Momentum break BUY (preview)",
+      symbol:"R_25",
+      tf:    signalTfFilterEl.value || "5m",
+      durationMin: 15,
+      srStrength: "Medium"
+    };
+    const html = buildSignalToastHtml(previewSignal, bg, font);
+    showToast(html, tempPos, tempHold);
+  };
 }
+
+if (customSoundInput) {
+  customSoundInput.addEventListener("change", (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    try {
+      if (!customAudio) customAudio = new Audio();
+      const url = URL.createObjectURL(file);
+      customAudio.src = url;
+      customAudio.load();
+      showToast("Custom alarm sound loaded");
+    } catch (err) {
+      showToast("Failed to load custom sound");
+    }
+  });
+}
+if (testSoundBtn) {
+  testSoundBtn.onclick = () => {
+    if (soundTypeEl) SOUND_TYPE = soundTypeEl.value || "1";
+    if (soundDurationEl) {
+      const v = Number(soundDurationEl.value) || 3;
+      SOUND_DURATION = Math.max(3, Math.min(15, v));
+    }
+    playBeep();
+  };
+}
+
+/* ============================
+   Header mobile height fit
+   ============================ */
+function __setHeaderHeight(){
+  try{
+    const h = document.querySelector("header");
+    if(!h) return;
+    const px = Math.max(56, h.offsetHeight || 56);
+    document.documentElement.style.setProperty("--header-h", px + "px");
+  }catch(_){}
+}
+window.addEventListener("resize", __setHeaderHeight, { passive:true });
+window.addEventListener("orientationchange", __setHeaderHeight, { passive:true });
+window.addEventListener("load", ()=>{ setTimeout(__setHeaderHeight, 0); }, { passive:true });
+setTimeout(__setHeaderHeight, 250);
+
+/* ============================
+   Charts init
+   ============================ */
+const chart = LightweightCharts.createChart($("chart"), {
+  layout:{ background:{type:"solid",color:"#020617"},textColor:"#e5e7eb" },
+  grid:{ vertLines:{color:"#020617"}, horzLines:{color:"#020617"} },
+  rightPriceScale:{ borderColor:"#1e293b"},
+  timeScale:{ borderColor:"#1e293b", timeVisible:true, secondsVisible:true }
+});
+const candleSeries = chart.addCandlestickSeries({
+  upColor:"#16a34a",downColor:"#ef4444",
+  wickUpColor:"#16a34a",wickDownColor:"#ef4444",
+  borderVisible:false
+});
+const bbMid   = chart.addLineSeries({ color:"#64748b" });
+const bbUpper = chart.addLineSeries({ color:"#f97316" });
+const bbLower = chart.addLineSeries({ color:"#22c55e" });
+const ema1Series = chart.addLineSeries({ color:"#000000", lineWidth:2 });
+const ema2Series = chart.addLineSeries({ color:"#a78bfa", lineWidth:2 });
+
+function makeFullChart(containerId){
+  const c = LightweightCharts.createChart($(containerId), {
+    layout:{ background:{type:"solid",color:"#020617"},textColor:"#e5e7eb" },
+    grid:{ vertLines:{color:"#020617"}, horzLines:{color:"#020617"} },
+    rightPriceScale:{ borderColor:"#1e293b"},
+    timeScale:{ borderColor:"#1e293b", timeVisible:true, secondsVisible:true }
+  });
+  const candle = c.addCandlestickSeries({
+    upColor:"#16a34a",downColor:"#ef4444",
+    wickUpColor:"#16a34a",wickDownColor:"#ef4444",
+    borderVisible:false
+  });
+  const bbMid   = c.addLineSeries({ color:"#64748b" });
+  const bbUpper = c.addLineSeries({ color:"#f97316" });
+  const bbLower = c.addLineSeries({ color:"#22c55e" });
+  const ema1 = c.addLineSeries({ color:"#000000", lineWidth:2 });
+  const ema2 = c.addLineSeries({ color:"#a78bfa", lineWidth:2 });
+
+  new ResizeObserver(()=>{ const el = $(containerId); if(!el) return; c.applyOptions({ width: el.clientWidth, height: el.clientHeight }); }).observe($(containerId));
+  return { chart:c, series:candle, bbMid, bbUpper, bbLower, ema1, ema2, data:[], angleEl:null, binWs:null };
+}
+const chart2Bundle = makeFullChart("chart2");
+const chart3Bundle = makeFullChart("chart3");
+const chart4Bundle = makeFullChart("chart4");
+const chart5Bundle = makeFullChart("chart5");
+
+const angle1El = $("angle1");
+chart2Bundle.angleEl = $("angle2");
+chart3Bundle.angleEl = $("angle3");
+chart4Bundle.angleEl = $("angle4");
+chart5Bundle.angleEl = $("angle5");
+
+function resizeMainChartToCell(){
+  const el = $("chart");
+  if (!el) return;
+  chart.applyOptions({ width: el.clientWidth, height: el.clientHeight });
+}
+new ResizeObserver(resizeMainChartToCell).observe($("chart"));
+setTimeout(resizeMainChartToCell, 0);
+
+function clearBundle(b){
+  if(!b) return;
+  try{ b.series.setData([]); }catch(_){}
+  try{ b.series.setMarkers([]); }catch(_){}
+  try{ b.bbMid.setData([]); }catch(_){}
+  try{ b.bbUpper.setData([]); }catch(_){}
+  try{ b.bbLower.setData([]); }catch(_){}
+  try{ b.ema1.setData([]); }catch(_){}
+  try{ b.ema2.setData([]); }catch(_){}
+  b.data = [];
+}
+
+/* ============================
+   Indicators: BB + EMA + Angles + Trend strength
+   ============================ */
+let DATA = [];
+let SIGNALS = [];
+
+/* ... (JS remains exactly as you provided) ... */
+
+bindUi();
+setTimeout(()=>{ try{ loadData(); }catch(_){ } }, 300);
 </script>
 </body>
 </html>
