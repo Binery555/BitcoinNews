@@ -1,1659 +1,361 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>B Plus Gaing Momentum Break Core – Live Signals</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>B Plus Gaing Bot Collection</title>
 
-<script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
-
-<style>
-  :root{
-    --header-h:56px; /* dynamic header height for mobile */
-    --bg:#0b0f14; --panel:#0f1621; --panel2:#0b1320; --ink:#e6eef7;
-    --muted:#9eb1c7; --line:#1a2736;
-    --up:#16a34a; --down:#ef4444;
-  }
-  body{
-    margin:0; background:#020617; color:var(--ink);
-    font-family:Inter,system-ui;
-    overflow:hidden;
-  }
-  header{
-    background:#020617;border-bottom:1px solid #1e293b;
-    height:56px;
-    padding:4px 10px;display:flex;align-items:center;gap:10px;
-    box-sizing:border-box;
-  }
-  header h1{ font-size:15px;margin:0;color:#fff;font-weight:600; }
-  select, button{
-    background:#020617;color:#d5e2f0;border:1px solid #1e293b;
-    padding:6px 8px;border-radius:8px;font-size:13px;
-  }
-  #status{
-    font-size:11px;border-radius:999px;background:#020617;padding:3px 8px;
-    color:#9eb1c7;border:1px solid #1e293b;margin-left:auto;
-  }
-
-  .btn-tp{ background:#2563eb; border-color:#1d4ed8; color:#e0f2fe; font-weight:500; }
-  .btn-tp:hover{ background:#1d4ed8; }
-  .btn-signal-settings{ background:#16a34a; border-color:#15803d; color:#ecfdf5; font-weight:500; }
-  .btn-signal-settings:hover{ background:#15803d; }
-
-  #layout{
-    display:flex; flex-direction:column;
-    height:calc(100dvh - var(--header-h,56px));
-    width:100vw; min-height:0;
-  }
-  #top-row{ flex:1; min-height:0; display:flex; width:100%; }
-
-  /* ========= bottom indicators = vertical stack + scroll ========= */
-  #bottom-indicators{
-    flex:0 0 38%;
-    min-height:260px;
-    max-height:56vh;
-    border-top:1px solid #1e293b;
-    background:#020817;
-    padding:8px;
-    box-sizing:border-box;
-    overflow:auto;
-  }
-  .bi-row{
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-    flex-wrap:nowrap;
-    align-items:stretch;
-  }
-  .bi-card{
-    flex:0 0 auto;
-    width:100%;
-    min-width:0;
-    background:#0b1220;
-    border:1px solid rgba(30,41,59,0.90);
-    border-radius:12px;
-    padding:10px;
-    box-sizing:border-box;
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-  }
-  .bi-title{font-size:12px; font-weight:800; color:#e5e7eb; letter-spacing:0.02em;}
-  .bi-sub{font-size:11px; color:#94a3b8;}
-  .bi-slot{ display:flex; align-items:center; justify-content:flex-start; padding:6px 0 0 0; }
-
-  .bi-jet{ margin:0; }
-  .bi-card.jetCard .bi-slot{justify-content:flex-start; padding-top:10px; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch;}
-  .bi-card.jetCard .chartind{overflow-x:auto; overflow-y:hidden; justify-content:flex-start;}
-
-  #bottom-indicators .chartind{
-    height:auto;
-    min-height:0;
-    max-height:none;
-    border-top:none;
-    background:transparent;
-    padding:0;
-    justify-content:center;
-  }
-
-  /* History card inside indicators */
-  .histWrap{
-    max-height:220px;
-    overflow:auto;
-    border-top:1px solid rgba(30,41,59,0.55);
-    padding-top:8px;
-    -webkit-overflow-scrolling:touch;
-  }
-  .histItem{
-    border:1px solid rgba(31,41,55,0.8);
-    background:rgba(2,6,23,0.55);
-    border-radius:10px;
-    padding:8px 9px;
-    margin-bottom:8px;
-  }
-  .histTop{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-  .histSym{
-    font-size:11px;
-    font-weight:800;
-    padding:2px 8px;
-    border-radius:999px;
-    border:1px solid rgba(30,41,59,0.95);
-    background:#020617;
-    color:#e5e7eb;
-  }
-  .histDirBuy{ color:#4ade80; font-weight:900; font-size:12px; }
-  .histDirSell{ color:#f87171; font-weight:900; font-size:12px; }
-  .histDirClose{ color:#fbbf24; font-weight:900; font-size:12px; }
-  .histMeta{ font-size:11px; color:#94a3b8; margin-top:4px; line-height:1.25; }
-
-  #chart-wrap{ flex:1; min-width:0; height:100%; }
-  #chart-grid{
-    height:100%;
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-    padding:10px;
-    box-sizing:border-box;
-  }
-
-  /* legacy grid rows (kept; can be disabled by overrides below) */
-  #chart-row-top{
-    display:grid;
-    grid-template-columns: 1fr 1fr;
-    gap:10px;
-    height:50%;
-  }
-  #chart-row-bottom{
-    display:grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap:10px;
-    height:50%;
-  }
-  #chart-row-top .chartbox,
-  #chart-row-bottom .chartbox{ min-height:0; }
-
-  .chartbox{
-    background:#020617;
-    border:1px solid #1e293b;
-    border-radius:12px;
-    overflow:hidden;
-    display:flex;
-    flex-direction:column;
-    min-width:0;
-    min-height:0;
-  }
-  .charthead{
-    padding:6px 10px;
-    font-size:12px;
-    color:#cbd5e1;
-    border-bottom:1px solid #1e293b;
-    background:#0b1220;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:10px;
-  }
-  .anglewrap{ display:flex; align-items:center; justify-content:flex-end; }
-  .anglebadge{
-    font-size:11px;
-    padding:2px 8px;
-    border-radius:999px;
-    border:1px solid #1e293b;
-    background:#020617;
-    color:#9eb1c7;
-    white-space:nowrap;
-  }
-  .chartcanvas{ flex:1; min-height:0; }
-
-  .chartsplit{ flex:1; min-height:0; display:flex; flex-direction:column; }
-  .chartind{
-    height:auto;
-    min-height:80px;
-    border-top:1px solid #1e293b;
-    background:#0b1220;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:8px 10px;
-    box-sizing:border-box;
-  }
-
-  .hTrack{
-    position:relative;
-    width:360px;
-    max-width:100%;
-    height:90px;
-    border-radius:12px;
-    border:1px solid rgba(30,41,59,0.95);
-    background:rgba(2,6,23,0.45);
-    overflow:hidden;
-  }
-  .hMid{
-    position:absolute;
-    left:0; right:0;
-    top:50%;
-    height:1px;
-    background:rgba(148,163,184,0.25);
-    transform:translateY(-0.5px);
-  }
-  .hCandle{
-    position:absolute;
-    left:10px;
-    right:10px;
-    top:50%;
-    height:18px;
-    transform:translateY(-50%);
-    border-radius:10px;
-    border:1px solid rgba(30,41,59,0.95);
-    background:rgba(148,163,184,0.12);
-    overflow:hidden;
-  }
-  .hFill{
-    position:absolute;
-    top:2px;
-    bottom:2px;
-    width:0%;
-    left:0%;
-    border-radius:8px;
-    background:rgba(148,163,184,0.25);
-    transition:width .15s ease, background-color .15s ease, opacity .15s ease;
-  }
-
-  .hMeta{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:10px;
-    width:360px;
-    max-width:100%;
-    padding:0 2px;
-    margin-top:6px;
-    box-sizing:border-box;
-  }
-  .tfTag{
-    font-size:11px;
-    font-weight:800;
-    padding:2px 8px;
-    border-radius:999px;
-    border:1px solid rgba(30,41,59,0.95);
-    background:#020617;
-    color:#e5e7eb;
-  }
-  .jetTag{font-size:12px;color:#cbd5e1;padding:2px 6px;border-radius:999px;border:1px solid rgba(148,163,184,0.25);}
-  .pctTag{ font-size:11px; font-weight:800; color:#e5e7eb; letter-spacing:0.01em; }
-  .pctSub{ font-size:11px; color:#94a3b8; margin-left:auto; }
-
-  /* ========= 15m (jet) thinner/smaller ========= */
-  .hTrack.jet{ width:620px; height:34px; }
-  .hTrack.jet .hCandle{ height:14px; border-radius:8px; border-width:1px; }
-  .hTrack.jet .hFill{ top:1px; bottom:1px; border-radius:6px; }
-
-  #signals{
-    width:280px;max-width:40vw;
-    border-left:1px solid #1e293b;
-    background:#020617;
-    padding:8px;
-    box-sizing:border-box;
-    overflow-y:auto;
-  }
-  #signals-title{ font-size:13px; color:#e5e7eb; margin-bottom:6px; }
-  .sig-card{
-    border:1px solid #1f2937;
-    border-radius:10px;
-    padding:6px 7px;
-    background:#020617;
-    margin-bottom:6px;
-  }
-  .symbol{
-    background:#020617;
-    padding:2px 6px;
-    border-radius:999px;
-    margin-right:4px;
-    font-size:11px;
-    border:1px solid #1e293b;
-    color:#cbd5f5;
-  }
-  .buy{ color:#4ade80; font-weight:600; font-size:12px;}
-  .sell{ color:#f87171; font-weight:600; font-size:12px;}
-  .close{ color:#fbbf24; font-weight:700; font-size:12px;}
-  .price{ color:#e5e7eb; font-size:12px; }
-  .tp{
-    font-size:12px;
-    margin-top:2px;
-    border-radius:6px;
-    padding:2px 4px;
-    display:inline-block;
-  }
-  .time{ color:#64748b; font-size:11px; margin-top:2px; }
-
-  /* ========= Toast supports true center without breaking animation ========= */
-  #toast{
-    position:fixed;
-    background:transparent;
-    border:none;
-    padding:0;
-    font-size:12px;
-    color:#e5e7eb;
-    box-shadow:none;
-
-    opacity:0;
-    pointer-events:none;
-    transition:opacity .25s ease, transform .25s ease;
-    z-index:9999;
-
-    right:16px;
-    bottom:16px;
-
-    --toast-tx: 0px;  /* for centering */
-    --toast-ty: 20px; /* entrance */
-    transform: translate(var(--toast-tx), var(--toast-ty));
-  }
-  #toast.show{
-    opacity:1;
-    --toast-ty: 0px;
-  }
-
-  .toast-card{
-    border-radius:14px;
-    border:2px solid #1f2937;
-    padding:10px 12px;
-    background:#020617;
-    min-width:260px;
-    max-width:min(420px, 92vw);
-    box-shadow:0 18px 50px rgba(0,0,0,0.55);
-  }
-  .toast-card .symbol{
-    background:#020617;
-    border:1px solid #1e293b;
-    border-radius:999px;
-    padding:2px 6px;
-    margin-right:6px;
-    font-size:11px;
-    color:#cbd5f5;
-  }
-  .toast-title{ font-size:12px; color:#e5e7eb; }
-  .toast-dir-buy{ color:#4ade80; font-weight:900; font-size:14px; margin-top:6px; }
-  .toast-dir-sell{ color:#f87171; font-weight:900; font-size:14px; margin-top:6px; }
-  .toast-entry{ color:#e5e7eb; font-size:12px; margin-top:6px; }
-  .toast-tp{ font-size:11px; padding:2px 6px; border-radius:8px; display:inline-block; margin-top:6px; }
-  .toast-time{ color:#94a3b8; font-size:11px; margin-top:6px; }
-
-  @media (max-width: 900px){
-    #layout{flex-direction:column;}
-    #signals{
-      width:100%;
-      max-width:100%;
-      height:40%;
-      border-left:none;
-      border-top:1px solid #1e293b;
-    }
-  }
-
-  header{ position:sticky; top:0; z-index:10001; }
-
-  @media (max-width: 700px){
-    body{ overflow:hidden; }
-    header{
-      height:auto; padding:8px 10px;
-      flex-wrap:wrap; gap:8px;
-    }
-    header h1{
-      flex:1 1 100%;
-      font-size:14px;
-      line-height:1.2;
-      text-align:center;
-      margin-left:0;
-    }
-    header label{ font-size:11px; color:#94a3b8; }
-    select, button{ font-size:12px; }
-
-    #layout{ height:calc(100dvh - var(--header-h,56px)); overflow:hidden; }
-    #top-row{ flex-direction:column; }
-
-    #chart-wrap{
-      flex:0 0 auto;
-      height:54dvh;
-      min-height:0;
-      overflow:hidden;
+  <style>
+    :root{
+      --black:#0b0b0c;
+      --black2:#121214;
+      --white:#ffffff;
+      --muted:#cfcfd6;
+      --yellow:#f4c21f;
+      --yellow2:#ffd54a;
+      --card:#111114cc;
+      --stroke:#ffffff1f;
+      --glow:#f4c21f4d;
     }
 
-    /* legacy mobile grid (kept; may be overridden below) */
-    #chart-grid{
-      height:100%;
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: repeat(3, 1fr);
-      gap:6px;
-      padding:6px;
-      box-sizing:border-box;
-    }
-    #chart-row-top,
-    #chart-row-bottom{
-      display:contents;
-      height:auto;
-    }
-    .chartbox{ min-height:0; }
-    .charthead{ padding:4px 6px; font-size:10px; }
-    .chartcanvas{ min-height:0; }
-
-    #signals{
-      flex:0 0 auto;
-      width:100%;
-      max-width:100%;
-      height:18dvh;
-      border-left:none;
-      border-top:2px solid #1e293b;
-      overflow:auto;
-      -webkit-overflow-scrolling:touch;
-    }
-
-    /* indicators as vertical stack on mobile too */
-    #bottom-indicators{
-      flex:0 0 auto;
-      height:28dvh;
-      max-height:none;
-      padding:6px;
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      align-items:stretch;
-      overflow:auto;
-      -webkit-overflow-scrolling:touch;
-      box-sizing:border-box;
-    }
-    .bi-row{ flex-direction:column; gap:8px; }
-    #bottom-indicators .bi-card{ width:100%; min-width:0; padding:8px; }
-    #bottom-indicators .bi-card.jetCard{ width:100%; min-width:0; max-width:none; }
-    #bottom-indicators .bi-title{font-size:12px;}
-    #bottom-indicators .bi-sub{font-size:10px; line-height:1.25;}
-    #bottom-indicators .bi-slot{padding-top:6px;}
-    #bottom-indicators .chartind{max-height:70px;}
-
-    .hTrack{ height:48px; }
-    .hTrack.jet{ width:100%; height:28px; }
-    .hTrack.jet .hCandle{ height:12px; border-radius:7px; }
-    .hTrack.jet .hFill{ top:1px; bottom:1px; border-radius:6px; }
-
-    .histWrap{ max-height:160px; }
-  }
-
-  @media (max-width: 420px){
-    header{ padding:8px; }
-    .charthead{ padding:6px 8px; font-size:11px; }
-    .anglebadge{ font-size:10px; padding:2px 6px; }
-    #signals-title{ font-size:12px; }
-    .sig-card{ padding:6px 7px; }
-    .toast-card{ min-width:220px; max-width:92vw; }
-  }
-
-  /* Popups */
-  .tp-modal-backdrop,
-  .signal-modal-backdrop{
-    position:fixed;
-    inset:0;
-    background:rgba(15,23,42,0.85);
-    display:none;
-    align-items:center;
-    justify-content:center;
-    z-index:9998;
-  }
-  .tp-modal-backdrop.show,
-  .signal-modal-backdrop.show{
-    display:flex;
-  }
-  .tp-modal,
-  .signal-modal{
-    background:#020617;
-    border:1px solid #1f2937;
-    border-radius:16px;
-    padding:16px 18px;
-    width:320px;
-    max-width:90vw;
-    box-shadow:0 20px 50px rgba(0,0,0,0.8);
-  }
-  .tp-title,
-  .signal-title{
-    font-size:14px;
-    font-weight:600;
-    margin-bottom:10px;
-    color:#e5e7eb;
-  }
-  .tp-field,
-  .signal-field{
-    margin-bottom:10px;
-    font-size:12px;
-  }
-  .tp-field label,
-  .signal-field label{
-    display:block;
-    margin-bottom:4px;
-    color:#9ca3af;
-  }
-  .alarm-inline,
-  .signal-inline{
-    display:flex;
-    gap:8px;
-    align-items:center;
-  }
-  .alarm-note{
-    font-size:11px;
-    color:#6b7280;
-    margin-top:3px;
-  }
-  .tp-actions,
-  .signal-actions{
-    display:flex;
-    justify-content:flex-end;
-    gap:8px;
-    margin-top:12px;
-  }
-  .btn-secondary{
-    background:#020617;
-    border-color:#374151;
-    color:#d1d5db;
-  }
-  .btn-primary{
-    background:#22c55e;
-    border-color:#16a34a;
-    color:#052e16;
-    font-weight:600;
-  }
-  .btn-primary:hover{ background:#16a34a; }
-
-  /* BPG_UI_THEME_START */
-  :root{--bpg-white:#000000;--bpg-yellow:#facc15;--bpg-red:#dc2626;--bpg-green:#16a34a;--bpg-ink:#14532d;}
-  body{ background:var(--bpg-white)!important; color:#ffffff!important; }
-  header{ background:var(--bpg-white)!important;border-bottom:2px solid var(--bpg-red)!important;}
-  header h1{color:var(--bpg-ink)!important;}
-  select,button{background:var(--bpg-white)!important;color:var(--bpg-ink)!important;border:2px solid var(--bpg-red)!important;}
-  #status{ background:#0b0b0b!important;color:var(--bpg-ink)!important;border:2px solid var(--bpg-red)!important;}
-  .chartbox{ background:#0b0b0b!important;border:2px solid var(--bpg-red)!important;}
-  .charthead{background:var(--bpg-yellow)!important;color:#000!important;border-bottom:2px solid var(--bpg-red)!important;}
-  .anglebadge{background:var(--bpg-white)!important;border:2px solid var(--bpg-red)!important;color:var(--bpg-ink)!important;}
-  #signals{background:var(--bpg-white)!important;border-left:2px solid var(--bpg-red)!important;}
-  .sig-card{ background:#0b0b0b!important;border:2px solid var(--bpg-red)!important;color:var(--bpg-ink)!important;}
-  .symbol{ background:#0b0b0b!important;border:2px solid var(--bpg-red)!important;color:var(--bpg-ink)!important;}
-  .buy{color:var(--bpg-green)!important;}
-  .sell{color:var(--bpg-red)!important;}
-  .close{color:var(--bpg-yellow)!important;}
-  #emaAnglePanel{border:3px solid var(--bpg-red)!important;background:var(--bpg-white)!important;}
-  .bpg-panel-title{display:flex;align-items:center;gap:8px;font-weight:900;font-size:12px;margin-bottom:6px;color:var(--bpg-ink)!important;}
-  .bpg-icon-turbo,.bpg-icon-cutoff{display:inline-flex;align-items:center;justify-content:center;color:var(--bpg-red)!important;}
-  .bpg-cutoff{display:inline-flex;align-items:center;gap:6px;font-weight:800;}
-  #emaAngleSlider{accent-color:var(--bpg-red);}
-  /* BPG_UI_THEME_END */
-
-
-  /* =========================================================
-     ONE-SCREEN FIT (Charts small + same screen)
-     ========================================================= */
-  body{ overflow:hidden !important; }
-  #layout{ overflow:hidden !important; }
-
-  /* Give top area more space, indicators less space */
-  #top-row{
-    flex: 1 1 auto !important;
-    min-height: 0 !important;
-  }
-
-  /* Make bottom indicators smaller so charts can fit */
-  #bottom-indicators{
-    flex: 0 0 26% !important;
-    min-height: 0 !important;
-    max-height: 30dvh !important;
-    padding: 6px !important;
-
-    /* ✅ FIX: allow scrolling to see all indicators */
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  /* indicators tighter */
-  #bottom-indicators .bi-row{ gap:6px !important; }
-  #bottom-indicators .bi-card{ padding:6px !important; border-radius:10px !important; }
-  #bottom-indicators .bi-title{ font-size:10px !important; }
-  #bottom-indicators .bi-sub{ font-size:9px !important; }
-  #bottom-indicators .chartind{ max-height:52px !important; }
-  .histWrap{ max-height:110px !important; }
-
-  /* Signals: tighter + internal scroll only */
-  #signals{
-    width: 260px !important;
-    max-width: 34vw !important;
-    padding: 6px !important;
-    overflow: hidden !important;
-    display:flex !important;
-    flex-direction:column !important;
-  }
-  #sig-list{
-    overflow:auto !important;
-    min-height:0 !important;
-    -webkit-overflow-scrolling:touch;
-  }
-
-  /* Chart area: NO scroll. Fit to remaining height */
-  #chart-wrap{
-    flex: 1 1 auto !important;
-    min-width: 0 !important;
-    height: 100% !important;
-    overflow: hidden !important;
-  }
-
-  /* Charts in a grid that fits one screen */
-  #chart-grid{
-    height: 100% !important;
-    min-height: 0 !important;
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    grid-template-rows: repeat(3, minmax(0, 1fr)) !important;
-    gap: 6px !important;
-    padding: 6px !important;
-    box-sizing: border-box !important;
-  }
-  #chart-row-top, #chart-row-bottom{ display:none !important; }
-
-  #chart-grid .chartbox{
-    height: auto !important;
-    min-height: 0 !important;
-  }
-
-  .charthead{
-    padding: 3px 6px !important;
-    font-size: 10px !important;
-  }
-  .anglebadge{
-    font-size: 9px !important;
-    padding: 1px 6px !important;
-  }
-
-  .chartsplit{ flex:1; min-height:0 !important; }
-  .chartcanvas{ flex:1; min-height:0 !important; }
-
-  /* Place 5 charts in 2x3 grid, last chart spans full width */
-  #chart-grid .chartbox:nth-child(1){ grid-column:1; grid-row:1; }
-  #chart-grid .chartbox:nth-child(2){ grid-column:2; grid-row:1; }
-  #chart-grid .chartbox:nth-child(3){ grid-column:1; grid-row:2; }
-  #chart-grid .chartbox:nth-child(4){ grid-column:2; grid-row:2; }
-  #chart-grid .chartbox:nth-child(5){ grid-column:1 / span 2; grid-row:3; }
-
-  @media (max-width: 700px){
-    #top-row{ flex-direction:column !important; }
-
-    #chart-wrap{ height: 58dvh !important; }
-
-    #signals{
-      height: 18dvh !important;
-      width: 100% !important;
-      max-width:100% !important;
-      border-left:none !important;
-      border-top:2px solid #1e293b !important;
-    }
-    #bottom-indicators{
-      flex: 0 0 24% !important;
-      max-height: 24dvh !important;
-    }
-
-    #chart-grid{
-      gap: 5px !important;
-      padding: 5px !important;
-    }
-  }
-
-  /* =========================
-     MOBILE-ONLY VIEW
-     Desktop/PC = full black, show nothing
-     Mobile/Tablet = show app
-     (UI-only, no strategy/data changes)
-     ========================= */
-
-  /* Default: hide everything on larger screens */
-  html, body{
-    background:#000 !important;
-  }
-  body > *{
-    display:none !important;
-  }
-
-  /* Allow only mobile/tablet screens to see the app */
-  @media (max-width: 900px), (pointer: coarse){
+    *{ box-sizing:border-box; }
     body{
-      background:var(--bpg-white, #000) !important;
-      color:#fff !important;
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Helvetica Neue", sans-serif;
+      color: var(--white);
+      min-height: 100svh;
+      display:flex;
+      justify-content:center;
+      padding: 18px 14px 28px;
+      background:
+        radial-gradient(900px 600px at 10% 10%, #ffffff10, transparent 60%),
+        radial-gradient(700px 500px at 90% 20%, #f4c21f1e, transparent 60%),
+        linear-gradient(135deg,
+          var(--black) 0%,
+          var(--black) 22%,
+          #1a1a1f 22%,
+          #1a1a1f 35%,
+          var(--yellow) 35%,
+          var(--yellow) 55%,
+          #f6f6f8 55%,
+          #f6f6f8 70%,
+          var(--black2) 70%,
+          var(--black2) 100%);
+      overflow-x:hidden;
     }
-    body > *{
-      display:revert !important;  /* restores original display */
+
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background:
+        linear-gradient(180deg, #00000055, transparent 35%, #00000055),
+        repeating-linear-gradient(45deg, #ffffff08 0 2px, transparent 2px 10px);
+      mix-blend-mode: overlay;
+      opacity:.55;
     }
-  }
-</style>
+
+    .app{
+      width: min(520px, 100%);
+      position:relative;
+      z-index:1;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding: 14px 14px;
+      border: 1px solid var(--stroke);
+      background: linear-gradient(180deg, #0f0f12cc, #0a0a0bcc);
+      border-radius: 18px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 28px #00000055;
+    }
+
+    .logo-wrap{
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      border: 1px solid #ffffff2b;
+      background: radial-gradient(60px 60px at 30% 30%, #ffffff18, transparent 60%),
+                  linear-gradient(135deg, #0f0f12, #1a1a1f);
+      display:grid;
+      place-items:center;
+      overflow:hidden;
+      flex: 0 0 auto;
+    }
+    .logo-wrap img{
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scale(1.05);
+    }
+
+    .title-area{
+      flex:1;
+      min-width: 0;
+    }
+
+    .title{
+      margin:0;
+      font-weight: 900;
+      letter-spacing: .3px;
+      line-height: 1.05;
+      font-size: clamp(22px, 5.8vw, 30px);
+      color: #111;
+      background: linear-gradient(90deg, var(--yellow2), var(--white), var(--yellow));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 18px var(--glow);
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+
+    .subtitle{
+      margin:6px 0 0;
+      font-size: 13px;
+      color: var(--muted);
+      opacity:.95;
+    }
+
+    .grid{
+      margin-top: 14px;
+      display:grid;
+      gap: 12px;
+    }
+
+    .card{
+      border-radius: 18px;
+      border: 1px solid var(--stroke);
+      background: linear-gradient(180deg, #111114cc, #0a0a0bcc);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 14px 30px #00000055;
+      overflow:hidden;
+      position:relative;
+    }
+
+    .card::before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background:
+        linear-gradient(135deg, transparent 0 42%, #f4c21f2c 42% 58%, transparent 58% 100%);
+      opacity:.85;
+      pointer-events:none;
+    }
+
+    .card-inner{
+      position:relative;
+      z-index:1;
+      padding: 14px 14px 12px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+
+    .badge{
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      display:grid;
+      place-items:center;
+      background: linear-gradient(135deg, #0b0b0c, #1c1c22);
+      border: 1px solid #ffffff2a;
+      box-shadow: 0 0 0 3px #f4c21f12;
+      flex:0 0 auto;
+    }
+
+    .badge span{
+      font-weight: 900;
+      color: var(--yellow2);
+      text-shadow: 0 0 10px var(--glow);
+      font-size: 16px;
+    }
+
+    .bot-info{
+      flex:1;
+      min-width:0;
+    }
+
+    .bot-name{
+      margin:0;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing:.2px;
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+
+    .bot-desc{
+      margin:6px 0 0;
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+
+    .actions{
+      display:flex;
+      gap:8px;
+      flex: 0 0 auto;
+    }
+
+    .icon-btn{
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      display:grid;
+      place-items:center;
+      border: 1px solid #ffffff2a;
+      background: linear-gradient(135deg, #0e0e10cc, #141418cc);
+      color: var(--white);
+      text-decoration:none;
+      transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+      box-shadow: 0 10px 18px #00000055;
+    }
+
+    .icon-btn:hover, .icon-btn:focus{
+      transform: translateY(-1px);
+      border-color: #f4c21f66;
+      box-shadow: 0 14px 22px #00000066, 0 0 0 4px #f4c21f22;
+      outline:none;
+    }
+
+    .icon-btn.open{
+      background: linear-gradient(135deg, #f4c21f, #ffd54a);
+      color:#111;
+      border-color:#00000033;
+    }
+
+    .icon{
+      width: 18px;
+      height: 18px;
+      display:block;
+    }
+
+    .footer{
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      border: 1px solid var(--stroke);
+      background: linear-gradient(180deg, #0f0f12cc, #0a0a0bcc);
+      color: var(--muted);
+      font-size: 12.5px;
+      text-align:center;
+      backdrop-filter: blur(10px);
+    }
+
+    @media (max-width: 360px){
+      .subtitle{ display:none; }
+      .bot-desc{ display:none; }
+      .icon-btn{ width:38px; height:38px; }
+      .badge{ width:42px; height:42px; }
+    }
+  </style>
 </head>
 
 <body>
-<header>
-  <h1>B Plus Gaing Momentum Break Core</h1>
-
-  <button id="openTp" class="btn-tp">Add TP option</button>
-  <button id="openSignalSettings" class="btn-signal-settings">Signals settings</button>
-
-  <label style="font-size:12px;color:#9ca3af;">Market</label>
-  <select id="symbol">
-      <optgroup label="Binance Spot" id="binanceGroup"></optgroup>
-      <optgroup label="Binance Futures (USD-M Perp)" id="binanceFuturesGroup"></optgroup>
-      <optgroup label="Deriv (Manual)" id="derivGroup"></optgroup>
-  </select>
-
-  <!-- ✅ TF renamed to Interval -->
-  <label style="font-size:12px;color:#9ca3af;">Main Interval</label>
-  <select id="tf">
-    <option value="1m">1m</option>
-    <option value="5m">5m</option>
-    <option value="10m">10m</option>
-    <option value="15m">15m</option>
-    <option value="30m">30m</option>
-    <option value="1h" selected>1h</option>
-    <option value="2h">2h</option>
-    <option value="4h">4h</option>
-    <option value="1d">1D</option>
-  </select>
-
-  <label style="font-size:12px;color:#9ca3af;">Interval 2</label>
-  <select id="tf2">
-    <option value="1m">1m</option>
-    <option value="5m">5m</option>
-    <option value="10m">10m</option>
-    <option value="15m">15m</option>
-    <option value="30m">30m</option>
-    <option value="1h">1h</option>
-    <option value="2h" selected>2h</option>
-    <option value="4h">4h</option>
-    <option value="1d">1D</option>
-  </select>
-
-  <label style="font-size:12px;color:#9ca3af;">Interval 3</label>
-  <select id="tf3">
-    <option value="1m">1m</option>
-    <option value="5m">5m</option>
-    <option value="10m">10m</option>
-    <option value="15m">15m</option>
-    <option value="30m">30m</option>
-    <option value="1h">1h</option>
-    <option value="2h">2h</option>
-    <option value="4h">4h</option>
-    <option value="1d" selected>1D</option>
-  </select>
-
-  <label style="font-size:12px;color:#9ca3af;">Interval 4</label>
-  <select id="tf4">
-    <option value="1m">1m</option>
-    <option value="5m">5m</option>
-    <option value="10m">10m</option>
-    <option value="15m">15m</option>
-    <option value="30m">30m</option>
-    <option value="1h">1h</option>
-    <option value="2h">2h</option>
-    <option value="4h" selected>4h</option>
-    <option value="1d">1D</option>
-  </select>
-
-  <label style="font-size:12px;color:#9ca3af;">Interval 5</label>
-  <select id="tf5">
-    <option value="1m">1m</option>
-    <option value="5m">5m</option>
-    <option value="10m">10m</option>
-    <option value="15m" selected>15m</option>
-    <option value="30m">30m</option>
-    <option value="1h">1h</option>
-    <option value="2h">2h</option>
-    <option value="4h">4h</option>
-    <option value="1d">1D</option>
-  </select>
-
-  <button id="load">Load</button>
-  <span id="status">Initializing…</span>
-</header>
-
-<div id="layout">
-  <div id="top-row">
-    <div id="chart-wrap">
-      <div id="chart-grid">
-        <div class="chartbox">
-          <div class="charthead">
-            <div>Main (<span id="tfLabel1"></span>)</div>
-            <div class="anglewrap"><span id="angle1" class="anglebadge">—</span></div>
-          </div>
-          <div class="chartsplit"><div class="chartcanvas" id="chart"></div></div>
-        </div>
-
-        <div class="chartbox">
-          <div class="charthead">
-            <div>Interval 2 (<span id="tfLabel2"></span>)</div>
-            <div class="anglewrap"><span id="angle2" class="anglebadge">—</span></div>
-          </div>
-          <div class="chartsplit"><div class="chartcanvas" id="chart2"></div></div>
-        </div>
-
-        <div class="chartbox">
-          <div class="charthead">
-            <div>Interval 3 (<span id="tfLabel3"></span>)</div>
-            <div class="anglewrap"><span id="angle3" class="anglebadge">—</span></div>
-          </div>
-          <div class="chartsplit"><div class="chartcanvas" id="chart3"></div></div>
-        </div>
-
-        <div class="chartbox">
-          <div class="charthead">
-            <div>Interval 4 (<span id="tfLabel4"></span>)</div>
-            <div class="anglewrap"><span id="angle4" class="anglebadge">—</span></div>
-          </div>
-          <div class="chartsplit"><div class="chartcanvas" id="chart4"></div></div>
-        </div>
-
-        <div class="chartbox">
-          <div class="charthead">
-            <div>Interval 5 (<span id="tfLabel5"></span>)</div>
-            <div class="anglewrap"><span id="angle5" class="anglebadge">—</span></div>
-          </div>
-          <div class="chartsplit"><div class="chartcanvas" id="chart5"></div></div>
-        </div>
+  <main class="app">
+    <header class="topbar">
+      <div class="logo-wrap" title="B Plus Gaing">
+        <img src="https://iili.io/fVy10Ab.th.jpg" alt="B Plus Gaing Logo" />
       </div>
 
-      <!-- legacy (not used) -->
-      <div id="chart-row-top" style="display:none"></div>
-      <div id="chart-row-bottom" style="display:none"></div>
-    </div>
+      <div class="title-area">
+        <h1 class="title">B Plus Gaing Bot Collection</h1>
+        <p class="subtitle">Quick access to your Binance trading bots</p>
+      </div>
+    </header>
 
-    <div id="signals">
-      <div id="emaAnglePanel" class="sig-card" style="margin-bottom:10px;">
-        <div class="bpg-panel-title" data-bpg="turbo-scan-gate">
-          <span class="bpg-icon-turbo" aria-hidden="true">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2l2.2 6.3H21l-5.4 3.9L17.8 18 12 14.1 6.2 18l2.2-5.8L3 8.3h6.8L12 2z" stroke="currentColor" stroke-width="2" fill="currentColor"/>
-            </svg>
-          </span>
-          <span>B Plus Gaing Turbo Scan Gate</span>
-        </div>
-
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
-          <span class="bpg-cutoff" data-bpg="cutoff">
-            <span class="bpg-icon-cutoff" aria-hidden="true">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                <path d="M7 18V8l5-3 5 3v10" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                <path d="M12 12v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                <circle cx="12" cy="12" r="2" fill="currentColor"/>
+    <section class="grid" aria-label="Bot List">
+      <!-- 1 -->
+      <article class="card">
+        <div class="card-inner">
+          <div class="badge"><span>1</span></div>
+          <div class="bot-info">
+            <h2 class="bot-name">B Plus Gaing EntrySniper Bot</h2>
+            <p class="bot-desc">Entry sniper dashboard</p>
+          </div>
+          <div class="actions">
+            <!-- Open in SAME TAB to avoid "loads but not runs" issues -->
+            <a class="icon-btn open" href="https://bplusgaingentrysniper.site/" title="Open">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M14 3h7v7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M21 3l-9 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M10 5H7a4 4 0 0 0-4 4v10a4 4 0 0 0 4 4h10a4 4 0 0 0 4-4v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
               </svg>
-            </span>
-            <span>Cutoff</span>
-          </span>
-          <span id="emaAngleVal" style="font-size:11px;color:#e5e7eb;">5°</span>
-        </div>
-
-        <input id="emaAngleSlider" type="range" min="1" max="80" value="5" step="1" style="width:100%;margin-top:6px;">
-        <div style="font-size:11px;color:#6b7280;margin-top:6px;line-height:1.25;">
-          DOWN if angle ≤ -<span id="emaAngleVal2">5</span>° &nbsp;|&nbsp;
-          UP if angle ≥ <span id="emaAngleVal3">5</span>°
-        </div>
-
-        <div style="margin-top:6px;font-size:12px;">
-          <span style="color:#9ca3af;">B Plus Gaing Turbo Scan Result:</span>
-          <span id="emaAllTrendLabel" style="font-weight:800;">—</span>
-        </div>
-      </div>
-
-      <div id="aiPlanPanel" class="sig-card" style="margin-bottom:10px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-          <div style="font-size:12px;color:#e5e7eb;font-weight:600;">OpenAI Trade Plan</div>
-          <div id="aiPlanStatus" style="font-size:11px;color:#9ca3af;">—</div>
-        </div>
-        <div style="margin-top:8px;display:grid;grid-template-columns: 1fr 1fr;gap:8px;">
-          <div><div style="font-size:11px;color:#94a3b8;">Bias</div><div id="aiBias" style="font-size:14px;font-weight:800;">WAIT</div></div>
-          <div><div style="font-size:11px;color:#94a3b8;">Confidence</div><div id="aiConf" style="font-size:14px;font-weight:800;">0%</div></div>
-        </div>
-        <div style="margin-top:8px;"><div style="font-size:11px;color:#94a3b8;">Entry</div><div id="aiEntry" style="font-size:13px;font-weight:700;">—</div></div>
-        <div style="margin-top:6px;display:grid;grid-template-columns: 1fr 1fr;gap:8px;">
-          <div><div style="font-size:11px;color:#94a3b8;">SL</div><div id="aiSL" style="font-size:13px;font-weight:700;">—</div></div>
-          <div><div style="font-size:11px;color:#94a3b8;">TPs</div><div id="aiTP" style="font-size:13px;font-weight:700;">—</div></div>
-        </div>
-        <div style="margin-top:8px;"><div style="font-size:11px;color:#94a3b8;">Reasons</div><div id="aiReason" style="font-size:11px;color:#cbd5e1;line-height:1.35;">—</div></div>
-        <div style="margin-top:6px;"><div style="font-size:11px;color:#94a3b8;">Invalidation</div><div id="aiInvalid" style="font-size:11px;color:#cbd5e1;line-height:1.35;">—</div></div>
-      </div>
-
-      <div id="aiComparePanel" class="sig-card" style="margin-bottom:10px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-          <div style="font-size:12px;color:#e5e7eb;font-weight:600;">B Plus Gaing Insight vs Core</div>
-          <div id="cmpStatus" style="font-size:11px;color:#9ca3af;">—</div>
-        </div>
-        <div style="margin-top:8px;display:grid;grid-template-columns: 1fr 1fr;gap:8px;">
-          <div>
-            <div style="font-size:11px;color:#94a3b8;">Core</div>
-            <div id="cmpEngine" style="font-size:14px;font-weight:800;">—</div>
-            <div id="cmpEngineMeta" style="font-size:11px;color:#9ca3af;margin-top:2px;">—</div>
-          </div>
-          <div>
-            <div style="font-size:11px;color:#94a3b8;">OpenAI</div>
-            <div id="cmpAI" style="font-size:14px;font-weight:800;">—</div>
-            <div id="cmpAIMeta" style="font-size:11px;color:#9ca3af;margin-top:2px;">—</div>
+            </a>
           </div>
         </div>
-        <div style="margin-top:8px;">
-          <div style="font-size:11px;color:#94a3b8;">Decision</div>
-          <div id="cmpDecision" style="font-size:12px;color:#cbd5e1;line-height:1.35;">—</div>
+      </article>
+
+      <!-- 2 -->
+      <article class="card">
+        <div class="card-inner">
+          <div class="badge"><span>2</span></div>
+          <div class="bot-info">
+            <h2 class="bot-name">B Plus Gaing ProfitPilot Bot</h2>
+            <p class="bot-desc">Profit pilot dashboard</p>
+          </div>
+          <div class="actions">
+            <a class="icon-btn open" href="https://bplusgaingprofitpilotbot.site/" title="Open">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M14 3h7v7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M21 3l-9 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M10 5H7a4 4 0 0 0-4 4v10a4 4 0 0 0 4 4h10a4 4 0 0 0 4-4v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </a>
+          </div>
         </div>
-      </div>
+      </article>
 
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;">
-        <div id="signals-title">Live Signals – Selected Market (last 15 minutes)</div>
-        <select id="sigTfFilter" style="background:#0b1220;border:1px solid #1f2937;color:#e5e7eb;border-radius:10px;padding:6px 10px;font-size:12px;">
-          <!-- ✅ TF renamed -->
-          <option value="all" selected>All Intervals</option>
-          <option value="1m">1m</option>
-          <option value="2m">2m</option>
-          <option value="5m">5m</option>
-          <option value="10m">10m</option>
-          <option value="15m">15m</option>
-          <option value="30m">30m</option>
-          <option value="1h">1h</option>
-        </select>
-      </div>
-      <div id="sig-list" style="font-size:12px;color:#9ca3af;">Waiting for data…</div>
-    </div>
-  </div>
-
-  <div id="bottom-indicators">
-    <div class="bi-row">
-      <div class="bi-card">
-        <div class="bi-title">Trend Strength — 1h</div>
-        <div class="bi-sub">Up trend = green candles • Down trend = red candles</div>
-        <div class="bi-slot"><div class="chartind" id="ind1"></div></div>
-      </div>
-
-      <div class="bi-card">
-        <div class="bi-title">Trend Strength — 2h</div>
-        <div class="bi-sub">Up trend = green candles • Down trend = red candles</div>
-        <div class="bi-slot"><div class="chartind" id="ind2"></div></div>
-      </div>
-
-      <div class="bi-card">
-        <div class="bi-title">Trend Strength — 4h</div>
-        <div class="bi-sub">Up trend = green candles • Down trend = red candles</div>
-        <div class="bi-slot"><div class="chartind" id="ind3"></div></div>
-      </div>
-
-      <div class="bi-card">
-        <div class="bi-title">Trend Strength — 1d</div>
-        <div class="bi-sub">Up trend = green candles • Down trend = red candles</div>
-        <div class="bi-slot"><div class="chartind" id="ind4"></div></div>
-      </div>
-
-      <div class="bi-card jetCard">
-        <div class="bi-title">B Plus Gaing Identify Strength — 15m</div>
-        <div class="bi-sub">Stronger = darker • Weaker = lighter • BUY green / SELL red</div>
-        <div class="bi-slot"><div class="chartind" id="ind5"></div></div>
-      </div>
-
-      <div class="bi-card" id="indHistoryCard">
-        <div class="bi-title">B Plus Gaing Signals History (latest)</div>
-        <div class="bi-sub">Signals that arrived live (auto-updates)</div>
-        <div class="histWrap" id="indHistory">Waiting…</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div id="toast"></div>
-
-<!-- TP Settings -->
-<div id="tpModal" class="tp-modal-backdrop">
-  <div class="tp-modal">
-    <div class="tp-title">TP Settings</div>
-
-    <div class="tp-field">
-      <label>TP places</label>
-      <select id="tpCount">
-        <option value="1">1 TP</option>
-        <option value="2">2 TP</option>
-        <option value="3">3 TP</option>
-        <option value="4">4 TP</option>
-        <option value="5">5 TP</option>
-      </select>
-      <div class="alarm-note">Keep 1 to 5 TP places for each signal.</div>
-    </div>
-
-    <div class="tp-field">
-      <label>TP background color</label>
-      <input type="color" id="tpBgColor" value="#1d4ed8">
-    </div>
-
-    <div class="tp-field">
-      <label>TP font color</label>
-      <input type="color" id="tpFontColor" value="#000000">
-    </div>
-
-    <div class="tp-field">
-      <label>TP sound</label>
-      <div class="alarm-inline">
-        <select id="tpSoundEnabled">
-          <option value="on" selected>ON</option>
-          <option value="off">OFF</option>
-        </select>
-      </div>
-      <div class="alarm-note">Turn TP achieve sound on or off.</div>
-    </div>
-
-    <div class="tp-field">
-      <label>TP achieve sound</label>
-      <div class="alarm-inline">
-        <select id="tpSoundType">
-          <option value="slot">Slot machine payout</option>
-          <option value="emergency">Emergency alert</option>
-          <option value="hall">Hall alert</option>
-          <option value="facility">Facility alarm</option>
-          <option value="classic">Classic alarm</option>
-        </select>
-        <button id="testTpSound" class="btn-secondary" style="font-size:11px;padding:4px 8px;">Test TP sound</button>
-      </div>
-      <div class="alarm-note">Sound used when TP1–TP5 are achieved.</div>
-    </div>
-
-    <div class="tp-actions">
-      <button id="closeTp" class="btn-secondary">Close</button>
-      <button id="saveTp" class="btn-primary">Save</button>
-    </div>
-  </div>
-</div>
-
-<!-- Signals Settings -->
-<div id="signalModal" class="signal-modal-backdrop">
-  <div class="signal-modal">
-    <div class="signal-title">Signals Settings</div>
-
-    <div class="signal-field">
-      <label>Graph Interval (for notifications)</label>
-      <select id="signalTfFilter">
-        <option value="1m">1 minute</option>
-        <option value="2m">2 minutes</option>
-        <option value="5m">5 minutes</option>
-        <option value="10m">10 minutes</option>
-        <option value="15m">15 minutes</option>
-        <option value="30m">30 minutes</option>
-        <option value="1h">1 hour</option>
-        <option value="4h">4 hours</option>
-      </select>
-      <div class="alarm-note">If saved, notifications & sounds will come only for this interval.</div>
-    </div>
-
-    <div class="signal-field">
-      <label>Notification display</label>
-      <select id="notifPosition">
-        <option value="top-left">Top left corner</option>
-        <option value="top-right">Top right corner</option>
-        <option value="bottom-left">Bottom left corner</option>
-        <option value="bottom-right">Bottom right corner</option>
-        <option value="center" selected>Center</option>
-      </select>
-    </div>
-
-    <div class="signal-field">
-      <label>Notification holding time (seconds)</label>
-      <input type="number" id="notifHold" min="2" max="60" value="4" style="width:80px;">
-      <div class="alarm-note">Between 2 – 60 seconds. How long notifications stay visible.</div>
-    </div>
-
-    <div class="signal-field">
-      <label>Notification background color</label>
-      <input type="color" id="notifBgColor" value="#020617">
-    </div>
-
-    <div class="signal-field">
-      <label>Notification font color</label>
-      <input type="color" id="notifFontColor" value="#e5e7eb">
-    </div>
-
-    <div class="signal-field">
-      <label>Alarm sound</label>
-      <div class="alarm-inline">
-        <select id="soundType">
-          <option value="1">Beep type 1</option>
-          <option value="2">Beep type 2</option>
-          <option value="3">Beep type 3</option>
-          <option value="4">Beep type 4</option>
-          <option value="5">Beep type 5</option>
-          <option value="slot">Slot machine payout (file)</option>
-          <option value="emergency">Emergency alert (file)</option>
-          <option value="hall">Hall alert (file)</option>
-          <option value="facility">Facility alarm (file)</option>
-          <option value="classic">Classic alarm (file)</option>
-          <option value="custom">Custom (uploaded)</option>
-        </select>
-        <button id="testSound" class="btn-secondary" style="font-size:11px;padding:4px 8px;">Test</button>
-      </div>
-      <div class="alarm-note">Choose a sound type and test before saving.</div>
-    </div>
-
-    <div class="signal-field">
-      <label>Ringing time</label>
-      <select id="soundDuration">
-        <option value="3">3 seconds</option>
-        <option value="5">5 seconds</option>
-        <option value="7">7 seconds</option>
-        <option value="10">10 seconds</option>
-        <option value="15">15 seconds</option>
-      </select>
-      <div class="alarm-note">Alarm will ring between 3 – 15 seconds.</div>
-    </div>
-
-    <div class="signal-field">
-      <label>Add own alarm sound</label>
-      <input type="file" id="customSoundFile" accept="audio/*">
-      <div class="alarm-note">Upload your own audio and select <strong>Custom (uploaded)</strong> in Alarm sound.</div>
-    </div>
-
-    <div class="signal-field" style="margin-top:12px;padding-top:10px;border-top:1px solid #1f2937;">
-      <label>EMA overlays (on chart)</label>
-
-      <div class="signal-inline" style="justify-content:space-between;">
-        <div style="display:flex;gap:8px;align-items:center;">
-          <span style="font-size:12px;color:#9ca3af;">EMA 1</span>
-          <select id="ema1Enabled" style="min-width:70px;">
-            <option value="on" selected>ON</option>
-            <option value="off">OFF</option>
-          </select>
-          <input type="number" id="ema1Period" min="1" max="200" value="10" style="width:80px;">
+      <!-- 3 -->
+      <article class="card">
+        <div class="card-inner">
+          <div class="badge"><span>3</span></div>
+          <div class="bot-info">
+            <h2 class="bot-name">B Plus Gaing TrendTurbo Bot</h2>
+            <p class="bot-desc">Trend turbo dashboard</p>
+          </div>
+          <div class="actions">
+            <a class="icon-btn open" href="https://bplusgaingtrendturbobot.site/" title="Open">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M14 3h7v7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M21 3l-9 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M10 5H7a4 4 0 0 0-4 4v10a4 4 0 0 0 4 4h10a4 4 0 0 0 4-4v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </a>
+          </div>
         </div>
-        <span style="font-size:11px;color:#6b7280;">Period 1–200</span>
-      </div>
+      </article>
 
-      <div class="signal-inline" style="justify-content:space-between;margin-top:8px;">
-        <div style="display:flex;gap:8px;align-items:center;">
-          <span style="font-size:12px;color:#9ca3af;">EMA 2</span>
-          <select id="ema2Enabled" style="min-width:70px;">
-            <option value="on" selected>ON</option>
-            <option value="off">OFF</option>
-          </select>
-          <input type="number" id="ema2Period" min="1" max="200" value="1" style="width:80px;">
+      <!-- 4 -->
+      <article class="card">
+        <div class="card-inner">
+          <div class="badge"><span>4</span></div>
+          <div class="bot-info">
+            <h2 class="bot-name">B Plus Gaing ScalperX Bot</h2>
+            <p class="bot-desc">Scalper X dashboard</p>
+          </div>
+          <div class="actions">
+            <a class="icon-btn open" href="https://bplusgaingscalperxbot.site/" title="Open">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M14 3h7v7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M21 3l-9 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M10 5H7a4 4 0 0 0-4 4v10a4 4 0 0 0 4 4h10a4 4 0 0 0 4-4v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </a>
+          </div>
         </div>
-        <span style="font-size:11px;color:#6b7280;">Optional 2nd EMA</span>
-      </div>
+      </article>
+    </section>
 
-      <div class="alarm-note" style="margin-top:6px;">EMA lines are drawn on the main price chart. Save to apply.</div>
-    </div>
-
-    <div class="signal-actions">
-      <button id="closeSignal" class="btn-secondary">Close</button>
-      <button id="previewSignal" class="btn-secondary">Preview</button>
-      <button id="saveSignal" class="btn-primary">Save</button>
-    </div>
-  </div>
-</div>
-
-<script>
-/* ============================
-   CONFIG + HELPERS
-   ============================ */
-const APP_ID = 108701;
-const API_TOKEN = "QSDAQPsfjphEvtT";
-const WS_URL  = `wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`;
-
-/* Deriv manual symbols */
-let ALL_SYMBOLS = [
-  "R_10","R_25","R_50","R_75","R_100",
-  "R_10S","R_25S","R_50S","R_75S","R_100S",
-  "frxAUDCAD","frxAUDCHF","frxAUDJPY","frxAUDNZD","frxAUDUSD",
-  "frxEURAUD","frxEURCAD","frxEURCHF","frxEURGBP","frxEURJPY","frxEURNOK","frxEURNZD","frxEURUSD",
-  "frxGBPAUD","frxGBPCAD","frxGBPCHF","frxGBPJPY","frxGBPNOK","frxGBPUSD",
-  "frxNZDJPY","frxNZDUSD",
-  "frxUSDCAD","frxUSDCHF","frxUSDJPY","frxUSDNOK","frxUSDPLN","frxUSDSEK","frxUSDZAR"
-];
-
-const $ = id => document.getElementById(id);
-const statusEl = $("status");
-function setStatus(t){ if(statusEl) statusEl.textContent = t; }
-
-function __fmtNum(x){
-  const n = Number(x);
-  if(!isFinite(n)) return "—";
-  if(Math.abs(n) >= 1000) return n.toFixed(2);
-  if(Math.abs(n) >= 1) return n.toFixed(4);
-  return n.toFixed(6);
-}
-
-/* ========== Toast ========== */
-function __posToast(pos){
-  const t = $("toast");
-  if(!t) return;
-
-  t.style.left = "";
-  t.style.right = "";
-  t.style.top = "";
-  t.style.bottom = "";
-
-  t.style.setProperty("--toast-tx","0px");
-  t.style.setProperty("--toast-ty","20px");
-
-  const pad = "16px";
-  if(pos === "top-left"){ t.style.left=pad; t.style.top=pad; }
-  else if(pos === "top-right"){ t.style.right=pad; t.style.top=pad; }
-  else if(pos === "bottom-left"){ t.style.left=pad; t.style.bottom=pad; }
-  else if(pos === "center"){
-    t.style.left="50%";
-    t.style.top="50%";
-    t.style.setProperty("--toast-tx","-50%");
-  }
-  else { t.style.right=pad; t.style.bottom=pad; }
-}
-let __toastTimer=null;
-function showToast(content, pos=NOTIF_POSITION, hold=NOTIF_HOLD_SECONDS){
-  const t = $("toast");
-  if(!t) return;
-  __posToast(pos);
-  if(typeof content === "string" && content.trim().startsWith("<")){
-    t.innerHTML = content;
-  }else{
-    t.innerHTML = `<div class="toast-card"><div class="toast-title">${String(content||"")}</div></div>`;
-  }
-  t.classList.add("show");
-  if(__toastTimer) clearTimeout(__toastTimer);
-  __toastTimer = setTimeout(()=> t.classList.remove("show"), Math.max(2, Number(hold)||4)*1000);
-}
-
-/* ========== Sounds ========== */
-const SIGNAL_SOUNDS_BASE = "https://derivesupanalyzer.site/wp-content/jet%20bot/Turbo%20Manual/notifications%20sounds/";
-const SIGNAL_SOUND_FILES = {
-  slot:     "mixkit-casino-win-alarm-and-coins-1990.wav",
-  emergency:"mixkit-critical-alarm-1004.wav",
-  hall:     "mixkit-clear-announce-tones-2861.wav",
-  facility: "mixkit-interface-option-select-2573.wav",
-  classic:  "mixkit-happy-bells-notification-937.wav"
-};
-let alarmAudio = new Audio();
-
-const TP_SOUNDS_BASE = "https://derivesupanalyzer.site/wp-content/jet%20bot/Turbo%20Manual/TP%20sounds/";
-const TP_SOUND_FILES = {
-  slot:     "mixkit-slot-machine-payout-alarm-1996.wav",
-  emergency:"mixkit-emergency-alert-alarm-1007.wav",
-  hall:     "mixkit-sound-alert-in-hall-1006.wav",
-  facility: "mixkit-facility-alarm-sound-999.wav",
-  classic:  "mixkit-classic-alarm-995.wav"
-};
-let tpAudio = new Audio();
-
-function __playAudio(aud, src, seconds){
-  try{
-    if(!aud) return;
-    aud.pause();
-    aud.currentTime = 0;
-    aud.src = src;
-    aud.play().catch(()=>{});
-    if(seconds && isFinite(seconds)){
-      setTimeout(()=>{ try{ aud.pause(); }catch(_){ } }, Math.max(1,seconds)*1000);
-    }
-  }catch(_){}
-}
-
-function playBeep(){
-  const type = String(SOUND_TYPE||"1");
-  const sec = Math.max(3, Math.min(15, Number(SOUND_DURATION)||3));
-
-  if(type === "custom" && customAudio){
-    __playAudio(customAudio, customAudio.src, sec);
-    return;
-  }
-  if(SIGNAL_SOUND_FILES[type]){
-    __playAudio(alarmAudio, SIGNAL_SOUNDS_BASE + SIGNAL_SOUND_FILES[type], sec);
-    return;
-  }
-
-  try{
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.connect(g); g.connect(ctx.destination);
-    const base = { "1":440, "2":520, "3":660, "4":330, "5":880 }[type] || 440;
-    o.frequency.value = base;
-    g.gain.value = 0.06;
-    o.start();
-    setTimeout(()=>{ o.stop(); ctx.close(); }, sec*1000);
-  }catch(_){}
-}
-
-function playTpSound(){
-  if (TP_SOUND_ENABLED === "off") return;
-  const f = TP_SOUND_FILES[TP_SOUND_TYPE] || TP_SOUND_FILES.slot;
-  __playAudio(tpAudio, TP_SOUNDS_BASE + f, 4);
-}
-
-/* ========== UI settings state ========== */
-const soundTypeEl      = $("soundType");
-const soundDurationEl  = $("soundDuration");
-const testSoundBtn     = $("testSound");
-const customSoundInput = $("customSoundFile");
-let SOUND_TYPE = soundTypeEl ? soundTypeEl.value : "1";
-let SOUND_DURATION = soundDurationEl ? Number(soundDurationEl.value) || 3 : 3;
-let customAudio = null;
-
-/* TP SETTINGS */
-const openTpBtn         = $("openTp");
-const tpModal           = $("tpModal");
-const tpCountEl         = $("tpCount");
-const tpBgColorEl       = $("tpBgColor");
-const tpFontColorEl     = $("tpFontColor");
-const tpSoundEnabledEl  = $("tpSoundEnabled");
-const tpSoundTypeEl     = $("tpSoundType");
-const testTpSoundBtn    = $("testTpSound");
-const saveTpBtn         = $("saveTp");
-const closeTpBtn        = $("closeTp");
-
-let TP_COUNT      = tpCountEl ? Number(tpCountEl.value) || 1 : 1;
-let TP_BG_COLOR   = tpBgColorEl ? tpBgColorEl.value : "#1d4ed8";
-let TP_FONT_COLOR = tpFontColorEl ? tpFontColorEl.value : "#000000";
-let TP_SOUND_TYPE = tpSoundTypeEl ? tpSoundTypeEl.value : "slot";
-let TP_SOUND_ENABLED = "on";
-
-/* SIGNALS SETTINGS */
-const openSignalSettingsBtn = $("openSignalSettings");
-const signalModal           = $("signalModal");
-const signalTfFilterEl      = $("signalTfFilter");
-const notifPositionEl       = $("notifPosition");
-const notifHoldEl           = $("notifHold");
-const notifBgColorEl        = $("notifBgColor");
-const notifFontColorEl      = $("notifFontColor");
-const saveSignalBtn         = $("saveSignal");
-const closeSignalBtn        = $("closeSignal");
-const previewSignalBtn      = $("previewSignal");
-
-let SIGNAL_FILTER_TF   = null;
-let NOTIF_POSITION     = "center";
-let NOTIF_HOLD_SECONDS = 4;
-let NOTIF_BG_COLOR     = "#020617";
-let NOTIF_FONT_COLOR   = "#e5e7eb";
-
-/* EMA SETTINGS */
-const ema1EnabledEl = $("ema1Enabled");
-const ema1PeriodEl  = $("ema1Period");
-const ema2EnabledEl = $("ema2Enabled");
-const ema2PeriodEl  = $("ema2Period");
-let EMA1_ENABLED = "on";
-let EMA2_ENABLED = "on";
-let EMA1_PERIOD  = 10;
-let EMA2_PERIOD  = 1;
-
-/* GLOBAL SIGNAL LOG */
-let GLOBAL_SIGNALS = [];
-let GLOBAL_SIGNAL_KEYS = new Set();
-function ensureGlobalSignal(s){
-  try{
-    if(!s) return;
-    const nowSec = Math.floor(Date.now()/1000);
-    if(typeof s.time === "number" && s.time > 20000000000) s.time = Math.floor(s.time/1000);
-    if(typeof s.time === "number" && (nowSec - s.time) > 3600) return;
-    const key = (s.symbol||"") + "|" + (s.tf||"") + "|" + String(s.time||"") + "|" + (s.dir||"");
-    if(GLOBAL_SIGNAL_KEYS.has(key)) return;
-    GLOBAL_SIGNAL_KEYS.add(key);
-    GLOBAL_SIGNALS.push(s);
-    GLOBAL_SIGNALS = GLOBAL_SIGNALS.filter(x => (nowSec - (Number(x.time)||nowSec)) <= 6*3600);
-  }catch(_){}
-}
-
-/* render history under indicators */
-function renderIndicatorHistory(){
-  const el = $("indHistory");
-  if(!el) return;
-  const nowSec = Math.floor(Date.now()/1000);
-  const list = (GLOBAL_SIGNALS||[])
-    .filter(s => (nowSec - (Number(s.time)||nowSec)) <= 6*3600)
-    .slice()
-    .sort((a,b)=> (b.time||0)-(a.time||0))
-    .slice(0, 60);
-
-  if(!list.length){
-    el.innerHTML = `<div style="color:#94a3b8;font-size:12px;padding:6px 2px;">No signal history yet.</div>`;
-    return;
-  }
-
-  el.innerHTML = list.map(s=>{
-    const ts = new Date((Number(s.time)||0)*1000).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit", second:"2-digit"});
-    const dir = String(s.dir||"").toLowerCase();
-    const cls = (dir==="buy") ? "histDirBuy" : (dir==="sell") ? "histDirSell" : "histDirClose";
-    const dTxt = (dir||"").toUpperCase();
-    return `
-      <div class="histItem">
-        <div class="histTop">
-          <span class="histSym">${String(s.symbol||"")}</span>
-          <span class="${cls}">${dTxt}</span>
-          <span style="color:#64748b;font-size:11px;">•</span>
-          <span style="color:#cbd5e1;font-size:11px;font-weight:800;">${String(s.tf||"")}</span>
-          <span style="margin-left:auto;color:#94a3b8;font-size:11px;">${ts}</span>
-        </div>
-        <div class="histMeta">
-          Entry: <span style="color:#e5e7eb;font-weight:800;">${__fmtNum(s.price)}</span>
-          ${s.tp!=null ? ` &nbsp;|&nbsp; TP: <span style="color:#e5e7eb;font-weight:800;">${__fmtNum(s.tp)}</span>` : ``}
-          <div style="margin-top:4px;color:#9ca3af;">${String(s.label||"")}</div>
-        </div>
-      </div>
-    `;
-  }).join("");
-}
-
-/* ============================
-   POPUPS wiring
-   ============================ */
-if (openTpBtn && tpModal) {
-  openTpBtn.onclick = () => {
-    tpCountEl.value      = String(TP_COUNT);
-    tpBgColorEl.value    = TP_BG_COLOR;
-    tpFontColorEl.value  = TP_FONT_COLOR;
-    tpSoundTypeEl.value  = TP_SOUND_TYPE;
-    if (tpSoundEnabledEl) tpSoundEnabledEl.value = TP_SOUND_ENABLED;
-    tpModal.classList.add("show");
-  };
-}
-if (closeTpBtn && tpModal) closeTpBtn.onclick = () => tpModal.classList.remove("show");
-if (saveTpBtn && tpModal) {
-  saveTpBtn.onclick = () => {
-    TP_COUNT       = Math.max(1, Math.min(5, Number(tpCountEl.value) || 1));
-    TP_BG_COLOR    = tpBgColorEl.value || "#1d4ed8";
-    TP_FONT_COLOR  = tpFontColorEl.value || "#000000";
-    TP_SOUND_TYPE  = tpSoundTypeEl.value || "slot";
-    TP_SOUND_ENABLED = (tpSoundEnabledEl && tpSoundEnabledEl.value) || "on";
-    renderSignals();
-    renderIndicatorHistory();
-    tpModal.classList.remove("show");
-    showToast("TP settings saved");
-  };
-}
-if (testTpSoundBtn && tpSoundTypeEl) {
-  testTpSoundBtn.onclick = () => {
-    if (tpSoundEnabledEl && tpSoundEnabledEl.value === "off") { showToast("TP sound is OFF"); return; }
-    const prev = TP_SOUND_TYPE;
-    TP_SOUND_TYPE = tpSoundTypeEl.value || "slot";
-    playTpSound();
-    TP_SOUND_TYPE = prev;
-  };
-}
-
-if (openSignalSettingsBtn && signalModal) {
-  openSignalSettingsBtn.onclick = () => {
-    if (!SIGNAL_FILTER_TF) SIGNAL_FILTER_TF = $("tf").value || "5m";
-    signalTfFilterEl.value = SIGNAL_FILTER_TF;
-    notifPositionEl.value  = NOTIF_POSITION;
-    notifHoldEl.value      = String(NOTIF_HOLD_SECONDS);
-    if (notifBgColorEl)   notifBgColorEl.value   = NOTIF_BG_COLOR;
-    if (notifFontColorEl) notifFontColorEl.value = NOTIF_FONT_COLOR;
-    if (soundTypeEl)      soundTypeEl.value      = SOUND_TYPE;
-    if (soundDurationEl)  soundDurationEl.value  = String(SOUND_DURATION);
-    if (ema1EnabledEl) ema1EnabledEl.value = EMA1_ENABLED;
-    if (ema1PeriodEl)  ema1PeriodEl.value  = String(EMA1_PERIOD);
-    if (ema2EnabledEl) ema2EnabledEl.value = EMA2_ENABLED;
-    if (ema2PeriodEl)  ema2PeriodEl.value  = String(EMA2_PERIOD);
-    signalModal.classList.add("show");
-  };
-}
-if (closeSignalBtn && signalModal) closeSignalBtn.onclick = () => signalModal.classList.remove("show");
-
-if (saveSignalBtn && signalModal) {
-  saveSignalBtn.onclick = () => {
-    SIGNAL_FILTER_TF = signalTfFilterEl.value || $("tf").value || "5m";
-    NOTIF_POSITION   = notifPositionEl.value || "center";
-    let holdVal = Number(notifHoldEl.value) || 4;
-    holdVal = Math.max(2, Math.min(60, holdVal));
-    NOTIF_HOLD_SECONDS = holdVal;
-    notifHoldEl.value  = String(holdVal);
-    if (notifBgColorEl)   NOTIF_BG_COLOR   = notifBgColorEl.value || "#020617";
-    if (notifFontColorEl) NOTIF_FONT_COLOR = notifFontColorEl.value || "#e5e7eb";
-    if (soundTypeEl) SOUND_TYPE = soundTypeEl.value || "1";
-    if (soundDurationEl) {
-      let v = Number(soundDurationEl.value) || 3;
-      v = Math.max(3, Math.min(15, v));
-      SOUND_DURATION = v;
-      soundDurationEl.value = String(v);
-    }
-
-    if (ema1EnabledEl) EMA1_ENABLED = ema1EnabledEl.value || "on";
-    if (ema2EnabledEl) EMA2_ENABLED = ema2EnabledEl.value || "off";
-
-    let p1 = ema1PeriodEl ? Number(ema1PeriodEl.value) : EMA1_PERIOD;
-    let p2 = ema2PeriodEl ? Number(ema2PeriodEl.value) : EMA2_PERIOD;
-    p1 = Math.max(1, Math.min(200, (isFinite(p1) ? p1 : 10)));
-    p2 = Math.max(1, Math.min(200, (isFinite(p2) ? p2 : 20)));
-    EMA1_PERIOD = p1;
-    EMA2_PERIOD = p2;
-
-    signalModal.classList.remove("show");
-    showToast("Signal settings saved");
-    calcEMAs();
-    recomputeAllSignals();
-  };
-}
-
-if (previewSignalBtn && signalModal) {
-  previewSignalBtn.onclick = () => {
-    const tempPos  = notifPositionEl.value || "center";
-    let tempHold   = Number(notifHoldEl.value) || 4;
-    tempHold       = Math.max(2, Math.min(60, tempHold));
-    const bg   = notifBgColorEl ? (notifBgColorEl.value || NOTIF_BG_COLOR) : NOTIF_BG_COLOR;
-    const font = notifFontColorEl ? (notifFontColorEl.value || NOTIF_FONT_COLOR) : NOTIF_FONT_COLOR;
-
-    const nowSec = Math.floor(Date.now() / 1000);
-    const previewSignal = {
-      time:  nowSec,
-      dir:   "buy",
-      price: 2332.0140,
-      tp:    2340.0000,
-      label: "B Plus Gaing Momentum break BUY (preview)",
-      symbol:"R_25",
-      tf:    signalTfFilterEl.value || "5m",
-      durationMin: 15,
-      srStrength: "Medium"
-    };
-    const html = buildSignalToastHtml(previewSignal, bg, font);
-    showToast(html, tempPos, tempHold);
-  };
-}
-
-if (customSoundInput) {
-  customSoundInput.addEventListener("change", (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
-    try {
-      if (!customAudio) customAudio = new Audio();
-      const url = URL.createObjectURL(file);
-      customAudio.src = url;
-      customAudio.load();
-      showToast("Custom alarm sound loaded");
-    } catch (err) {
-      showToast("Failed to load custom sound");
-    }
-  });
-}
-if (testSoundBtn) {
-  testSoundBtn.onclick = () => {
-    if (soundTypeEl) SOUND_TYPE = soundTypeEl.value || "1";
-    if (soundDurationEl) {
-      const v = Number(soundDurationEl.value) || 3;
-      SOUND_DURATION = Math.max(3, Math.min(15, v));
-    }
-    playBeep();
-  };
-}
-
-/* ============================
-   Header mobile height fit
-   ============================ */
-function __setHeaderHeight(){
-  try{
-    const h = document.querySelector("header");
-    if(!h) return;
-    const px = Math.max(56, h.offsetHeight || 56);
-    document.documentElement.style.setProperty("--header-h", px + "px");
-  }catch(_){}
-}
-window.addEventListener("resize", __setHeaderHeight, { passive:true });
-window.addEventListener("orientationchange", __setHeaderHeight, { passive:true });
-window.addEventListener("load", ()=>{ setTimeout(__setHeaderHeight, 0); }, { passive:true });
-setTimeout(__setHeaderHeight, 250);
-
-/* ============================
-   Charts init
-   ============================ */
-const chart = LightweightCharts.createChart($("chart"), {
-  layout:{ background:{type:"solid",color:"#020617"},textColor:"#e5e7eb" },
-  grid:{ vertLines:{color:"#020617"}, horzLines:{color:"#020617"} },
-  rightPriceScale:{ borderColor:"#1e293b"},
-  timeScale:{ borderColor:"#1e293b", timeVisible:true, secondsVisible:true }
-});
-const candleSeries = chart.addCandlestickSeries({
-  upColor:"#16a34a",downColor:"#ef4444",
-  wickUpColor:"#16a34a",wickDownColor:"#ef4444",
-  borderVisible:false
-});
-const bbMid   = chart.addLineSeries({ color:"#64748b" });
-const bbUpper = chart.addLineSeries({ color:"#f97316" });
-const bbLower = chart.addLineSeries({ color:"#22c55e" });
-const ema1Series = chart.addLineSeries({ color:"#000000", lineWidth:2 });
-const ema2Series = chart.addLineSeries({ color:"#a78bfa", lineWidth:2 });
-
-function makeFullChart(containerId){
-  const c = LightweightCharts.createChart($(containerId), {
-    layout:{ background:{type:"solid",color:"#020617"},textColor:"#e5e7eb" },
-    grid:{ vertLines:{color:"#020617"}, horzLines:{color:"#020617"} },
-    rightPriceScale:{ borderColor:"#1e293b"},
-    timeScale:{ borderColor:"#1e293b", timeVisible:true, secondsVisible:true }
-  });
-  const candle = c.addCandlestickSeries({
-    upColor:"#16a34a",downColor:"#ef4444",
-    wickUpColor:"#16a34a",wickDownColor:"#ef4444",
-    borderVisible:false
-  });
-  const bbMid   = c.addLineSeries({ color:"#64748b" });
-  const bbUpper = c.addLineSeries({ color:"#f97316" });
-  const bbLower = c.addLineSeries({ color:"#22c55e" });
-  const ema1 = c.addLineSeries({ color:"#000000", lineWidth:2 });
-  const ema2 = c.addLineSeries({ color:"#a78bfa", lineWidth:2 });
-
-  new ResizeObserver(()=>{ const el = $(containerId); if(!el) return; c.applyOptions({ width: el.clientWidth, height: el.clientHeight }); }).observe($(containerId));
-  return { chart:c, series:candle, bbMid, bbUpper, bbLower, ema1, ema2, data:[], angleEl:null, binWs:null };
-}
-const chart2Bundle = makeFullChart("chart2");
-const chart3Bundle = makeFullChart("chart3");
-const chart4Bundle = makeFullChart("chart4");
-const chart5Bundle = makeFullChart("chart5");
-
-const angle1El = $("angle1");
-chart2Bundle.angleEl = $("angle2");
-chart3Bundle.angleEl = $("angle3");
-chart4Bundle.angleEl = $("angle4");
-chart5Bundle.angleEl = $("angle5");
-
-function resizeMainChartToCell(){
-  const el = $("chart");
-  if (!el) return;
-  chart.applyOptions({ width: el.clientWidth, height: el.clientHeight });
-}
-new ResizeObserver(resizeMainChartToCell).observe($("chart"));
-setTimeout(resizeMainChartToCell, 0);
-
-function clearBundle(b){
-  if(!b) return;
-  try{ b.series.setData([]); }catch(_){}
-  try{ b.series.setMarkers([]); }catch(_){}
-  try{ b.bbMid.setData([]); }catch(_){}
-  try{ b.bbUpper.setData([]); }catch(_){}
-  try{ b.bbLower.setData([]); }catch(_){}
-  try{ b.ema1.setData([]); }catch(_){}
-  try{ b.ema2.setData([]); }catch(_){}
-  b.data = [];
-}
-
-/* ============================
-   Indicators: BB + EMA + Angles + Trend strength
-   ============================ */
-let DATA = [];
-let SIGNALS = [];
-
-/* ... (JS remains exactly as you provided) ... */
-
-bindUi();
-setTimeout(()=>{ try{ loadData(); }catch(_){ } }, 300);
-</script>
+    <footer class="footer">
+      Note: Links open in the same tab to avoid “loads but not runs” issues in some browsers.
+    </footer>
+  </main>
 </body>
 </html>
