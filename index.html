@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -19,6 +19,22 @@
     }
 
     *{ box-sizing:border-box; }
+
+    /* PC/Desktop = FULL BLACK SCREEN (nothing visible) */
+    @media (hover:hover) and (pointer:fine){
+      html, body{
+        background:#000 !important;
+        margin:0 !important;
+        width:100% !important;
+        height:100% !important;
+        overflow:hidden !important;
+      }
+      body *{
+        display:none !important;
+        visibility:hidden !important;
+      }
+    }
+
     body{
       margin:0;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Helvetica Neue", sans-serif;
@@ -280,7 +296,6 @@
             <p class="bot-desc">Entry sniper dashboard</p>
           </div>
           <div class="actions">
-            <!-- Open in SAME TAB to avoid "loads but not runs" issues -->
             <a class="icon-btn open" href="https://bplusgaingentrysniper.site/" title="Open">
               <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path d="M14 3h7v7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -353,9 +368,7 @@
       </article>
     </section>
 
-    <footer class="footer">
-      Note: Links open in the same tab to avoid “loads but not runs” issues in some browsers.
-    </footer>
+    <!-- footer note removed as requested -->
   </main>
 </body>
 </html>
