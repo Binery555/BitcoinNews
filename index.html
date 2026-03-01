@@ -114,7 +114,7 @@
 
     .main-nav{display:flex;justify-content:flex-start;gap:10px;margin:2px 0 6px 0}
     .main-nav button{padding:8px 6px;font-size:13px;color:#A1A6B0}
-    .main-nav button.active{color:#FFF;border-bottom:2px solid #FFF}
+    .main-nav button.active{color:#FFF;border-bottom:none}
     .main-nav button:first-child{ margin-left:-6px; }
 
     .sub-toggle{display:flex;gap:6px;margin:8px 0 0 0;border-bottom:none !important;box-shadow:none !important;}
@@ -124,14 +124,19 @@
     .balance-panel{margin:12px 0}
     .balance-header{display:flex;justify-content:space-between;align-items:center;color:#A1A6B0;font-size:12px}
     .balance-header span{display:flex;align-items:center;gap:10px}
-    .balance-amount{display:flex;align-items:flex-end;margin:8px 0}
+    .balance-amount{display:flex;align-items:flex-end;margin:8px 0 8px 8px}
     .amount{font-size:28px;font-weight:600}
-    .currency{margin-left:8px;color:#A1A6B0;font-size:12px}
+    .currency{margin-left:8px;color:#FFF;font-size:12px;display:inline-flex;align-items:center;gap:7px}
+    .currency-caret{display:inline-block;width:12px;height:8px;background:#FFF;clip-path:polygon(0 0,100% 0,50% 100%);opacity:.95;transform:translateY(1px)}
     .realized-pnl{color:#A1A6B0;font-size:12px}
+    .realized-pnl .title{color:#FFF;font-size:13px;border-bottom:1px dotted var(--text-secondary);padding-bottom:2px;display:inline-block}
     .realized-pnl .gain{color:var(--text-green);font-weight:700}
 
-    .small-balances{display:flex;margin-top:12px;justify-content:space-between}
+    .small-balances{display:flex;margin-top:12px;justify-content:flex-start;gap:96px}
     .small-item{display:flex;flex-direction:column}
+    .small-item.wallet-item .label{border-bottom:none}
+    .small-item.unrealized-item{margin-left:-18px}
+    .small-item.unrealized-item .label,.small-item.unrealized-item .value{margin-left:10px}
     .small-item .label{color:#A1A6B0;font-size:12px}
     .small-item .value{font-size:14px;font-weight:600;margin-top:4px}
 
@@ -766,17 +771,12 @@
 <body>
   <div class="app">
     <div class="top-stack" id="topStack">
-      <header class="top-toggle" aria-label="Exchange or Wallet">
-        <span class="seg-thumb" aria-hidden="true"></span>
-        <button class="toggle-btn active" type="button">Exchange</button>
-        <button class="toggle-btn" type="button">Wallet</button>
-      </header>
 
       <nav class="main-nav" aria-label="Main sections">
         <button>Overview</button>
+        <button>Funding</button>
         <button class="active">Futures</button>
         <button>Spot</button>
-        <button>Funding</button>
       </nav>
 
       <div class="sub-toggle" role="tablist" aria-label="Futures type">
@@ -806,21 +806,21 @@
 
       <div class="balance-amount">
         <span id="amount" class="amount">Loading…</span>
-        <span class="currency">USD <i class="fas fa-chevron-down" aria-hidden="true"></i></span>
+        <span class="currency">USD <span class="currency-caret" aria-hidden="true"></span></span>
       </div>
 
       <div class="realized-pnl" id="pnl">
-        Today’s Realized PNL
+        <span class="title">Today’s Realized PNL</span>
         <span id="realizedSpan" class="gain">Loading…</span>
         <i class="fas fa-chevron-right" aria-hidden="true"></i>
       </div>
 
       <div class="small-balances">
-        <div class="small-item">
+        <div class="small-item wallet-item">
           <div class="label">Wallet Balance (USD)</div>
           <div class="value" id="walletValue">Loading…</div>
         </div>
-        <div class="small-item">
+        <div class="small-item unrealized-item">
           <div class="label">Unrealized PNL (USD)</div>
           <div class="value" id="unrealizedValue">Loading…</div>
         </div>
@@ -1066,11 +1066,12 @@
     /* ===== Segmented control ===== */
     (function(){
       const wrap = document.querySelector('.app .top-toggle');
+      if (!wrap) return;
       const btns  = [...wrap.querySelectorAll('.toggle-btn')];
       const thumb = wrap.querySelector('.seg-thumb');
       const setActive = (i) => {
         btns.forEach((b,idx)=> b.classList.toggle('active', idx===i));
-        thumb.style.transform = `translateX(${i*100}%)`;
+        if (thumb) thumb.style.transform = `translateX(${i*100}%)`;
       };
       setActive(0);
       btns.forEach((b,i)=> b.addEventListener('click',()=>setActive(i)));
