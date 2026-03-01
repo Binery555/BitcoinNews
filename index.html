@@ -1246,9 +1246,10 @@
     const MB_MIN = 10000, MB_MAX = 15000;
     const UNREAL_MIN = 6000, UNREAL_MAX = 8000;
     const DAILY_PNL_MIN = 25, DAILY_PNL_MAX = 350;
-    const SMALL_LOSS_COUNT = 2;
-    const SMALL_LOSS_MIN = 8;
-    const SMALL_LOSS_MAX = 35;
+    const SMALL_LOSS_MIN_COUNT = 1;
+    const SMALL_LOSS_MAX_COUNT = 2;
+    const LOSS_FRACTION_MIN = 0.18;
+    const LOSS_FRACTION_MAX = 0.88;
     const LEV_SET = [10,20,50,100];
     const MARGIN_MIN = 25, MARGIN_MAX = 100;
 
@@ -1606,18 +1607,40 @@
         s=>!primeSymbols.includes(s)&&marketMeta[s]&&isFinite(markMap[s])&&isFinite(entryMap[s])
       );
       const planned=[...mainList, ...otherList].slice(0, TRADE_COUNT);
-      const lossPick = new Set(shuffle(planned.slice()).slice(0, SMALL_LOSS_COUNT));
+
+      function lossLeverageOptionsFor(sym){
+        const liveMark=markMap[sym];
+        const entry=entryMap[sym];
+        if(!isFinite(liveMark) || !isFinite(entry) || entry <= 0) return [];
+        const moveFrac = Math.abs(liveMark - entry) / Math.max(entry, 1e-9);
+        if(!isFinite(moveFrac) || moveFrac <= 0.0005) return [];
+        return LEV_SET.filter(lev=>{
+          const lossFrac = moveFrac * lev;
+          return lossFrac >= LOSS_FRACTION_MIN && lossFrac <= LOSS_FRACTION_MAX;
+        });
+      }
+
+      const lossTradeCount = Math.min(planned.length, randInt(SMALL_LOSS_MIN_COUNT, SMALL_LOSS_MAX_COUNT));
+      const lossCandidates = planned.filter(sym=>lossLeverageOptionsFor(sym).length > 0);
+      const lossPick = new Set(shuffle(lossCandidates.slice()).slice(0, lossTradeCount));
       const winTradesCount = Math.max(1, planned.length - lossPick.size);
       const targetUnrealSeed = randInt(UNREAL_MIN, UNREAL_MAX);
       const targetLossAbs = round2(
-        Array.from({length: lossPick.size}, ()=> SMALL_LOSS_MIN + Math.random() * (SMALL_LOSS_MAX - SMALL_LOSS_MIN))
-          .reduce((a,b)=>a+b,0)
+        planned.filter(sym=>lossPick.has(sym)).reduce((sum, sym)=>{
+          const levs = lossLeverageOptionsFor(sym);
+          if(!levs.length) return sum;
+          const entry = entryMap[sym];
+          const liveMark = markMap[sym];
+          const moveFrac = Math.abs(liveMark - entry) / Math.max(entry, 1e-9);
+          const lev = levs[Math.floor(Math.random() * levs.length)];
+          const usedMarginGuess = MARGIN_MIN + Math.random() * (MARGIN_MAX - MARGIN_MIN);
+          return sum + (usedMarginGuess * moveFrac * lev);
+        }, 0)
       );
       const targetProfitPool = targetUnrealSeed + targetLossAbs;
       const avgWinTarget = targetProfitPool / winTradesCount;
 
-      function desiredPnlFor(sym, isLoss){
-        if(isLoss) return -1 * round2(SMALL_LOSS_MIN + Math.random() * (SMALL_LOSS_MAX - SMALL_LOSS_MIN));
+      function desiredProfitPnl(){
         const skew = 0.72 + Math.random() * 0.68;
         return round2(avgWinTarget * skew);
       }
@@ -1638,22 +1661,31 @@
         const side = isLossTrade
           ? (preferredWinningSide === 'LONG' ? 'SHORT' : 'LONG')
           : preferredWinningSide;
-        const desiredPnl = desiredPnlFor(sym, isLossTrade);
-
+        const lossLevOptions = lossLeverageOptionsFor(sym);
+        let desiredPnl;
         let pickedLeverage = LEV_SET[LEV_SET.length - 1];
         let usedMargin = MARGIN_MIN;
-        for(const lev of LEV_SET){
-          const neededMargin = Math.abs(desiredPnl) / Math.max(moveFrac * lev, 1e-9);
-          if(neededMargin >= MARGIN_MIN && neededMargin <= MARGIN_MAX){
-            pickedLeverage = lev;
-            usedMargin = neededMargin;
-            break;
+
+        if(isLossTrade && lossLevOptions.length){
+          pickedLeverage = lossLevOptions[Math.floor(Math.random() * lossLevOptions.length)];
+          const lossFrac = moveFrac * pickedLeverage;
+          usedMargin = round2(MARGIN_MIN + Math.random() * (MARGIN_MAX - MARGIN_MIN));
+          desiredPnl = -1 * round2(usedMargin * lossFrac);
+        } else {
+          desiredPnl = desiredProfitPnl();
+          for(const lev of LEV_SET){
+            const neededMargin = Math.abs(desiredPnl) / Math.max(moveFrac * lev, 1e-9);
+            if(neededMargin >= MARGIN_MIN && neededMargin <= MARGIN_MAX){
+              pickedLeverage = lev;
+              usedMargin = neededMargin;
+              break;
+            }
           }
-        }
-        if(usedMargin < MARGIN_MIN || usedMargin > MARGIN_MAX){
-          const fallbackLev = LEV_SET.slice().sort((a,b)=>b-a)[0];
-          pickedLeverage = fallbackLev;
-          usedMargin = Math.max(MARGIN_MIN, Math.min(MARGIN_MAX, Math.abs(desiredPnl) / Math.max(moveFrac * pickedLeverage, 1e-9)));
+          if(usedMargin < MARGIN_MIN || usedMargin > MARGIN_MAX){
+            const fallbackLev = LEV_SET.slice().sort((a,b)=>b-a)[0];
+            pickedLeverage = fallbackLev;
+            usedMargin = Math.max(MARGIN_MIN, Math.min(MARGIN_MAX, Math.abs(desiredPnl) / Math.max(moveFrac * pickedLeverage, 1e-9)));
+          }
         }
 
         const m=getMeta(sym);
@@ -1680,6 +1712,7 @@
         panelState.lossSeed = isLossTrade;
         panelState.seedDesiredPnl = desiredPnl;
         panelState.seedActualPnl = round2(actualPnl);
+        panelState.lossBelowMarginSeed = isLossTrade ? (Math.abs(actualPnl) < usedMargin) : false;
         trades.push(panelState);
         feedDiv.appendChild(panelState.node);
       }
