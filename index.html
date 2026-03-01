@@ -1243,15 +1243,14 @@
 
     /*** 🔧 ACCOUNT TARGETS (per your constraints) ***/
     const TRADE_MIN = 25, TRADE_MAX = 30;
-    const WALLET_MIN = 2500, WALLET_MAX = 9000;
     const MB_MIN = 10000, MB_MAX = 15000;
-    const TARGET_UNREAL_MIN = 6000, TARGET_UNREAL_MAX = 8000;
+    const UNREAL_MIN = 6000, UNREAL_MAX = 8000;
     const DAILY_PNL_MIN = 25, DAILY_PNL_MAX = 350;
     const SMALL_LOSS_COUNT = 2;
-    const SMALL_LOSS_MIN = 5;
-    const SMALL_LOSS_MAX = 25;
+    const SMALL_LOSS_MIN = 8;
+    const SMALL_LOSS_MAX = 35;
+    const LEV_SET = [10,20,50,100];
     const MARGIN_MIN = 25, MARGIN_MAX = 100;
-    const LEVERAGE_MIN = 10, LEVERAGE_MAX = 100;
 
     /*** PERSISTENCE KEYS — keep disabled so values randomize on load ***/
     const STORAGE_TRADES_KEY = 'fa_trades_v4_refreshEveryLoad';
@@ -1596,7 +1595,7 @@
 
       symbols = symbols.filter(s=>!!marketMeta[s]);
       const poolForEntry=Array.from(
-        new Set([...primeSymbols, ...symbols.slice(0, TRADE_COUNT*2)])
+        new Set([...primeSymbols, ...symbols.slice(0, TRADE_COUNT*3)])
       );
       const entryMap=await loadTwoMonthEntryMap(poolForEntry);
 
@@ -1608,66 +1607,79 @@
       );
       const planned=[...mainList, ...otherList].slice(0, TRADE_COUNT);
       const lossPick = new Set(shuffle(planned.slice()).slice(0, SMALL_LOSS_COUNT));
+      const winTradesCount = Math.max(1, planned.length - lossPick.size);
+      const targetUnrealSeed = randInt(UNREAL_MIN, UNREAL_MAX);
+      const targetLossAbs = round2(
+        Array.from({length: lossPick.size}, ()=> SMALL_LOSS_MIN + Math.random() * (SMALL_LOSS_MAX - SMALL_LOSS_MIN))
+          .reduce((a,b)=>a+b,0)
+      );
+      const targetProfitPool = targetUnrealSeed + targetLossAbs;
+      const avgWinTarget = targetProfitPool / winTradesCount;
+
+      function desiredPnlFor(sym, isLoss){
+        if(isLoss) return -1 * round2(SMALL_LOSS_MIN + Math.random() * (SMALL_LOSS_MAX - SMALL_LOSS_MIN));
+        const skew = 0.72 + Math.random() * 0.68;
+        return round2(avgWinTarget * skew);
+      }
 
       for(let i=0;i<planned.length;i++){
         const sym=planned[i];
         const liveMark=markMap[sym];
         if(!isFinite(liveMark)) continue;
         const entryRaw=entryMap[sym];
-        if(!isFinite(entryRaw)) continue;
-
-        const leverage = randInt(LEVERAGE_MIN, LEVERAGE_MAX);
+        if(!isFinite(entryRaw) || entryRaw <= 0) continue;
         const entry=quantizeToTick(entryRaw, getMeta(sym).tickSize);
+        const moveAbs = Math.abs(liveMark - entry);
+        const moveFrac = moveAbs / Math.max(entry, 1e-9);
+        if(!isFinite(moveFrac) || moveFrac <= 0.0005) continue;
 
+        const isLossTrade = lossPick.has(sym);
         const preferredWinningSide = (liveMark >= entry) ? 'LONG' : 'SHORT';
-        const side = lossPick.has(sym)
+        const side = isLossTrade
           ? (preferredWinningSide === 'LONG' ? 'SHORT' : 'LONG')
           : preferredWinningSide;
+        const desiredPnl = desiredPnlFor(sym, isLossTrade);
 
-        let usedMargin=(MARGIN_MIN + Math.random()*(MARGIN_MAX - MARGIN_MIN));
+        let pickedLeverage = LEV_SET[LEV_SET.length - 1];
+        let usedMargin = MARGIN_MIN;
+        for(const lev of LEV_SET){
+          const neededMargin = Math.abs(desiredPnl) / Math.max(moveFrac * lev, 1e-9);
+          if(neededMargin >= MARGIN_MIN && neededMargin <= MARGIN_MAX){
+            pickedLeverage = lev;
+            usedMargin = neededMargin;
+            break;
+          }
+        }
+        if(usedMargin < MARGIN_MIN || usedMargin > MARGIN_MAX){
+          const fallbackLev = LEV_SET.slice().sort((a,b)=>b-a)[0];
+          pickedLeverage = fallbackLev;
+          usedMargin = Math.max(MARGIN_MIN, Math.min(MARGIN_MAX, Math.abs(desiredPnl) / Math.max(moveFrac * pickedLeverage, 1e-9)));
+        }
+
         const m=getMeta(sym);
-        let qtyRaw=qtyFrom(usedMargin, leverage, entry);
+        let qtyRaw=qtyFrom(usedMargin, pickedLeverage, entry);
         let qty=quantizeDownToStep(qtyRaw, m.stepSize);
         if(qty < m.minQty) qty = m.minQty;
+        usedMargin = Math.max(MARGIN_MIN, Math.min(MARGIN_MAX, (qty * entry) / pickedLeverage));
 
-        let pnlNow = side === 'LONG'
+        const actualPnl = side === 'LONG'
           ? upnlLong(liveMark, entry, qty)
           : upnlShort(liveMark, entry, qty);
 
-        if(lossPick.has(sym)){
-          const desiredLoss = -1 * (SMALL_LOSS_MIN + Math.random() * (SMALL_LOSS_MAX - SMALL_LOSS_MIN));
-          if(Math.abs(pnlNow) > 0.000001){
-            qty = quantizeDownToStep(Math.abs(desiredLoss / ((side === 'LONG' ? (liveMark - entry) : (entry - liveMark)) || 1)), m.stepSize);
-            if(qty < m.minQty) qty = m.minQty;
-            pnlNow = side === 'LONG'
-              ? upnlLong(liveMark, entry, qty)
-              : upnlShort(liveMark, entry, qty);
-            usedMargin = Math.max(MARGIN_MIN, Math.min(MARGIN_MAX, (qty * entry) / leverage));
-          }
-        } else {
-          const desiredProfit = 180 + Math.random() * 220;
-          if(Math.abs(pnlNow) > 0.000001){
-            qty = quantizeDownToStep(Math.abs(desiredProfit / ((side === 'LONG' ? (liveMark - entry) : (entry - liveMark)) || 1)), m.stepSize);
-            if(qty < m.minQty) qty = m.minQty;
-            pnlNow = side === 'LONG'
-              ? upnlLong(liveMark, entry, qty)
-              : upnlShort(liveMark, entry, qty);
-            usedMargin = Math.max(MARGIN_MIN, Math.min(MARGIN_MAX, (qty * entry) / leverage));
-          }
-        }
-
-        const marginMode = Math.random() < 0.5 ? 'Cross' : 'Isolated';
-        let effMargin = (marginMode === 'Isolated')
+        const marginMode = Math.random() < 0.58 ? 'Cross' : 'Isolated';
+        const effMargin = marginMode === 'Isolated'
           ? usedMargin
-          : usedMargin * (1.08 + Math.random() * 0.35);
+          : usedMargin * (1.10 + Math.random() * 0.55);
 
         const panelState = createPanel({
-          sym, leverage, entry, mark: liveMark,
+          sym, leverage: pickedLeverage, entry, mark: liveMark,
           usedMargin, effMargin, mmr: getMaintRate(sym),
           qty, side, marginMode
         });
 
-        panelState.lossSeed = lossPick.has(sym);
+        panelState.lossSeed = isLossTrade;
+        panelState.seedDesiredPnl = desiredPnl;
+        panelState.seedActualPnl = round2(actualPnl);
         trades.push(panelState);
         feedDiv.appendChild(panelState.node);
       }
@@ -1685,7 +1697,7 @@
         sum += pnl;
       }
       unrealizedSum = round2(sum);
-      walletBalance = round2(Math.max(WALLET_MIN, targetMarginBalance - unrealizedSum));
+      targetMarginBalance = round2(walletBalance + unrealizedSum);
       refreshTop();
     }
 
@@ -1724,16 +1736,12 @@
         return;
       }
 
-      const adjustable = trades.filter(t=>!t.lossSeed);
-      const lockedLosses = trades.filter(t=>t.lossSeed);
-      const targetSet = adjustable.length ? adjustable : trades;
-      const perTrade = diff / targetSet.length;
-
-      for(const t of targetSet){
+      const perTrade = diff / trades.length;
+      for(const t of trades){
         const cur = t.side==='LONG'
           ? upnlLong(t.mark, t.entry, t.qty)
           : upnlShort(t.mark, t.entry, t.qty);
-        const desired = Math.max(25, cur + perTrade);
+        const desired = cur + perTrade;
         let newMark;
         if(t.side==='LONG'){
           newMark = t.entry + (desired / t.qty);
@@ -1742,10 +1750,6 @@
         }
         newMark = quantizeToTick(newMark, getMeta(t.sym).tickSize);
         t.mark = newMark;
-        renderTrade(t);
-      }
-
-      for(const t of lockedLosses){
         renderTrade(t);
       }
 
@@ -2048,14 +2052,17 @@
       enforceTradeCount();
       clampTradeMargins();
 
-      targetMarginBalance = randInt(MB_MIN, MB_MAX);
-      adjustTradesToTargetUnreal(randInt(TARGET_UNREAL_MIN, TARGET_UNREAL_MAX));
+      recalcAccountTopFromTrades();
+      const seededUnreal = unrealizedSum;
+      const desiredMarginBalance = randInt(MB_MIN, MB_MAX);
+      walletBalance = round2(Math.max(0, desiredMarginBalance - seededUnreal));
+      targetMarginBalance = round2(walletBalance + seededUnreal);
 
       realizedTodayUSD = randInt(DAILY_PNL_MIN, DAILY_PNL_MAX);
-      recalcAccountTopFromTrades();
       realizedTodayPct = walletBalance > 0
         ? (realizedTodayUSD / walletBalance) * 100
         : 0;
+      refreshTop();
 
       connectFuturesMarkWS();
       setupSaveOnlyCard();
