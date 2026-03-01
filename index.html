@@ -122,12 +122,15 @@
     .sub-toggle .toggle-btn.active{background:#323742;color:#FFF}
 
     .balance-panel{margin:12px 0}
-    .balance-header{display:flex;justify-content:space-between;align-items:center;color:#A1A6B0;font-size:12px}
+    .balance-header{display:flex;justify-content:space-between;align-items:flex-start;color:#A1A6B0;font-size:12px}
     .balance-header span{display:flex;align-items:center;gap:10px}
-    .balance-amount{display:flex;align-items:flex-end;margin:8px 0 8px 8px}
+    .balance-title{display:inline-flex;align-items:center;gap:8px;color:#F2F4F8;font-size:13px;line-height:1.15}
+    .balance-title-text{display:inline-block;padding-bottom:5px;border-bottom:1px dotted rgba(255,255,255,.34)}
+    .balance-eye{display:inline-block;width:16px;height:10px;position:relative;flex:0 0 auto;background:center/contain no-repeat url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 16%27 fill=%27none%27%3E%3Cpath d=%27M1.5 8C4 4.5 7.2 2.5 12 2.5c4.8 0 8 2 10.5 5.5-2.5 3.5-5.7 5.5-10.5 5.5-4.8 0-8-2-10.5-5.5Z%27 stroke=%27%23737D90%27 stroke-width=%272%27 stroke-linejoin=%27round%27/%3E%3Ccircle cx=%2712%27 cy=%278%27 r=%273%27 stroke=%27%23737D90%27 stroke-width=%272%27/%3E%3C/svg%3E")}
+    .balance-amount{display:flex;align-items:flex-end;margin:8px 0 8px -2px}
     .amount{font-size:28px;font-weight:600}
-    .currency{margin-left:8px;color:#FFF;font-size:12px;display:inline-flex;align-items:center;gap:7px}
-    .currency-caret{display:inline-block;width:12px;height:8px;background:#FFF;clip-path:polygon(0 0,100% 0,50% 100%);opacity:.95;transform:translateY(1px)}
+    .currency{margin-left:6px;color:#FFF;font-size:12px;display:inline-flex;align-items:center;gap:4px}
+    .currency-caret{display:inline-block;width:9px;height:6px;background:#FFF;clip-path:polygon(0 0,100% 0,50% 100%);opacity:.95;transform:translateY(1px)}
     .realized-pnl{color:#A1A6B0;font-size:12px}
     .realized-pnl .title{color:#FFF;font-size:13px;border-bottom:1px dotted var(--text-secondary);padding-bottom:2px;display:inline-block}
     .realized-pnl .gain{color:var(--text-green);font-weight:700}
@@ -135,8 +138,8 @@
     .small-balances{display:flex;margin-top:12px;justify-content:flex-start;gap:96px}
     .small-item{display:flex;flex-direction:column}
     .small-item.wallet-item .label{border-bottom:none}
-    .small-item.unrealized-item{margin-left:-18px}
-    .small-item.unrealized-item .label,.small-item.unrealized-item .value{margin-left:10px}
+    .small-item.unrealized-item{margin-left:-4px}
+    .small-item.unrealized-item .label,.small-item.unrealized-item .value{margin-left:20px}
     .small-item .label{color:#A1A6B0;font-size:12px}
     .small-item .value{font-size:14px;font-weight:600;margin-top:4px}
 
@@ -787,7 +790,7 @@
 
     <section class="balance-panel" aria-label="Balances">
       <div class="balance-header">
-        <span>Margin Balance <i id="eyeToggle" class="fas fa-eye" aria-hidden="true"></i></span>
+        <span class="balance-title"><span class="balance-title-text">Margin Balance</span><i id="eyeToggle" class="balance-eye" aria-hidden="true"></i></span>
         <span class="icon-group" aria-label="Actions">
           <label class="photo-slot photo-empty" data-slot="top-reward">
             <input type="file" accept=".jpg,.jpeg,image/jpeg" capture="environment">
