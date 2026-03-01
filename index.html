@@ -1243,12 +1243,15 @@
 
     /*** 🔧 ACCOUNT TARGETS (per your constraints) ***/
     const TRADE_MIN = 25, TRADE_MAX = 30;
-    const WALLET_MIN = 8500, WALLET_MAX = 14800;
+    const WALLET_MIN = 2500, WALLET_MAX = 9000;
     const MB_MIN = 10000, MB_MAX = 15000;
+    const TARGET_UNREAL_MIN = 6000, TARGET_UNREAL_MAX = 8000;
     const DAILY_PNL_MIN = 25, DAILY_PNL_MAX = 350;
     const SMALL_LOSS_COUNT = 2;
-    const SMALL_LOSS_MIN = 3;
-    const SMALL_LOSS_MAX = 22;
+    const SMALL_LOSS_MIN = 5;
+    const SMALL_LOSS_MAX = 25;
+    const MARGIN_MIN = 25, MARGIN_MAX = 100;
+    const LEVERAGE_MIN = 10, LEVERAGE_MAX = 100;
 
     /*** PERSISTENCE KEYS — keep disabled so values randomize on load ***/
     const STORAGE_TRADES_KEY = 'fa_trades_v4_refreshEveryLoad';
@@ -1597,7 +1600,6 @@
       );
       const entryMap=await loadTwoMonthEntryMap(poolForEntry);
 
-      const MARGIN_MIN=8, MARGIN_MAX=28;
       const mainList=primeSymbols.filter(
         s=>marketMeta[s]&&isFinite(markMap[s])&&isFinite(entryMap[s])
       );
@@ -1605,7 +1607,6 @@
         s=>!primeSymbols.includes(s)&&marketMeta[s]&&isFinite(markMap[s])&&isFinite(entryMap[s])
       );
       const planned=[...mainList, ...otherList].slice(0, TRADE_COUNT);
-      const LEV_SET = [3,5,8,10];
       const lossPick = new Set(shuffle(planned.slice()).slice(0, SMALL_LOSS_COUNT));
 
       for(let i=0;i<planned.length;i++){
@@ -1615,7 +1616,7 @@
         const entryRaw=entryMap[sym];
         if(!isFinite(entryRaw)) continue;
 
-        const leverage = LEV_SET[Math.floor(Math.random()*LEV_SET.length)];
+        const leverage = randInt(LEVERAGE_MIN, LEVERAGE_MAX);
         const entry=quantizeToTick(entryRaw, getMeta(sym).tickSize);
 
         const preferredWinningSide = (liveMark >= entry) ? 'LONG' : 'SHORT';
@@ -1644,7 +1645,7 @@
             usedMargin = Math.max(MARGIN_MIN, Math.min(MARGIN_MAX, (qty * entry) / leverage));
           }
         } else {
-          const desiredProfit = 40 + Math.random() * 140;
+          const desiredProfit = 180 + Math.random() * 220;
           if(Math.abs(pnlNow) > 0.000001){
             qty = quantizeDownToStep(Math.abs(desiredProfit / ((side === 'LONG' ? (liveMark - entry) : (entry - liveMark)) || 1)), m.stepSize);
             if(qty < m.minQty) qty = m.minQty;
@@ -1700,8 +1701,8 @@
 
     function clampTradeMargins(){
       for(const t of trades){
-        if(t.usedMargin < 50) t.usedMargin = 50;
-        if(t.usedMargin > 200) t.usedMargin = 200;
+        if(t.usedMargin < MARGIN_MIN) t.usedMargin = MARGIN_MIN;
+        if(t.usedMargin > MARGIN_MAX) t.usedMargin = MARGIN_MAX;
         if(t.effMargin < t.usedMargin) t.effMargin = t.usedMargin;
       }
     }
@@ -1723,12 +1724,16 @@
         return;
       }
 
-      const perTrade = diff / trades.length;
-      for(const t of trades){
+      const adjustable = trades.filter(t=>!t.lossSeed);
+      const lockedLosses = trades.filter(t=>t.lossSeed);
+      const targetSet = adjustable.length ? adjustable : trades;
+      const perTrade = diff / targetSet.length;
+
+      for(const t of targetSet){
         const cur = t.side==='LONG'
           ? upnlLong(t.mark, t.entry, t.qty)
           : upnlShort(t.mark, t.entry, t.qty);
-        const desired = cur + perTrade;
+        const desired = Math.max(25, cur + perTrade);
         let newMark;
         if(t.side==='LONG'){
           newMark = t.entry + (desired / t.qty);
@@ -1737,6 +1742,10 @@
         }
         newMark = quantizeToTick(newMark, getMeta(t.sym).tickSize);
         t.mark = newMark;
+        renderTrade(t);
+      }
+
+      for(const t of lockedLosses){
         renderTrade(t);
       }
 
@@ -2040,6 +2049,7 @@
       clampTradeMargins();
 
       targetMarginBalance = randInt(MB_MIN, MB_MAX);
+      adjustTradesToTargetUnreal(randInt(TARGET_UNREAL_MIN, TARGET_UNREAL_MAX));
 
       realizedTodayUSD = randInt(DAILY_PNL_MIN, DAILY_PNL_MAX);
       recalcAccountTopFromTrades();
