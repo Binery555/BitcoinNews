@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <!-- ✅ iPhone 16 Pro Max safe-area + proper scaling -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-  <title>Futures Assets Mockup — with 6M Trend Profit Cards (Top bars fixed, Frame Removed, +20 trades, random small-loss duo) — Margin Persistent</title>
+  <title>Futures Assets Mockup — with 3M Entry + Live Mark Price (2 Small Losses, 10k-15k Margin Balance)</title>
 
   <!-- ✅ iPhone Safari fullscreen / hide URL bar -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1117,7 +1117,6 @@
     let walletBalance = 0;
     let unrealizedSum = 0;
     let targetMarginBalance = 0;
-    let desiredUnrealTarget = 0;
 
     function refreshTop(){
       amountEl.textContent   = showTop ? fmtMoney(targetMarginBalance) : "•••••••";
@@ -1244,9 +1243,12 @@
 
     /*** 🔧 ACCOUNT TARGETS (per your constraints) ***/
     const TRADE_MIN = 25, TRADE_MAX = 30;
-    const WALLET_MIN = 5000, WALLET_MAX = 10000;
+    const WALLET_MIN = 8500, WALLET_MAX = 14800;
     const MB_MIN = 10000, MB_MAX = 15000;
-    const DAILY_PNL_MIN = 50, DAILY_PNL_MAX = 1500;
+    const DAILY_PNL_MIN = 25, DAILY_PNL_MAX = 350;
+    const SMALL_LOSS_COUNT = 2;
+    const SMALL_LOSS_MIN = 3;
+    const SMALL_LOSS_MAX = 22;
 
     /*** PERSISTENCE KEYS — keep disabled so values randomize on load ***/
     const STORAGE_TRADES_KEY = 'fa_trades_v4_refreshEveryLoad';
@@ -1511,7 +1513,7 @@
       return d.getTime();
     }
 
-    async function fetchEntryFromThreeMonths(sym, startMs){
+    async function fetchEntryFromTwoMonths(sym, startMs){
       try{
         const url1=`https://fapi.binance.com/fapi/v1/markPriceKlines?symbol=${sym}&interval=1d&startTime=${startMs-2*24*3600*1000}&limit=2`;
         const res1=await fetch(url1);
@@ -1551,7 +1553,7 @@
       return null;
     }
 
-    async function loadThreeMonthEntryMap(symbolList){
+    async function loadTwoMonthEntryMap(symbolList){
       const start=approxThreeMonthsAgoMs();
       const entryMap=Object.create(null);
       const unique=[...new Set(symbolList)];
@@ -1559,7 +1561,7 @@
       for(let i=0;i<unique.length;i+=batch){
         const chunk=unique.slice(i,i+batch);
         await Promise.all(chunk.map(async (sym)=>{
-          const close=await fetchEntryFromThreeMonths(sym,start);
+          const close=await fetchEntryFromTwoMonths(sym,start);
           if(isFinite(close)) entryMap[sym]=close;
         }));
       }
@@ -1593,9 +1595,9 @@
       const poolForEntry=Array.from(
         new Set([...primeSymbols, ...symbols.slice(0, TRADE_COUNT*2)])
       );
-      const entryMap=await loadThreeMonthEntryMap(poolForEntry);
+      const entryMap=await loadTwoMonthEntryMap(poolForEntry);
 
-      const MARGIN_MIN=50, MARGIN_MAX=200;
+      const MARGIN_MIN=8, MARGIN_MAX=28;
       const mainList=primeSymbols.filter(
         s=>marketMeta[s]&&isFinite(markMap[s])&&isFinite(entryMap[s])
       );
@@ -1603,7 +1605,8 @@
         s=>!primeSymbols.includes(s)&&marketMeta[s]&&isFinite(markMap[s])&&isFinite(entryMap[s])
       );
       const planned=[...mainList, ...otherList].slice(0, TRADE_COUNT);
-      const LEV_SET = [10,20,50,100,125];
+      const LEV_SET = [3,5,8,10];
+      const lossPick = new Set(shuffle(planned.slice()).slice(0, SMALL_LOSS_COUNT));
 
       for(let i=0;i<planned.length;i++){
         const sym=planned[i];
@@ -1615,7 +1618,10 @@
         const leverage = LEV_SET[Math.floor(Math.random()*LEV_SET.length)];
         const entry=quantizeToTick(entryRaw, getMeta(sym).tickSize);
 
-        const side=(liveMark >= entry) ? 'LONG' : 'SHORT';
+        const preferredWinningSide = (liveMark >= entry) ? 'LONG' : 'SHORT';
+        const side = lossPick.has(sym)
+          ? (preferredWinningSide === 'LONG' ? 'SHORT' : 'LONG')
+          : preferredWinningSide;
 
         let usedMargin=(MARGIN_MIN + Math.random()*(MARGIN_MAX - MARGIN_MIN));
         const m=getMeta(sym);
@@ -1623,10 +1629,36 @@
         let qty=quantizeDownToStep(qtyRaw, m.stepSize);
         if(qty < m.minQty) qty = m.minQty;
 
+        let pnlNow = side === 'LONG'
+          ? upnlLong(liveMark, entry, qty)
+          : upnlShort(liveMark, entry, qty);
+
+        if(lossPick.has(sym)){
+          const desiredLoss = -1 * (SMALL_LOSS_MIN + Math.random() * (SMALL_LOSS_MAX - SMALL_LOSS_MIN));
+          if(Math.abs(pnlNow) > 0.000001){
+            qty = quantizeDownToStep(Math.abs(desiredLoss / ((side === 'LONG' ? (liveMark - entry) : (entry - liveMark)) || 1)), m.stepSize);
+            if(qty < m.minQty) qty = m.minQty;
+            pnlNow = side === 'LONG'
+              ? upnlLong(liveMark, entry, qty)
+              : upnlShort(liveMark, entry, qty);
+            usedMargin = Math.max(MARGIN_MIN, Math.min(MARGIN_MAX, (qty * entry) / leverage));
+          }
+        } else {
+          const desiredProfit = 40 + Math.random() * 140;
+          if(Math.abs(pnlNow) > 0.000001){
+            qty = quantizeDownToStep(Math.abs(desiredProfit / ((side === 'LONG' ? (liveMark - entry) : (entry - liveMark)) || 1)), m.stepSize);
+            if(qty < m.minQty) qty = m.minQty;
+            pnlNow = side === 'LONG'
+              ? upnlLong(liveMark, entry, qty)
+              : upnlShort(liveMark, entry, qty);
+            usedMargin = Math.max(MARGIN_MIN, Math.min(MARGIN_MAX, (qty * entry) / leverage));
+          }
+        }
+
         const marginMode = Math.random() < 0.5 ? 'Cross' : 'Isolated';
         let effMargin = (marginMode === 'Isolated')
           ? usedMargin
-          : usedMargin * (1.2 + Math.random() * 1.5);
+          : usedMargin * (1.08 + Math.random() * 0.35);
 
         const panelState = createPanel({
           sym, leverage, entry, mark: liveMark,
@@ -1634,6 +1666,7 @@
           qty, side, marginMode
         });
 
+        panelState.lossSeed = lossPick.has(sym);
         trades.push(panelState);
         feedDiv.appendChild(panelState.node);
       }
@@ -1651,7 +1684,7 @@
         sum += pnl;
       }
       unrealizedSum = round2(sum);
-      targetMarginBalance = round2(walletBalance + unrealizedSum);
+      walletBalance = round2(Math.max(WALLET_MIN, targetMarginBalance - unrealizedSum));
       refreshTop();
     }
 
@@ -1675,42 +1708,27 @@
 
     function adjustTradesToTargetUnreal(targetUnreal){
       if(!trades.length) return;
-      desiredUnrealTarget = round2(targetUnreal);
 
-      const losersNeeded = Math.min(2, trades.length);
-      const loserSet = new Set();
-      while(loserSet.size < losersNeeded){
-        loserSet.add(Math.floor(Math.random() * trades.length));
+      let currentUnreal = 0;
+      for(const t of trades){
+        const pnl = t.side==='LONG'
+          ? upnlLong(t.mark, t.entry, t.qty)
+          : upnlShort(t.mark, t.entry, t.qty);
+        currentUnreal += pnl;
+      }
+      currentUnreal = round2(currentUnreal);
+      const diff = targetUnreal - currentUnreal;
+      if(Math.abs(diff) < 0.01){
+        unrealizedSum = targetUnreal;
+        return;
       }
 
-      const lossTargets = trades.map((t, idx)=>{
-        if(!loserSet.has(idx)) return 0;
-        const cap = Math.max(2, Math.min(18, t.usedMargin * 0.12));
-        return -round2(2 + Math.random() * (cap - 2));
-      });
-      const totalLossAbs = round2(lossTargets.reduce((s, v)=> s + Math.abs(v), 0));
-      const winnersCount = Math.max(1, trades.length - losersNeeded);
-      const winnersTargetTotal = Math.max(0, round2(desiredUnrealTarget + totalLossAbs));
-      const baseWinner = winnersTargetTotal / winnersCount;
-
-      let appliedTotal = 0;
-      let winnersSeen = 0;
-      for(let i=0;i<trades.length;i++){
-        const t = trades[i];
-        let desired;
-        if(loserSet.has(i)){
-          desired = lossTargets[i];
-          t.lockLoss = true;
-        } else {
-          winnersSeen += 1;
-          const factor = 0.7 + Math.random() * 0.9;
-          desired = round2(baseWinner * factor);
-          t.lockLoss = false;
-          if(winnersSeen === winnersCount){
-            desired = round2(winnersTargetTotal - appliedTotal);
-          }
-        }
-
+      const perTrade = diff / trades.length;
+      for(const t of trades){
+        const cur = t.side==='LONG'
+          ? upnlLong(t.mark, t.entry, t.qty)
+          : upnlShort(t.mark, t.entry, t.qty);
+        const desired = cur + perTrade;
         let newMark;
         if(t.side==='LONG'){
           newMark = t.entry + (desired / t.qty);
@@ -1719,8 +1737,6 @@
         }
         newMark = quantizeToTick(newMark, getMeta(t.sym).tickSize);
         t.mark = newMark;
-        t.targetPnl = desired;
-        appliedTotal += desired;
         renderTrade(t);
       }
 
@@ -1732,22 +1748,6 @@
         check += pnl;
       });
       unrealizedSum = round2(check);
-    }
-
-    function reapplyLockedPnlTargets(){
-      if(!trades.length) return;
-      for(const t of trades){
-        if(!isFinite(t.targetPnl)) continue;
-        let newMark;
-        if(t.side==='LONG'){
-          newMark = t.entry + (t.targetPnl / t.qty);
-        } else {
-          newMark = t.entry - (t.targetPnl / t.qty);
-        }
-        t.mark = quantizeToTick(newMark, getMeta(t.sym).tickSize);
-        renderTrade(t);
-      }
-      recalcAccountTopFromTrades();
     }
 
     function connectFuturesMarkWS(){
@@ -1774,7 +1774,7 @@
             }
           }
         }
-        if(touched) reapplyLockedPnlTargets();
+        if(touched) recalcAccountTopFromTrades();
       };
       ws.onclose=()=>{
         console.warn('[WS] Closed. Reconnecting in 2s…');
@@ -2039,18 +2039,13 @@
       enforceTradeCount();
       clampTradeMargins();
 
-      walletBalance = randInt(WALLET_MIN, WALLET_MAX);
-      targetMarginBalance = randInt(Math.max(MB_MIN, walletBalance + 250), MB_MAX);
-      const desiredUnreal = round2(targetMarginBalance - walletBalance);
+      targetMarginBalance = randInt(MB_MIN, MB_MAX);
 
       realizedTodayUSD = randInt(DAILY_PNL_MIN, DAILY_PNL_MAX);
+      recalcAccountTopFromTrades();
       realizedTodayPct = walletBalance > 0
         ? (realizedTodayUSD / walletBalance) * 100
         : 0;
-
-      adjustTradesToTargetUnreal(desiredUnreal);
-
-      recalcAccountTopFromTrades();
 
       connectFuturesMarkWS();
       setupSaveOnlyCard();
