@@ -62,7 +62,7 @@
       --vh: 1vh;
 
       /* Earn */
-      --earn-card-bg:#1e2127;
+      --earn-card-bg:var(--panel-bg);
       --earn-row-hover:#2a303b;
       --earn-text:#f2f4f8;
       --earn-chevron:#6b717e;
@@ -96,6 +96,7 @@
       border-bottom:none !important;
       padding-bottom:8px; margin-bottom:8px;
       padding-top: env(safe-area-inset-top, 0px);
+      transform: translateX(0.1cm);
     }
 
     .top-toggle{
@@ -127,7 +128,7 @@
     .sub-toggle .toggle-btn{padding:4px 8px;font-size:11px;color:#A1A6B0;border-radius:6px;background:transparent;}
     .sub-toggle .toggle-btn.active{background:#323742;color:#FFF}
 
-    .balance-panel{margin:12px 0}
+    .balance-panel{margin:12px 0;transform: translateX(0.1cm);}
     .balance-header{display:flex;justify-content:space-between;align-items:flex-start;color:#A1A6B0;font-size:12px}
     .balance-header span{display:flex;align-items:center;gap:12px}
     .balance-title{display:inline-flex;align-items:center;gap:8px;color:#F2F4F8;font-size:13px;line-height:1.15}
@@ -159,7 +160,7 @@
     }
     .earn-card{
       width:100%;
-      background:var(--earn-card-bg);
+      background:var(--panel-bg);
       border-radius:16px;
       padding:3px 6px;
       border:1px solid rgba(255,255,255,0.08);
@@ -472,17 +473,11 @@
     .photo-slot--bottom{ width:var(--slot-bottom); height:var(--slot-bottom); border-radius:3px; }
     .photo-slot input[type="file"]{ position:absolute; inset:0; opacity:0; cursor:pointer; }
     .photo-slot img{
-      width:88%; height:88%; margin:6%;
-      object-fit:cover; display:block;
-      border:none; outline:none; background:transparent;
-      image-rendering:auto;
+      width:88%; height:88%; margin:6%; object-fit:cover; display:block;
+      border:none; outline:none; background:transparent; image-rendering:auto;
     }
-    .photo-slot--bottom img{
-      width:90%; height:90%; margin:5%; object-fit:cover; display:block;
-    }
-    .photo-empty::after{
-      content:''; position:absolute; inset:0; background:transparent;
-    }
+    .photo-slot--bottom img{ width:90%; height:90%; margin:5%; object-fit:cover; display:block; }
+    .photo-empty::after{ content:''; position:absolute; inset:0; background:transparent; }
 
     .pnl-modal-backdrop,
     .history-modal-backdrop{
@@ -939,8 +934,43 @@
     }
     .history-dow span{ text-align:center; }
 
+    .history-calendar-viewport{
+      overflow:hidden;
+      position:relative;
+    }
+
     .history-calendar-grid{
       margin-top:10px;display:grid;grid-template-columns:repeat(7, minmax(0,1fr));gap:10px;
+    }
+
+    .history-calendar-grid.is-sliding-prev{
+      animation: histSlidePrev .28s ease;
+    }
+    .history-calendar-grid.is-sliding-next{
+      animation: histSlideNext .28s ease;
+    }
+    .history-month-nav__label.is-sliding-prev{
+      animation: histLabelPrev .28s ease;
+    }
+    .history-month-nav__label.is-sliding-next{
+      animation: histLabelNext .28s ease;
+    }
+
+    @keyframes histSlidePrev{
+      from{ transform:translateX(-26px); opacity:.45; }
+      to{ transform:translateX(0); opacity:1; }
+    }
+    @keyframes histSlideNext{
+      from{ transform:translateX(26px); opacity:.45; }
+      to{ transform:translateX(0); opacity:1; }
+    }
+    @keyframes histLabelPrev{
+      from{ transform:translateX(-14px); opacity:.55; }
+      to{ transform:translateX(0); opacity:1; }
+    }
+    @keyframes histLabelNext{
+      from{ transform:translateX(14px); opacity:.55; }
+      to{ transform:translateX(0); opacity:1; }
     }
 
     .history-day{
@@ -1678,7 +1708,9 @@
               <div class="history-dow" aria-hidden="true">
                 <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
               </div>
-              <div id="histCalGrid" class="history-calendar-grid" role="grid" aria-label="Daily PNL calendar"></div>
+              <div class="history-calendar-viewport">
+                <div id="histCalGrid" class="history-calendar-grid" role="grid" aria-label="Daily PNL calendar"></div>
+              </div>
             </div>
           </section>
         </main>
@@ -2833,7 +2865,18 @@
     function daysInMonthUTC(y, m){ return new Date(Date.UTC(y, m, 0)).getUTCDate(); }
     function firstDowUTC(y, m){ return new Date(Date.UTC(y, m - 1, 1)).getUTCDay(); }
 
-    function renderCalendar(){
+    function applyCalendarSlide(direction){
+      calGrid.classList.remove('is-sliding-prev','is-sliding-next');
+      monthLabel.classList.remove('is-sliding-prev','is-sliding-next');
+      if(direction === 'prev' || direction === 'next'){
+        void calGrid.offsetWidth;
+        void monthLabel.offsetWidth;
+        calGrid.classList.add(direction === 'prev' ? 'is-sliding-prev' : 'is-sliding-next');
+        monthLabel.classList.add(direction === 'prev' ? 'is-sliding-prev' : 'is-sliding-next');
+      }
+    }
+
+    function renderCalendar(direction = null){
       if(!historySummary) historySummary = buildYearSummary();
 
       const {y, m} = months[monthIndex];
@@ -2922,18 +2965,20 @@
           calGrid.appendChild(empty);
         }
       }
+
+      applyCalendarSlide(direction);
     }
 
     prevBtn.addEventListener("click", () => {
       if(monthIndex > 0){
         monthIndex--;
-        renderCalendar();
+        renderCalendar('prev');
       }
     });
     nextBtn.addEventListener("click", () => {
       if(monthIndex < months.length - 1){
         monthIndex++;
-        renderCalendar();
+        renderCalendar('next');
       }
     });
 
