@@ -243,11 +243,11 @@
       margin-right:3px;
     }
     .earn-chevron{
-      width:9px;
-      height:9px;
+      width:17px;
+      height:17px;
       display:block;
-      flex:0 0 9px;
-      margin-top:2px;
+      flex:0 0 17px;
+      margin-top:-2px;
     }
     .earn-chevron path{
       stroke:var(--earn-chevron);
@@ -865,7 +865,7 @@
     }
     .history-range-picker::-webkit-scrollbar{ display:none; }
     .history-range-pill{
-      background:transparent;border:0;color:rgba(213,218,225,.7) !important;font-size:var(--fs-13) !important;font-weight:400 !important;padding:6px 6px;border-radius:16px;white-space:nowrap;
+      background:transparent;border:0;color:rgba(213,218,225,.7) !important;font-size:var(--fs-13) !important;font-weight:400 !important;padding:6px 6px;border-radius:10px;white-space:nowrap;
     }
     .history-range-pill.is-active{
       background:#273142;
@@ -875,6 +875,7 @@
       font-size:var(--fs-13) !important;
       font-weight:400 !important;
       padding:6px 10px;
+      border-radius:10px;
     }
 
     .history-totals{ margin:0; padding:0 0 6px; }
@@ -962,7 +963,7 @@
 
     .history-calendar{ padding:12px 0 0; }
     .history-dow{
-      display:grid;grid-template-columns:repeat(7, minmax(0,1fr));gap:10px;padding:6px 2px 0;color:rgba(213,218,225,.58);font-size:var(--fs-12);letter-spacing:.08em;
+      display:grid;grid-template-columns:repeat(7, minmax(0,1fr));gap:8px;padding:6px 4px 0;color:rgba(213,218,225,.58);font-size:var(--fs-12);letter-spacing:.08em;
     }
     .history-dow span{ text-align:center; }
 
@@ -972,7 +973,7 @@
     }
 
     .history-calendar-grid{
-      margin-top:10px;display:grid;grid-template-columns:repeat(7, minmax(0,1fr));gap:10px;
+      margin-top:10px;display:grid;grid-template-columns:repeat(7, minmax(0,1fr));gap:8px;padding-right:4px;
     }
 
     .history-calendar-grid.is-sliding-prev{
@@ -1006,7 +1007,7 @@
     }
 
     .history-day{
-      position:relative;display:flex;flex-direction:column;justify-content:space-between;gap:6px;padding:10px;min-height:52px;aspect-ratio:1/1;border-radius:6px;background:transparent;border:0;text-align:left;cursor:pointer;font-variant-numeric: tabular-nums;
+      position:relative;display:flex;flex-direction:column;justify-content:space-between;gap:5px;padding:9px;min-height:48px;aspect-ratio:1/1;border-radius:6px;background:transparent;border:0;text-align:left;cursor:pointer;font-variant-numeric: tabular-nums;
     }
     .history-day__num{
       font-size:11px;font-weight:500;color:rgba(240,242,246,.92);line-height:1;font-family:var(--num-font);z-index:2;
@@ -1871,7 +1872,20 @@
     }
     const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
     const randMoney2 = (min, max) => Math.round((min + Math.random() * (max - min)) * 100) / 100;
-
+    const randMoneyNot00 = (min, max, rng = Math.random) => {
+      const cents = Math.floor(min * 100);
+      const centsMax = Math.floor(max * 100);
+      let value = cents;
+      let guard = 0;
+      do{
+        value = Math.floor(rng() * (centsMax - cents + 1)) + cents;
+        guard++;
+      } while (value % 100 === 0 && guard < 1000);
+      if (value % 100 === 0) value += (value + 1 <= centsMax ? 1 : -1);
+      return value / 100;
+    };
+    const randBetweenIntRng = (rng, min, max) => Math.floor(rng() * (max - min + 1)) + min;
+    
     function formatProfit(_sym, x) {
       const s = toFixedSafe(x, 2);
       const [i, d] = s.split('.');
@@ -1967,7 +1981,7 @@
     const TRADE_MIN = 25, TRADE_MAX = 30;
     const MB_MIN = 10000, MB_MAX = 15000;
     const UNREAL_MIN = 6000, UNREAL_MAX = 8000;
-    const DAILY_PNL_MIN = 25, DAILY_PNL_MAX = 350;
+    const DAILY_PNL_MIN = 100, DAILY_PNL_MAX = 500;
     const SMALL_LOSS_MIN_COUNT = 1;
     const SMALL_LOSS_MAX_COUNT = 2;
     const LOSS_FRACTION_MIN = 0.18;
@@ -2775,17 +2789,24 @@
       const maxDay = isCurrentMonth ? currentDay : dim;
 
       const possibleDays = Array.from({length: maxDay}, (_,i)=>i+1);
-      shuffle(possibleDays);
+      for (let i = possibleDays.length - 1; i > 0; i--) {
+        const j = Math.floor(rng() * (i + 1));
+        [possibleDays[i], possibleDays[j]] = [possibleDays[j], possibleDays[i]];
+      }
 
-      const lossCount = randInt(2, 3);
+      const lossCount = Math.min(maxDay, randBetweenIntRng(rng, 1, 4));
       const chosenLosses = possibleDays.slice(0, lossCount).sort((a,b)=>a-b);
       const remainingAfterLoss = possibleDays.filter(day => !chosenLosses.includes(day));
 
-      const zeroCount = Math.random() < 0.5 ? 1 : 3;
-      const chosenZeros = shuffle(remainingAfterLoss.slice()).slice(0, Math.min(zeroCount, remainingAfterLoss.length)).sort((a,b)=>a-b);
+      const zeroCount = Math.min(remainingAfterLoss.length, randBetweenIntRng(rng, 1, 3));
+      const chosenZeros = remainingAfterLoss
+        .slice()
+        .sort(() => rng() - 0.5)
+        .slice(0, zeroCount)
+        .sort((a,b)=>a-b);
 
       chosenLosses.forEach(day=>{
-        lossDays.set(day, -round2(randBetween(rng, 25, 50)));
+        lossDays.set(day, -round2(randMoneyNot00(50, 100, rng)));
       });
 
       chosenZeros.forEach(day=>{
@@ -2794,37 +2815,31 @@
 
       for(let d=1; d<=maxDay; d++){
         if(lossDays.has(d) || zeroDays.has(d)) continue;
-        profitDays.set(d, round2(randBetween(rng, 100, 1000)));
+        profitDays.set(d, round2(randMoneyNot00(100, 500, rng)));
       }
 
       return { profitDays, lossDays, zeroDays, dim, maxDay, isCurrentMonth };
     }
 
+    function getTargetHistoryTotals(){
+      const seed = ((currentYear * 10000) + (currentMonth * 100) + currentDay + 9091) >>> 0;
+      const rng = mulberry32(seed);
+      const totalProfit = round2(randMoneyNot00(23000, 25000, rng));
+      const totalLossAbs = round2(randMoneyNot00(3000, 4000, rng));
+      const netProfit = round2(totalProfit - totalLossAbs);
+      return { totalProfit, totalLossAbs, netProfit };
+    }
+
     function buildYearSummary(){
       const months = [];
-      let totalProfit = 0;
-      let totalLossAbs = 0;
       const start = new Date(currentYear, currentMonth - 12, 1);
 
       for(let i=0;i<12;i++){
         const d = new Date(start.getFullYear(), start.getMonth() + i, 1);
         const y = d.getFullYear();
         const m = d.getMonth() + 1;
-        const monthData = generateMonthData(y, m);
-
-        for(const v of monthData.profitDays.values()) totalProfit += v;
-        for(const v of monthData.lossDays.values()) totalLossAbs += Math.abs(v);
-
-        months.push({ y, m, ...monthData });
+        months.push({ y, m, ...generateMonthData(y, m) });
       }
-
-      const targetProfit = round2(randBetween(mulberry32((currentYear * 10000 + currentMonth * 100 + currentDay) >>> 0), 15000, 20000));
-      const scale = totalProfit > 0 ? targetProfit / totalProfit : 1;
-
-      months.forEach(mon=>{
-        mon.profitDays = new Map([...mon.profitDays.entries()].map(([k,v])=>[k, round2(v * scale)]));
-        mon.lossDays = new Map([...mon.lossDays.entries()].map(([k,v])=>[k, round2(v)]));
-      });
 
       const currentMon = months.find(x => x.y === currentYear && x.m === currentMonth);
       if (currentMon) {
@@ -2832,24 +2847,21 @@
         currentMon.lossDays.delete(currentDay);
         currentMon.zeroDays.delete(currentDay);
 
-        const syncedTodayValue = round2(realizedTodayUSD);
-        if (syncedTodayValue === 0) currentMon.zeroDays.set(currentDay, 0);
-        else if (syncedTodayValue > 0) currentMon.profitDays.set(currentDay, syncedTodayValue);
-        else currentMon.lossDays.set(currentDay, syncedTodayValue);
+        const todaySeed = ((currentYear * 10000) + (currentMonth * 100) + currentDay + 771) >>> 0;
+        const todayRng = mulberry32(todaySeed);
+        const todayMode = randBetweenIntRng(todayRng, 1, 10);
+
+        if (todayMode <= 2) {
+          currentMon.lossDays.set(currentDay, -round2(randMoneyNot00(50, 100, todayRng)));
+        } else if (todayMode === 3) {
+          currentMon.zeroDays.set(currentDay, 0);
+        } else {
+          currentMon.profitDays.set(currentDay, round2(randMoneyNot00(100, 500, todayRng)));
+        }
       }
 
-      totalProfit = 0;
-      totalLossAbs = 0;
-      months.forEach(mon=>{
-        for(const v of mon.profitDays.values()) totalProfit += v;
-        for(const v of mon.lossDays.values()) totalLossAbs += Math.abs(v);
-      });
-
-      totalProfit = round2(totalProfit);
-      totalLossAbs = round2(totalLossAbs);
-      const netProfit = round2(totalProfit - totalLossAbs);
-
-      return { months, totalProfit, totalLossAbs, netProfit };
+      const totals = getTargetHistoryTotals();
+      return { months, totalProfit: totals.totalProfit, totalLossAbs: totals.totalLossAbs, netProfit: totals.netProfit };
     }
 
     function syncHistoryFromTop(){
@@ -3099,13 +3111,16 @@
       walletBalance = round2(Math.max(0, desiredMarginBalance - seededUnreal));
       targetMarginBalance = round2(walletBalance + seededUnreal);
 
-      realizedTodayUSD = randMoney2(DAILY_PNL_MIN, DAILY_PNL_MAX);
+      historySummary = buildYearSummary();
+      const currentHistMonth = historySummary.months.find(x => x.y === currentYear && x.m === currentMonth);
+      realizedTodayUSD = currentHistMonth
+        ? (currentHistMonth.profitDays.get(currentDay) || currentHistMonth.lossDays.get(currentDay) || 0)
+        : randMoneyNot00(DAILY_PNL_MIN, DAILY_PNL_MAX);
       realizedTodayPct = walletBalance > 0
         ? (realizedTodayUSD / walletBalance) * 100
         : 0;
       refreshTop();
 
-      historySummary = buildYearSummary();
       syncHistoryFromTop();
       renderCalendar();
 
